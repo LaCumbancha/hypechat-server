@@ -1,0 +1,18 @@
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE messages(
+	id SERIAL,
+	sender VARCHAR(256) NOT NULL,
+	receiver VARCHAR(256) NOT NUll,
+	text_content VARCHAR(256) NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE users(
+	id SERIAL,
+	username VARCHAR(256) NOT NULL,
+	email VARCHAR(256) NOT NUll,
+	password VARCHAR(256) NOT NULL,
+	PRIMARY KEY (id)
+);

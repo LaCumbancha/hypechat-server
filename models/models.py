@@ -17,6 +17,11 @@ class Message(db.Model):
 
         return new_message
 
+    def __init__(self, sender, receiver, text_content):
+        self.sender = sender
+        self.receiver = receiver
+        self.text_content = text_content
+
     def sender(self):
         return self._sender
 

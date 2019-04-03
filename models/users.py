@@ -17,6 +17,11 @@ class RegularUser(db.Model):
 
         return new_user
 
+    def __init__(self, username, email, password):
+        self._username = username
+        self._email = email
+        self._password = password
+
     def username(self):
         return self._username
 
