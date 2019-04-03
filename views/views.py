@@ -1,7 +1,8 @@
+from models.constants import StatusCode
 from models.models import Message
 from models.users import RegularUser
 from run import app
-from flask import request
+from flask import request, jsonify
 
 
 @app.route('/messages', methods=['GET'])
@@ -19,6 +20,7 @@ def get_users():
 
 
 @app.route('/users/new-user', methods=['POST'])
-def new_user():
-    RegularUser.new_with(request.get_json().get("username"), request.get_json().get("email"), request.get_json().get("password"))
-    return "Usuario creado"
+def register_user():
+    data = request.get_json()
+    new_user = RegularUser.new_with(data["username"], data["email"], data["password"])
+    return jsonify(new_user), StatusCode.OK.value
