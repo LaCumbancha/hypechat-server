@@ -1,8 +1,23 @@
 from exceptions.exceptions import UserCreationFailureError
 from models.constants import StatusCode
 from models.users import RegularUser
+from models.models import Message
 from run import app
 from flask import request, jsonify
+
+
+@app.route('/messages', methods=['GET'])
+def get_messages():
+    all_messages = Message.query.all()
+    contents = [message.text_content() for message in all_messages]
+    return "Mensajes: " + ", ".join(contents)
+
+
+@app.route('/users', methods=['GET'])
+def get_users():
+    all_users = RegularUser.query.all()
+    usernames = [user.username() for user in all_users]
+    return "Usuarios: " + ", ".join(usernames)
 
 
 @app.route('/users/new-user', methods=['POST'])
