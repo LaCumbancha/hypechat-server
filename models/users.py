@@ -1,4 +1,7 @@
 from app import db
+from exceptions.exceptions import UserCreationFailureError
+from models.authentication import AuthToken
+from sqlalchemy import exc
 
 
 class RegularUser(db.Model):
@@ -9,14 +12,23 @@ class RegularUser(db.Model):
     _email = db.Column(name='email', type_=db.String(), unique=True)
     _password = db.Column(name='password', type_=db.String(), nullable=False)
     _logged = db.Column(name='logged', type_=db.Boolean(), nullable=False, default=False)
+    _auth_token = db.Column(name='auth_token', type_=db.String(), default=AuthToken.generate())
 
     @classmethod
     def create_user(cls, username, email, password):
         new_user = RegularUser(username=username, email=email, password=password)
-        db.session.add(new_user)
-        db.session.commit()
 
-        return {"id": new_user.id()}
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(RegularUser).filter(RegularUser._email == email).first():
+                raise UserCreationFailureError("Email already in use for other user.")
+            else:
+                raise UserCreationFailureError("User already exists")
+        else:
+            return {"auth_token": new_user.token()}
 
     @classmethod
     def login_user(cls, email, password):
@@ -69,3 +81,6 @@ class RegularUser(db.Model):
 
     def logout(self):
         self._logged = False
+
+    def token(self):
+        return self._auth_token
