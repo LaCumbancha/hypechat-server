@@ -1,6 +1,7 @@
 from app import db
 from exceptions.exceptions import *
 from models.authentication import AuthToken
+from passlib.apps import custom_app_context as hash_builder
 from sqlalchemy import exc
 
 
@@ -15,7 +16,7 @@ class RegularUser(db.Model):
 
     @classmethod
     def create_user(cls, username, email, password):
-        new_user = RegularUser(username=username, email=email, password=password)
+        new_user = RegularUser(username=username, email=email, password=hash_builder.hash(password))
 
         try:
             db.session.add(new_user)
@@ -33,7 +34,7 @@ class RegularUser(db.Model):
     def login_user(cls, email, password):
         user = db.session.query(RegularUser) \
             .filter(RegularUser._email == email) \
-            .filter(RegularUser._password == password).one_or_none()
+            .filter(hash_builder.verify(RegularUser._password, password)).one_or_none()
 
         if user:
             user.login()
