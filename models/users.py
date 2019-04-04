@@ -1,4 +1,5 @@
 from app import db
+from models.authentication import AuthToken
 
 
 class RegularUser(db.Model):
@@ -9,6 +10,7 @@ class RegularUser(db.Model):
     _email = db.Column(name='email', type_=db.String(), unique=True)
     _password = db.Column(name='password', type_=db.String(), nullable=False)
     _logged = db.Column(name='logged', type_=db.Boolean(), nullable=False, default=False)
+    _auth_token = db.Column(name='auth_token', type_=db.String(), default=AuthToken.generate())
 
     @classmethod
     def create_user(cls, username, email, password):
@@ -16,7 +18,7 @@ class RegularUser(db.Model):
         db.session.add(new_user)
         db.session.commit()
 
-        return {"id": new_user.id()}
+        return {"auth_token": new_user.token()}
 
     @classmethod
     def login_user(cls, email, password):
@@ -69,3 +71,6 @@ class RegularUser(db.Model):
 
     def logout(self):
         self._logged = False
+
+    def token(self):
+        return self._auth_token
