@@ -1,3 +1,4 @@
+from exceptions.exceptions import UserAlreadyExistsError
 from models.constants import StatusCode
 from models.users import RegularUser
 from run import app

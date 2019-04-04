@@ -1,5 +1,7 @@
 from app import db
+from exceptions.exceptions import UserAlreadyExistsError
 from models.authentication import AuthToken
+from sqlalchemy import exc
 
 
 class RegularUser(db.Model):
@@ -15,10 +17,14 @@ class RegularUser(db.Model):
     @classmethod
     def create_user(cls, username, email, password):
         new_user = RegularUser(username=username, email=email, password=password)
-        db.session.add(new_user)
-        db.session.commit()
 
-        return {"auth_token": new_user.token()}
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return {"auth_token": new_user.token()}
+        except exc.IntegrityError:
+            db.session.rollback()
+            raise UserAlreadyExistsError("User already exists")
 
     @classmethod
     def login_user(cls, email, password):
