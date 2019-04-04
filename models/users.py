@@ -15,12 +15,26 @@ class RegularUser(db.Model):
         db.session.add(new_user)
         db.session.commit()
 
-        return {"id": new_user._id}
+        return {"id": new_user.id()}
+
+    @classmethod
+    def login(cls, email, password):
+        user = db.session.query(RegularUser)\
+            .filter(RegularUser._email == email)\
+            .filter(RegularUser._password == password).first()
+
+        if user:
+            return {"id": user.id()}
+        else:
+            return None
 
     def __init__(self, username, email, password):
         self._username = username
         self._email = email
         self._password = password
+
+    def id(self):
+        return self._id
 
     def username(self):
         return self._username
