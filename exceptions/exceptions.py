@@ -1,4 +1,4 @@
-class UserAlreadyExistsError(Exception):
+class UserCreationFailureError(Exception):
     status_code = 400
 
     def __init__(self, message, payload=None):
