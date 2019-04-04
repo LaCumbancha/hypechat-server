@@ -32,11 +32,9 @@ class RegularUser(db.Model):
 
     @classmethod
     def login_user(cls, email, password):
-        user = db.session.query(RegularUser) \
-            .filter(RegularUser._email == email) \
-            .filter(hash_builder.verify(RegularUser._password, password)).one_or_none()
+        user = db.session.query(RegularUser).filter(RegularUser._email == email).one_or_none()
 
-        if user:
+        if user and hash_builder.verify(password, user.password()):
             user.login()
             db.session.commit()
             return {"auth_token": user.token()}
