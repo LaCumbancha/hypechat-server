@@ -1,5 +1,5 @@
 from app import db
-from exceptions.exceptions import UserCreationFailureError
+from exceptions.exceptions import *
 from models.authentication import AuthToken
 from sqlalchemy import exc
 
@@ -11,7 +11,6 @@ class RegularUser(db.Model):
     _username = db.Column(name='username', type_=db.String(), unique=True)
     _email = db.Column(name='email', type_=db.String(), unique=True)
     _password = db.Column(name='password', type_=db.String(), nullable=False)
-    _logged = db.Column(name='logged', type_=db.Boolean(), nullable=False, default=False)
     _auth_token = db.Column(name='auth_token', type_=db.String(), default=AuthToken.generate())
 
     @classmethod
@@ -32,29 +31,27 @@ class RegularUser(db.Model):
 
     @classmethod
     def login_user(cls, email, password):
-        user = db.session.query(RegularUser)\
-            .filter(RegularUser._email == email)\
-            .filter(RegularUser._password == password).first()
+        user = db.session.query(RegularUser) \
+            .filter(RegularUser._email == email) \
+            .filter(RegularUser._password == password).one_or_none()
 
         if user:
-            if not user.is_logged():
-                user.login()
-                db.session.commit()
-                return {"id": user.id()}
-
-        return None
+            user.login()
+            db.session.commit()
+            return {"auth_token": user.token()}
+        else:
+            raise CredentialsError("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, id):
-        user = db.session.query(RegularUser).filter(RegularUser._id == id).first()
+    def logout_user(cls, token):
+        user = db.session.query(RegularUser).filter(RegularUser._auth_token == token).one_or_none()
 
         if user:
-            if user.is_logged():
-                user.logout()
-                db.session.commit()
-                return {"id": user.id()}
-
-        return None
+            user.logout()
+            db.session.commit()
+            return {"message": "User logged out."}
+        else:
+            raise UserNotLoggedError("You must be logged to perform this action.")
 
     def __init__(self, username, email, password):
         self._username = username
@@ -77,10 +74,10 @@ class RegularUser(db.Model):
         return self._logged
 
     def login(self):
-        self._logged = True
+        self._auth_token = AuthToken.generate()
 
     def logout(self):
-        self._logged = False
+        self._auth_token = None
 
     def token(self):
         return self._auth_token

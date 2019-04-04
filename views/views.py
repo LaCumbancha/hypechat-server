@@ -17,16 +17,13 @@ def login():
     data = request.get_json()
     login_user = RegularUser.login_user(data["email"], data["password"])
 
-    if login_user:
-        return jsonify(login_user), StatusCode.OK.value
-    else:
-        return jsonify({"message": "User not found"}), StatusCode.NOT_FOUND.value
+    return jsonify(login_user), StatusCode.OK.value
 
 
 @app.route('/users/logout', methods=['POST'])
 def logout():
     data = request.get_json()
-    login_user = RegularUser.logout_user(data["id"])
+    login_user = RegularUser.logout_user(data["auth_token"])
 
     if login_user:
         return jsonify(login_user), StatusCode.OK.value
