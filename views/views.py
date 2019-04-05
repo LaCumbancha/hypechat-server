@@ -5,7 +5,7 @@ from run import app
 from flask import request, jsonify
 
 
-@app.route('/users/new-user', methods=['POST'])
+@app.route('/users', methods=['POST'])
 def register_user():
     data = request.get_json()
     new_user = RegularUser.create_user(data["username"], data["email"], data["password"])
