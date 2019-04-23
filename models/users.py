@@ -1,6 +1,6 @@
 from app import db
 from exceptions.exceptions import *
-from models.authentication import AuthToken
+from models.authentication import Authenticator
 from tables.users import UserTableEntry
 from passlib.apps import custom_app_context as hashing
 from sqlalchemy import exc
@@ -10,7 +10,12 @@ class RegularUser:
 
     @classmethod
     def create_user(cls, username, email, password):
-        new_user = UserTableEntry(username=username, email=email, password=hashing.hash(password))
+        new_user = UserTableEntry(
+            username=username,
+            email=email,
+            password=hashing.hash(password),
+            token=Authenticator.generate()
+        )
 
         try:
             db.session.add(new_user)
@@ -29,7 +34,7 @@ class RegularUser:
         user = db.session.query(UserTableEntry).filter(UserTableEntry.email == email).one_or_none()
 
         if user and hashing.verify(password, user.password):
-            user.auth_token = AuthToken.generate()
+            user.auth_token = Authenticator.generate()
             db.session.commit()
             return {"auth_token": user.auth_token}
         else:
@@ -45,3 +50,7 @@ class RegularUser:
             return {"message": "User logged out."}
         else:
             raise UserNotLoggedError("You must be logged to perform this action.")
+
+    def __init__(self, username, auth_token):
+        self.username = username,
+        self.auth_token = auth_token

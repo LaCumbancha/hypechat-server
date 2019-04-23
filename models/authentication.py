@@ -1,10 +1,26 @@
-import os, random, string
+import os
+import random
+import string
+
+from tables.users import UserTableEntry
+from exceptions.exceptions import  UserNotLoggedError
+
+from app import db
 
 
-class AuthToken:
+class Authenticator:
     _token_length = os.getenv('SECURITY_TOKEN_LENGTH')
 
     @classmethod
     def generate(cls):
         chars = string.ascii_letters + string.digits
         return "".join(random.choice(chars) for _ in range(int(cls._token_length)))
+
+    @classmethod
+    def authenticate(cls, auth_token):
+        user = db.session.query(UserTableEntry).filter(UserTableEntry.auth_token == auth_token).one_or_none()
+
+        if user:
+            return user
+        else:
+            raise UserNotLoggedError("You must be logged to perform this action.")

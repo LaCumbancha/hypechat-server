@@ -1,16 +1,10 @@
 from exceptions.exceptions import UserCreationFailureError
+from models.authentication import Authenticator
 from models.constants import StatusCode
 from models.users import RegularUser
-from models.models import Message
-from run import app
+
 from flask import request, jsonify
-
-
-@app.route('/messages', methods=['GET'])
-def get_messages():
-    all_messages = Message.query.all()
-    contents = [message.text_content() for message in all_messages]
-    return "Mensajes: " + ", ".join(contents)
+from run import app
 
 
 @app.route('/users', methods=['GET'])
@@ -40,7 +34,4 @@ def logout():
     data = request.get_json()
     login_user = RegularUser.logout_user(data["auth_token"])
 
-    if login_user:
-        return jsonify(login_user), StatusCode.OK.value
-    else:
-        return jsonify({"message": "User not found"}), StatusCode.NOT_FOUND.value
+    return jsonify(login_user), StatusCode.OK.value
