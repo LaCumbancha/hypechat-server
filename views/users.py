@@ -9,6 +9,8 @@ from run import app
 
 @app.route('/users', methods=['GET'])
 def get_users():
+    data = request.get_json()
+    Authenticator.authenticate(data["auth_token"])
     all_users = RegularUser.query.all()
     usernames = [user.username() for user in all_users]
     return "Usuarios: " + ", ".join(usernames)
@@ -32,6 +34,7 @@ def login():
 @app.route('/users/logout', methods=['POST'])
 def logout():
     data = request.get_json()
+    Authenticator.authenticate(data["auth_token"])
     login_user = RegularUser.logout_user(data["auth_token"])
 
     return jsonify(login_user), StatusCode.OK.value
