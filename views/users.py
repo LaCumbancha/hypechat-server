@@ -33,6 +33,5 @@ def login():
 @app.route('/users/logout', methods=['POST'])
 def logout():
     req = ClientRequest(request)
-    user = Authenticator.authenticate(req.token())
-    logout_user = RegularUser.logout_user(req.token())
+    logout_user = RegularUser.logout_user(req)
     return jsonify(logout_user), StatusCode.OK.value
