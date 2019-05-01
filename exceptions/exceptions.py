@@ -1,3 +1,6 @@
+from models.constants import StatusCode
+
+
 class UserError(Exception):
 
     def __init__(self):
@@ -10,7 +13,7 @@ class UserError(Exception):
 
 
 class UserCreationFailureError(UserError):
-    status_code = 400
+    status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, payload=None):
         UserError()
@@ -19,7 +22,7 @@ class UserCreationFailureError(UserError):
 
 
 class CredentialsError(UserError):
-    status_code = 400
+    status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, payload=None):
         UserError()
@@ -28,7 +31,7 @@ class CredentialsError(UserError):
 
 
 class UserNotLoggedError(UserError):
-    status_code = 401
+    status_code = StatusCode.UNAUTHORIZED.value
 
     def __init__(self, message, payload=None):
         UserError()

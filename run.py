@@ -5,7 +5,7 @@ from app import create_app
 config_name = os.getenv('APP_SETTINGS')
 app = create_app(config_name)
 
-from views import *
+from views import users, messages
 from handlers import *
 
 if __name__ == '__main__':
