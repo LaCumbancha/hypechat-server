@@ -41,15 +41,12 @@ class RegularUser:
             raise CredentialsError("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, auth_token):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.auth_token == auth_token).one_or_none()
+    def logout_user(cls, req):
+        user = Authenticator.authenticate(req.token())
 
-        if user:
-            user.auth_token = None
-            db.session.commit()
-            return {"message": "User logged out."}
-        else:
-            raise UserNotLoggedError("You must be logged to perform this action.")
+        user.auth_token = None
+        db.session.commit()
+        return {"message": "User logged out."}
 
     def __init__(self, username, auth_token):
         self.username = username,
