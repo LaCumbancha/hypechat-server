@@ -25,7 +25,7 @@ class RegularUser:
             db.session.commit()
         except exc.IntegrityError:
             db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == email).first():
+            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
                 raise UserCreationFailureError("Email already in use for other user.")
             else:
                 raise UserCreationFailureError("User already exists")

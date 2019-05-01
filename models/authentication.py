@@ -19,7 +19,7 @@ class Authenticator:
     @classmethod
     def authenticate(cls, authentication_data):
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.auth_token == authentication_data.auth_token()).one_or_none()
+            UserTableEntry.auth_token == authentication_data.token()).one_or_none()
 
         if user:
             return user
