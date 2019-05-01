@@ -7,7 +7,12 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET = os.getenv('SECRET')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL').format(
+        user=os.getenv('DATABASE_USER'),
+        pw=os.getenv('DATABASE_PASS'),
+        host=os.getenv('DATABASE_HOST'),
+        db=os.getenv('DATABASE_NAME')
+    )
 
 
 class ProductionConfig(Config):
@@ -22,7 +27,12 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL').format(
+        user=os.getenv('TEST_DATABASE_USER'),
+        pw=os.getenv('TEST_DATABASE_PASS'),
+        host=os.getenv('TEST_DATABASE_HOST'),
+        db=os.getenv('TEST_DATABASE_NAME')
+    )
 
 
 app_config = {
