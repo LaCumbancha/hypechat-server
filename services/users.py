@@ -6,7 +6,7 @@ from passlib.apps import custom_app_context as hashing
 from sqlalchemy import exc
 
 
-class RegularUser:
+class UserService:
 
     @classmethod
     def create_user(cls, new_user_data):
