@@ -1,16 +1,31 @@
+from dtos.users import *
+
+
 class ClientRequest:
 
     def __init__(self, data):
         self.data = data
 
-    def token(self):
-        return self.data.get_json()["auth_token"]
+    def json_body(self):
+        return self.data.get_json()
 
-    def username(self):
-        return self.data.get_json()["username"]
+    def new_user_data(self):
+        return NewUserDTO(
+            username=self.json_body().get("username"),
+            email=self.json_body().get("email"),
+            password=self.json_body().get("password"),
+            first_name=self.json_body().get("first_name"),
+            last_name=self.json_body().get("last_name"),
+            profile_pic=self.json_body().get("profile_pic")
+        )
 
-    def email(self):
-        return self.data.get_json()["email"]
+    def login_data(self):
+        return LoginDTO(
+            email=self.json_body().get("email"),
+            password=self.json_body().get("password")
+        )
 
-    def password(self):
-        return self.data.get_json()["password"]
+    def authentication_data(self):
+        return AuthenticationDTO(
+            token=self.json_body().get("auth_token")
+        )

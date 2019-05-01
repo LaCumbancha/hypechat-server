@@ -3,7 +3,7 @@ import random
 import string
 
 from tables.users import UserTableEntry
-from exceptions.exceptions import  UserNotLoggedError
+from exceptions.exceptions import UserNotLoggedError
 
 from app import db
 
@@ -17,8 +17,9 @@ class Authenticator:
         return "".join(random.choice(chars) for _ in range(int(cls._token_length)))
 
     @classmethod
-    def authenticate(cls, auth_token):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.auth_token == auth_token).one_or_none()
+    def authenticate(cls, authentication_data):
+        user = db.session.query(UserTableEntry).filter(
+            UserTableEntry.auth_token == authentication_data.auth_token()).one_or_none()
 
         if user:
             return user

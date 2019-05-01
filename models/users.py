@@ -9,11 +9,14 @@ from sqlalchemy import exc
 class RegularUser:
 
     @classmethod
-    def create_user(cls, username, email, password):
+    def create_user(cls, new_user_data):
         new_user = UserTableEntry(
-            username=username,
-            email=email,
-            password=hashing.hash(password),
+            username=new_user_data.username(),
+            email=new_user_data.email(),
+            password=hashing.hash(new_user_data.password()),
+            first_name=new_user_data.first_name(),
+            last_name=new_user_data.last_name(),
+            profile_pic=new_user_data.profile_pic(),
             token=Authenticator.generate()
         )
 
@@ -30,10 +33,10 @@ class RegularUser:
             return {"auth_token": new_user.auth_token}
 
     @classmethod
-    def login_user(cls, email, password):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == email).one_or_none()
+    def login_user(cls, login_data):
+        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == login_data.email()).one_or_none()
 
-        if user and hashing.verify(password, user.password):
+        if user and hashing.verify(login_data.password(), user.password):
             user.auth_token = Authenticator.generate()
             db.session.commit()
             return {"auth_token": user.auth_token}
@@ -41,13 +44,7 @@ class RegularUser:
             raise CredentialsError("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, req):
-        user = Authenticator.authenticate(req.token())
-
+    def logout_user(cls, user):
         user.auth_token = None
         db.session.commit()
         return {"message": "User logged out."}
-
-    def __init__(self, username, auth_token):
-        self.username = username,
-        self.auth_token = auth_token
