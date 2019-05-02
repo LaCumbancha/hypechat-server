@@ -10,7 +10,7 @@ from run import app
 @app.route('/messages', methods=['GET'])
 def get_messages():
     req = ClientRequest(request)
-    Authenticator.authenticate(req.token())
+    Authenticator.authenticate(req.authentication_data())
     messages = Message.query.all()
     contents = [message.text_content() for message in messages]
     return "Mensajes: " + ", ".join(contents)
