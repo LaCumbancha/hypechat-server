@@ -9,7 +9,7 @@ git clone https://github.com/MaxiSuppes/hypechat-server.git
 
 Then, you could choose between running locally in your OS, or running with Docker.
 
-####**Local OS**
+####Local OS
 
 1. Install Python's virtual environment.
 ```
@@ -41,7 +41,7 @@ source .env
 flask run
 ```
 
-###### Database:
+##### Database:
 
 Development mode will connect with a local database for fastest connection. To install PostgreSQL and create the tables: 
 ```
@@ -55,7 +55,7 @@ python manage.py db upgrade
 
 The tables structures are located in the file `tables-scripts.sql`.
 
-####**Doker**
+####Doker
 
 1. Install Docker
 ```
