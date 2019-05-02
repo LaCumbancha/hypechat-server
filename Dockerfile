@@ -22,5 +22,4 @@ EXPOSE 5000
 
 # Make Docker container executable
 RUN source .env
-ENTRYPOINT ["flask"]
-CMD ["run"]
+CMD ["sh", "-c", "flask run -h 0.0.0.0 -p $PORT"]
