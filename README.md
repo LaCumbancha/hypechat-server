@@ -42,6 +42,20 @@ In the project root directory:
 pip install -Ur requirements.txt
 ```
 
+### 7. Generating Docker image
+##### Installing Docker:
+```
+sudo apt-get docker.io
+```
+##### Creating image
+```
+docker build -t hypechat-server:latest
+```
+##### Running image
+```
+docker run --net host -d -p 5000:5000 hypechat-server
+```
+
 ## Environments
 
 ### Running
