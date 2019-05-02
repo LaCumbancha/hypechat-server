@@ -3,5 +3,6 @@ Flask==1.0.2
 Flask-Migrate==2.4.0
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.3.2
+Flask-Cors==3.0.7
 psycopg2-binary==2.7.7,<2.8 --no-binary psycopg2
 python-dotenv==0.10.1

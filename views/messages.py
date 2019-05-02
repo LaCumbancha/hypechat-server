@@ -1,6 +1,7 @@
 from models.authentication import Authenticator
+from models.request import ClientRequest
 from models.constants import StatusCode
-from models.models import Message
+from models.message import Message
 
 from flask import request, jsonify
 from run import app

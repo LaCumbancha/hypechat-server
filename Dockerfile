@@ -22,4 +22,4 @@ EXPOSE 5000
 
 # Make Docker container executable
 RUN source .env
-CMD ["sh", "-c", "flask run -h 0.0.0.0 -p $PORT"]
+CMD ["sh", "-c", "flask run -h 0.0.0.0 -p ${PORT:=5000}"]
