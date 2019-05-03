@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 echo "Setting environment to PROD."
-cp ./env ./~env.temp
-sed "s|\(export APP_SETTINGS=\).*|\1\"production\"|g" ./env >> ./temp
-sed "s|\(export FLASK_ENV=\).*|\1\"production\"|g" ./temp >> ./temp2
-mv ./temp2 ./env
-rm ./temp
+cp ./.env ./~.env.temp
+sed "s|\(export APP_SETTINGS=\).*|\1\"production\"|g" ./.env >> ./.temp
+sed "s|\(export FLASK_ENV=\).*|\1\"production\"|g" ./.temp >> ./.temp2
+mv ./.temp2 ./.env
+rm ./.temp
 
 echo "Building Docker image..."
 if ! sudo docker build -t hypechat-server:latest .; then
@@ -26,4 +26,4 @@ if ! sudo heroku container:release web --app hypechat-server; then
 fi
 
 echo "Resetting environment as last state"
-mv ./~env.temp ./env
+mv ./~.env.temp ./.env
