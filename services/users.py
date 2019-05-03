@@ -31,12 +31,13 @@ class UserService:
             db.session.commit()
             cls.logger().info(f"User with ID {new_user.id} created.")
         except exc.IntegrityError:
-            cls.logger().info(f"Failing to create user with ID {new_user.id}.")
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
+                cls.logger().info(f"Failing to create user with ID {new_user.id}. Email already in use for other user.")
                 raise UserCreationFailureError("Email already in use for other user.")
             else:
-                raise UserCreationFailureError("User already exists")
+                cls.logger().info(f"Failing to create user with ID {new_user.id}. User already exists.")
+                raise UserCreationFailureError("User already exists.")
         else:
             return {"auth_token": new_user.auth_token}
 
