@@ -86,4 +86,11 @@ heroku container:login
 heroku container:push web --app hypechat-server
 heroku container:release web --app hypechat-server
 ```
+
+To create the Docker image and deploy in just one step, it's provided the **deploy** script. Make sure to give it execution permissions before execute it.
+```
+chmod +x ./deploy
+./deploy
+```
+
 Heroku's host is: https://hypechat-server.herokuapp.com
