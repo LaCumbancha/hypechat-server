@@ -1,6 +1,7 @@
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+import logging
 
 class Config(object):
     TESTING = False
@@ -9,6 +10,7 @@ class Config(object):
 
 
 class ProductionConfig(Config):
+    LOG_LEVEL = os.getenv('PROD_LOG_LEVEL')
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL').format(
         user=os.getenv('PROD_DATABASE_USER'),
@@ -19,6 +21,7 @@ class ProductionConfig(Config):
 
 
 class DevelopmentConfig(Config):
+    LOG_LEVEL = os.getenv('DEV_LOG_LEVEL')
     DEVELOPMENT = True
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL').format(
@@ -30,6 +33,7 @@ class DevelopmentConfig(Config):
 
 
 class TestingConfig(Config):
+    LOG_LEVEL = os.getenv('BETA_LOG_LEVEL')
     TESTING = True
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL').format(

@@ -1,10 +1,21 @@
 from dtos.users import *
 
+import logging
+
 
 class ClientRequest:
 
     def __init__(self, data):
         self.data = data
+        self.logging_request(self.data)
+
+    @classmethod
+    def logging_request(cls, data):
+        logging.getLogger(cls.__name__).info({
+            "Headers": data.headers.to_list(),
+            "Body": data.get_json(),
+            "Cookies": data.cookies
+        })
 
     def json_body(self):
         return self.data.get_json()
