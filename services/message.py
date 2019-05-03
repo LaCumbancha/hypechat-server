@@ -6,6 +6,10 @@ import logging
 class MessageService:
 
     @classmethod
+    def logger(cls):
+        return logging.getLogger(cls.__name__)
+
+    @classmethod
     def new_with(cls, sender, receiver, text_content):
         new_message = MessageTableEntry(sender=sender, receiver=receiver, text_content=text_content)
         db.session.add(new_message)

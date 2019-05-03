@@ -11,9 +11,11 @@ import logging
 class UserService:
 
     @classmethod
-    def create_user(cls, new_user_data):
-        logger = logging.getLogger(cls.__name__)
+    def logger(cls):
+        return logging.getLogger(cls.__name__)
 
+    @classmethod
+    def create_user(cls, new_user_data):
         new_user = UserTableEntry(
             username=new_user_data.username(),
             email=new_user_data.email(),
@@ -27,9 +29,9 @@ class UserService:
         try:
             db.session.add(new_user)
             db.session.commit()
-            logger.info(f"User with ID {new_user.id} created.")
+            cls.logger().info(f"User with ID {new_user.id} created.")
         except exc.IntegrityError:
-            logger.info(f"Failing to create user with ID {new_user.id}.")
+            cls.logger().info(f"Failing to create user with ID {new_user.id}.")
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
                 raise UserCreationFailureError("Email already in use for other user.")
@@ -40,22 +42,20 @@ class UserService:
 
     @classmethod
     def login_user(cls, login_data):
-        logger = logging.getLogger(cls.__name__)
         user = db.session.query(UserTableEntry).filter(UserTableEntry.email == login_data.email()).one_or_none()
 
         if user and hashing.verify(login_data.password(), user.password):
             user.auth_token = Authenticator.generate()
             db.session.commit()
-            logger.info(f"Logging in user with ID {user.id}")
+            cls.logger().info(f"Logging in user with ID {user.id}")
             return {"auth_token": user.auth_token}
         else:
-            logger.info(f"Wrong credentials while attempting to log in user with ID {user.id}")
+            cls.logger().info(f"Wrong credentials while attempting to log in user with ID {user.id}")
             raise CredentialsError("Wrong email or password.")
 
     @classmethod
     def logout_user(cls, user):
         user.auth_token = None
         db.session.commit()
-        logger = logging.getLogger(cls.__name__)
-        logger.info(f"User with ID {user.id} logged out.")
+        cls.logger().info(f"User with ID {user.id} logged out.")
         return {"message": "User logged out."}
