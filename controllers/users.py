@@ -7,8 +7,7 @@ from flask import request, jsonify
 from run import app
 
 import logging
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("UsersController")
 
 
 @app.route('/users', methods=['GET'])

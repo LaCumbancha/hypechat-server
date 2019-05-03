@@ -22,7 +22,7 @@ def create_app(config_name):
         level=logging.getLevelName(app.config.get("LOG_LEVEL")),
         format=os.getenv('LOGGING_FORMAT')
     )
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("App")
     logger.info("Starting app")
     db.init_app(app)
 
