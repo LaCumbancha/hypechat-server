@@ -1,5 +1,7 @@
 from app import db
 
+import logging
+
 
 class MessageService:
 
