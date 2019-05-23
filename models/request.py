@@ -38,5 +38,6 @@ class ClientRequest:
 
     def authentication_data(self):
         return AuthenticationDTO(
+            username=self.json_body().get("username"),
             token=self.json_body().get("auth_token")
         )
