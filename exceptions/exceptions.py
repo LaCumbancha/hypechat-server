@@ -13,17 +13,7 @@ class UserError(Exception):
         return rv
 
 
-class UserCreationFailureError(UserError):
-    status_code = StatusCode.BAD_REQUEST.value
-
-    def __init__(self, message, status, payload=None):
-        UserError()
-        self.message = message
-        self.status = status
-        self.payload = payload
-
-
-class CredentialsError(UserError):
+class UserNotFoundError(UserError):
     status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
