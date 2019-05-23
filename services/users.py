@@ -1,4 +1,5 @@
 from app import db
+from dtos.responses.users import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import UserTableEntry
@@ -34,12 +35,12 @@ class UserService:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
                 cls.logger().info(f"Failing to create user with ID {new_user.id}. Email already in use for other user.")
-                raise UserCreationFailureError("Email already in use for other user.")
+                return UserAlreadyCreatedResponse("Email already in use for other user.")
             else:
                 cls.logger().info(f"Failing to create user with ID {new_user.id}. User already exists.")
-                raise UserCreationFailureError("User already exists.")
+                return UserAlreadyCreatedResponse("User already exists.")
         else:
-            return {"auth_token": new_user.auth_token}
+            return SuccessfulUserResponse(new_user)
 
     @classmethod
     def login_user(cls, login_data):
@@ -49,14 +50,15 @@ class UserService:
             user.auth_token = Authenticator.generate()
             db.session.commit()
             cls.logger().info(f"Logging in user with ID {user.id}")
-            return {"auth_token": user.auth_token}
+            return SuccessfulUserResponse(user)
         else:
             cls.logger().info(f"Wrong credentials while attempting to log in user with ID {user.id}")
-            raise CredentialsError("Wrong email or password.")
+            return WrongCredentialsResponse("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, user):
+    def logout_user(cls, logout_data):
+        user = Authenticator.authenticate(logout_data)
         user.auth_token = None
         db.session.commit()
         cls.logger().info(f"User with ID {user.id} logged out.")
-        return {"message": "User logged out."}
+        return UserLoggedOutResponse("User logged out.")

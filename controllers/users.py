@@ -24,7 +24,7 @@ def register_user():
     logger.info("Attempting to register new user")
     req = ClientRequest(request)
     new_user = UserService.create_user(req.new_user_data())
-    return jsonify(new_user), StatusCode.OK.value
+    return jsonify(new_user.json()), new_user.status_code()
 
 
 @app.route('/users/login', methods=['POST'])
@@ -32,13 +32,12 @@ def login():
     logger.info("Attempting to login")
     req = ClientRequest(request)
     login_user = UserService.login_user(req.login_data())
-    return jsonify(login_user), StatusCode.OK.value
+    return jsonify(login_user.json()), login_user.status_code()
 
 
 @app.route('/users/logout', methods=['POST'])
 def logout():
     logger.info("Attempting to logout")
     req = ClientRequest(request)
-    user = Authenticator.authenticate(req.authentication_data())
-    logout_user = UserService.logout_user(user)
-    return jsonify(logout_user), StatusCode.OK.value
+    logout_user = UserService.logout_user(req.authentication_data())
+    return jsonify(logout_user.json()), logout_user.status_code()

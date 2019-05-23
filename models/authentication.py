@@ -3,7 +3,8 @@ import random
 import string
 
 from tables.users import UserTableEntry
-from exceptions.exceptions import UserNotLoggedError
+from models.constants import UserStatus
+from exceptions.exceptions import WrongTokenError
 
 from app import db
 import logging
@@ -29,4 +30,4 @@ class Authenticator:
             return user
         else:
             logger.info(f"Failing to authenticate user.")
-            raise UserNotLoggedError("You must be logged to perform this action.")
+            raise WrongTokenError("You must be logged to perform this action.", UserStatus.WRONG_TOKEN.value)

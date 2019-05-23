@@ -1,4 +1,4 @@
-from dtos.users import *
+from dtos.inputs.users import *
 
 import logging
 
