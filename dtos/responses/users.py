@@ -27,6 +27,7 @@ class SuccessfulUserResponse(Jsonizable):
 class ActiveUserResponse(Jsonizable):
 
     def __init__(self, user):
+        self.id = user.user_id
         self.username = user.username
         self.email = user.email
         self.first_name = user.first_name
