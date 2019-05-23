@@ -41,3 +41,19 @@ def logout():
     req = ClientRequest(request)
     logout_user = UserService.logout_user(req.authentication_data())
     return jsonify(logout_user.json()), logout_user.status_code()
+
+
+@app.route('/users/online', methods=['POST'])
+def set_online():
+    logger.info("Attempting to set user online")
+    req = ClientRequest(request)
+    online_user = UserService.set_user_online(req.authentication_data())
+    return jsonify(online_user.json()), online_user.status_code()
+
+
+@app.route('/users/offline', methods=['POST'])
+def set_offline():
+    logger.info("Attempting to set user offline")
+    req = ClientRequest(request)
+    offline_user = UserService.set_user_offline(req.authentication_data())
+    return jsonify(offline_user.json()), offline_user.status_code()

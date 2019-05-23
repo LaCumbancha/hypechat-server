@@ -43,10 +43,10 @@ class UserService:
             return SuccessfulUserResponse(new_user)
 
     @classmethod
-    def login_user(cls, login_data):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == login_data.email()).one_or_none()
+    def login_user(cls, authentication_data):
+        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == authentication_data.email()).one_or_none()
 
-        if user and hashing.verify(login_data.password(), user.password):
+        if user and hashing.verify(authentication_data.password(), user.password):
             user.auth_token = Authenticator.generate()
             db.session.commit()
             cls.logger().info(f"Logging in user with ID {user.id}")
@@ -56,9 +56,25 @@ class UserService:
             return WrongCredentialsResponse("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, logout_data):
-        user = Authenticator.authenticate(logout_data)
+    def logout_user(cls, authentication_data):
+        user = Authenticator.authenticate(authentication_data)
         user.auth_token = None
         db.session.commit()
         cls.logger().info(f"User with ID {user.id} logged out.")
         return UserLoggedOutResponse("User logged out.")
+
+    @classmethod
+    def set_user_online(cls, authentication_data):
+        user = Authenticator.authenticate(authentication_data)
+        user.online = True
+        db.session.commit()
+        cls.logger().info(f"User with ID {user.id} set online.")
+        return SuccessfulUserResponse(user)
+
+    @classmethod
+    def set_user_offline(cls, authentication_data):
+        user = Authenticator.authenticate(authentication_data)
+        user.online = False
+        db.session.commit()
+        cls.logger().info(f"User with ID {user.id} set offline.")
+        return SuccessfulUserResponse(user)
