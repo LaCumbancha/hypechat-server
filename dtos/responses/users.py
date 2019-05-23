@@ -5,14 +5,20 @@ from utils.serializer import Jsonizable
 class SuccessfulUserResponse(Jsonizable):
 
     def __init__(self, user):
-        self.status = UserResponseStatus.ACTIVE.value
         self.user = ActiveUserResponse(user)
+        self.status = self._status()
 
     def json(self):
         return {
             "status": self.status,
             "user": self.user.json()
         }
+
+    def _status(self):
+        if self.user.online:
+            return UserResponseStatus.ACTIVE.value
+        else:
+            return UserResponseStatus.OFFLINE.value
 
     def status_code(self):
         return StatusCode.OK.value
@@ -27,6 +33,7 @@ class ActiveUserResponse(Jsonizable):
         self.last_name = user.last_name
         self.profile_pic = user.profile_pic
         self.token = user.auth_token
+        self.online = user.online
 
     def json(self):
         return vars(self)

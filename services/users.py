@@ -72,9 +72,9 @@ class UserService:
         return SuccessfulUserResponse(user)
 
     @classmethod
-    def set_user_online(cls, authentication_data):
+    def set_user_offline(cls, authentication_data):
         user = Authenticator.authenticate(authentication_data)
         user.online = False
         db.session.commit()
-        cls.logger().info(f"User with ID {user.id} set online.")
+        cls.logger().info(f"User with ID {user.id} set offline.")
         return SuccessfulUserResponse(user)
