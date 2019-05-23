@@ -1,4 +1,5 @@
 from dtos.inputs.users import *
+from dtos.inputs.teams import *
 
 import logging
 
@@ -40,4 +41,14 @@ class ClientRequest:
         return AuthenticationDTO(
             username=self.json_body().get("username"),
             token=self.json_body().get("auth_token")
+        )
+
+    def new_team_data(self):
+        return NewTeamDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            team_name=self.json_body().get("team_name"),
+            location=self.json_body().get("location"),
+            description=self.json_body().get("description"),
+            welcome_message=self.json_body().get("welcome_message"),
         )

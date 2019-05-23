@@ -24,7 +24,22 @@ class SuccessfulUserResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class UnsuccessfulUserResponse(Jsonizable):
+class SuccessfulTeamResponse(Jsonizable):
+
+    def __init__(self, user):
+        self.team = ActiveTeamResponse(user)
+
+    def json(self):
+        return {
+            "status": TeamResponseStatus.CREATED.value,
+            "team": self.team.json()
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
+class UnsuccessfulClientResponse(Jsonizable):
 
     def __init__(self, message):
         self.message = message
@@ -55,7 +70,20 @@ class ActiveUserResponse(Jsonizable):
         return vars(self)
 
 
-class UserAlreadyCreatedResponse(Jsonizable):
+class ActiveTeamResponse(Jsonizable):
+
+    def __init__(self, team):
+        self.team_id = team.team_id
+        self.team_name = team.team_name
+        self.location = team.location
+        self.description = team.description
+        self.welcome_message = team.welcome_message
+
+    def json(self):
+        return vars(self)
+
+
+class ClientAlreadyCreatedResponse(Jsonizable):
 
     def __init__(self, message):
         self.message = message

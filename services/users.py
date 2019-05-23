@@ -1,5 +1,5 @@
 from app import db
-from dtos.responses.users import *
+from dtos.responses.clients import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
@@ -40,13 +40,13 @@ class UserService:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
                 cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use for other user.")
-                return UserAlreadyCreatedResponse("Email already in use for other user.")
+                return ClientAlreadyCreatedResponse("Email already in use for other user.")
             elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username()).first():
                 cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
-                return UserAlreadyCreatedResponse("Username already in use for other user.")
+                return ClientAlreadyCreatedResponse("Username already in use for other user.")
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
-                return UnsuccessfulUserResponse("Couldn't create user.")
+                return UnsuccessfulClientResponse("Couldn't create user.")
         else:
             return SuccessfulUserResponse(new_user)
 

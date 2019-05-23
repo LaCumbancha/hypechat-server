@@ -28,7 +28,7 @@ class Authenticator:
             UserTableEntry.username == authentication_data.username())).one_or_none()
 
         if user:
-            logger.info(f"User with ID {user.user_id} authenticated.")
+            logger.info(f"User #{user.user_id} authenticated.")
             return user
         else:
             logger.info(f"Failing to authenticate user {authentication_data.username}.")
