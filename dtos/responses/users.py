@@ -48,7 +48,7 @@ class WrongCredentialsResponse(Jsonizable):
 
     def json(self):
         return {
-            "status": UserStatus.USER_NOT_FOUND.value,
+            "status": UserStatus.WRONG_CREDENTIALS.value,
             "message": self.message
         }
 
