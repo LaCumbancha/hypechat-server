@@ -1,42 +1,55 @@
 from models.constants import *
 from utils.serializer import Jsonizable
+from abc import abstractmethod
 
 
-class SuccessfulUserResponse(Jsonizable):
+class SuccessfulClientResponse(Jsonizable):
 
-    def __init__(self, user):
-        self.user = ActiveUserResponse(user)
-        self.status = self._status()
+    def __init__(self, client, status):
+        self.client = client
+        self.status = status
 
     def json(self):
         return {
             "status": self.status,
-            "user": self.user.json()
+            "client": self.client.json()
         }
 
-    def _status(self):
-        if self.user.online:
+    def status_code(self):
+        return StatusCode.OK.value
+
+
+class SuccessfulUserResponse(SuccessfulClientResponse):
+
+    def __init__(self, user):
+        client = ActiveUserResponse(user)
+        super(SuccessfulUserResponse, self).__init__(client, self._status(client))
+
+    def json(self):
+        return {
+            "status": self.status,
+            "user": self.client.json()
+        }
+
+    @classmethod
+    def _status(cls, client):
+        if client.online:
             return UserResponseStatus.ACTIVE.value
         else:
             return UserResponseStatus.OFFLINE.value
 
-    def status_code(self):
-        return StatusCode.OK.value
 
+class SuccessfulTeamResponse(SuccessfulClientResponse):
 
-class SuccessfulTeamResponse(Jsonizable):
-
-    def __init__(self, user):
-        self.team = ActiveTeamResponse(user)
+    def __init__(self, team):
+        client = ActiveTeamResponse(team)
+        super(SuccessfulTeamResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
 
     def json(self):
         return {
-            "status": TeamResponseStatus.CREATED.value,
-            "team": self.team.json()
+            "status": self.status,
+            "team": self.client.json()
         }
-
-    def status_code(self):
-        return StatusCode.OK.value
 
 
 class UnsuccessfulClientResponse(Jsonizable):
