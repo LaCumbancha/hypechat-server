@@ -51,3 +51,15 @@ class WrongCredentialsResponse(Jsonizable):
             "status": UserStatus.USER_NOT_FOUND.value,
             "message": self.message
         }
+
+
+class UserLoggedOutResponse(Jsonizable):
+
+    def __init__(self, message):
+        self.message = message
+
+    def json(self):
+        return {
+            "status": UserStatus.LOGGED_OUT.value,
+            "message": self.message
+        }

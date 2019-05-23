@@ -41,4 +41,4 @@ def logout():
     req = ClientRequest(request)
     user = Authenticator.authenticate(req.authentication_data())
     logout_user = UserService.logout_user(user)
-    return jsonify(logout_user), StatusCode.OK.value
+    return jsonify(logout_user.json()), StatusCode.OK.value

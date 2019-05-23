@@ -60,4 +60,4 @@ class UserService:
         user.auth_token = None
         db.session.commit()
         cls.logger().info(f"User with ID {user.id} logged out.")
-        return {"message": "User logged out."}
+        return UserLoggedOutResponse("User logged out.")
