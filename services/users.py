@@ -2,6 +2,7 @@ from app import db
 from dtos.responses.users import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
+from tables.clients import ClientsTableEntry
 from tables.users import UserTableEntry
 from passlib.apps import custom_app_context as hashing
 from sqlalchemy import exc
@@ -17,27 +18,32 @@ class UserService:
 
     @classmethod
     def create_user(cls, new_user_data):
-        new_user = UserTableEntry(
-            username=new_user_data.username(),
-            email=new_user_data.email(),
-            password=hashing.hash(new_user_data.password()),
-            first_name=new_user_data.first_name(),
-            last_name=new_user_data.last_name(),
-            profile_pic=new_user_data.profile_pic(),
-            token=Authenticator.generate()
-        )
+        new_client = ClientsTableEntry()
 
         try:
+            db.session.add(new_client)
+            db.session.flush()
+            new_user = UserTableEntry(
+                id=new_client.id,
+                username=new_user_data.username(),
+                email=new_user_data.email(),
+                password=hashing.hash(new_user_data.password()),
+                first_name=new_user_data.first_name(),
+                last_name=new_user_data.last_name(),
+                profile_pic=new_user_data.profile_pic(),
+                token=Authenticator.generate()
+            )
             db.session.add(new_user)
+            db.session.flush()
             db.session.commit()
-            cls.logger().info(f"User with ID {new_user.id} created.")
+            cls.logger().info(f"User with ID {new_client.id} created.")
         except exc.IntegrityError:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
-                cls.logger().info(f"Failing to create user with ID {new_user.id}. Email already in use for other user.")
+                cls.logger().info(f"Failing to create user with ID {new_client.id}. Email already in use for other user.")
                 return UserAlreadyCreatedResponse("Email already in use for other user.")
             else:
-                cls.logger().info(f"Failing to create user with ID {new_user.id}. User already exists.")
+                cls.logger().info(f"Failing to create user with ID {new_client.id}. User already exists.")
                 return UserAlreadyCreatedResponse("User already exists.")
         else:
             return SuccessfulUserResponse(new_user)
