@@ -24,7 +24,7 @@ def register_user():
     logger.info("Attempting to register new user")
     req = ClientRequest(request)
     new_user = UserService.create_user(req.new_user_data())
-    return jsonify(new_user), StatusCode.OK.value
+    return jsonify(new_user.json()), StatusCode.OK.value
 
 
 @app.route('/users/login', methods=['POST'])

@@ -1,5 +1,6 @@
 from app import db
 from exceptions.exceptions import *
+from dtos.responses.users import SuccessfulUserRequestResponse
 from models.authentication import Authenticator
 from tables.users import UserTableEntry
 from passlib.apps import custom_app_context as hashing
@@ -39,7 +40,7 @@ class UserService:
                 cls.logger().info(f"Failing to create user with ID {new_user.id}. User already exists.")
                 raise UserCreationFailureError("User already exists.")
         else:
-            return {"auth_token": new_user.auth_token}
+            return SuccessfulUserRequestResponse(new_user)
 
     @classmethod
     def login_user(cls, login_data):
