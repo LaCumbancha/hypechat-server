@@ -53,19 +53,23 @@ class UserService:
             return SuccessfulUserResponse(new_user)
 
     @classmethod
-    def login_user(cls, authentication_data):
+    def login_user(cls, login_data):
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.email == authentication_data.email).one_or_none()
+            UserTableEntry.email == login_data.email).one_or_none()
 
-        if user and hashing.verify(authentication_data.password, user.password):
-            user.auth_token = Authenticator.generate()
-            user.online = True
-            db.session.commit()
-            cls.logger().info(f"Logging in user {user.user_id}")
-            return SuccessfulUserResponse(user)
+        if user:
+            if hashing.verify(login_data.password, user.password):
+                user.auth_token = Authenticator.generate()
+                user.online = True
+                db.session.commit()
+                cls.logger().info(f"Logging in user {user.user_id}")
+                return SuccessfulUserResponse(user)
+            else:
+                cls.logger().info(f"Wrong credentials while attempting to log in user #{login_data.email}")
+                return WrongCredentialsResponse("Wrong email or password.")
         else:
-            cls.logger().info(f"Wrong credentials while attempting to log in user #{user.user_id}")
-            return WrongCredentialsResponse("Wrong email or password.")
+            cls.logger().info(f"User #{login_data.email} not found.")
+            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
     def logout_user(cls, authentication_data):
