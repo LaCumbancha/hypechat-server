@@ -34,7 +34,7 @@ class CredentialsError(UserError):
 
 
 class WrongTokenError(UserError):
-    status_code = StatusCode.UNAUTHORIZED.value
+    status_code = StatusCode.FORBIDDEN.value
 
     def __init__(self, message, status, payload=None):
         UserError()

@@ -1,4 +1,4 @@
-from models.constants import UserStatus
+from models.constants import *
 from utils.serializer import Jsonizable
 
 
@@ -13,6 +13,9 @@ class SuccessfulUserResponse(Jsonizable):
             "status": self.status,
             "user": self.user.json()
         }
+
+    def status_code(self):
+        return StatusCode.OK.value
 
 
 class ActiveUserResponse(Jsonizable):
@@ -40,6 +43,9 @@ class UserAlreadyCreatedResponse(Jsonizable):
             "message": self.message
         }
 
+    def status_code(self):
+        return StatusCode.BAD_REQUEST.value
+
 
 class WrongCredentialsResponse(Jsonizable):
 
@@ -52,6 +58,9 @@ class WrongCredentialsResponse(Jsonizable):
             "message": self.message
         }
 
+    def status_code(self):
+        return StatusCode.FORBIDDEN.value
+
 
 class UserLoggedOutResponse(Jsonizable):
 
@@ -63,3 +72,6 @@ class UserLoggedOutResponse(Jsonizable):
             "status": UserStatus.LOGGED_OUT.value,
             "message": self.message
         }
+
+    def status_code(self):
+        return StatusCode.OK.value
