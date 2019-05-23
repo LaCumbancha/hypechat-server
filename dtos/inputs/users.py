@@ -42,8 +42,12 @@ class LoginDTO:
 
 class AuthenticationDTO:
 
-    def __init__(self, token):
+    def __init__(self, username, token):
+        self._username = username
         self._token = token
 
     def token(self):
         return self._token
+
+    def username(self):
+        return self._username

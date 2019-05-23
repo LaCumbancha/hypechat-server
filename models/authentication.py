@@ -5,6 +5,7 @@ import string
 from tables.users import UserTableEntry
 from models.constants import UserResponseStatus
 from exceptions.exceptions import WrongTokenError
+from sqlalchemy import and_
 
 from app import db
 import logging
@@ -22,8 +23,9 @@ class Authenticator:
     def authenticate(cls, authentication_data):
         logger = logging.getLogger(cls.__name__)
 
-        user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.auth_token == authentication_data.token()).one_or_none()
+        user = db.session.query(UserTableEntry).filter(and_(
+            UserTableEntry.auth_token == authentication_data.token(),
+            UserTableEntry.username == authentication_data.username())).one_or_none()
 
         if user:
             logger.info(f"User with ID {user.id} authenticated.")
