@@ -39,6 +39,5 @@ def login():
 def logout():
     logger.info("Attempting to logout")
     req = ClientRequest(request)
-    user = Authenticator.authenticate(req.authentication_data())
-    logout_user = UserService.logout_user(user)
+    logout_user = UserService.logout_user(req.authentication_data())
     return jsonify(logout_user.json()), StatusCode.OK.value

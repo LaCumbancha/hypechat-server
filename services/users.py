@@ -56,7 +56,8 @@ class UserService:
             return WrongCredentialsResponse("Wrong email or password.")
 
     @classmethod
-    def logout_user(cls, user):
+    def logout_user(cls, logout_data):
+        user = Authenticator.authenticate(logout_data)
         user.auth_token = None
         db.session.commit()
         cls.logger().info(f"User with ID {user.id} logged out.")
