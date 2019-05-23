@@ -9,7 +9,7 @@ class StatusCode(Enum):
     SERVER_ERROR = 500
 
 
-class UserStatus(Enum):
+class UserResponseStatus(Enum):
     ACTIVE = "ACTIVE"
     OFFLINE = "OFFLINE"
     LOGGED_OUT = "LOGGED_OUT"
