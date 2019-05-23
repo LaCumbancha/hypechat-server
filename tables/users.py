@@ -15,7 +15,7 @@ class UserTableEntry(db.Model):
     last_name = db.Column(name='last_name', type_=db.String(), nullable=True)
     profile_pic = db.Column(name='profile_pic', type_=db.String(), nullable=True)
     auth_token = db.Column(name='auth_token', type_=db.String(), nullable=False, default=None)
-    status = db.Column(name='status', type_=db.Boolean, nullable=False, default=True)
+    online = db.Column(name='online', type_=db.Boolean, nullable=False, default=True)
 
     def __init__(self, username, email, password, first_name, last_name, profile_pic, token):
         self.username = username
