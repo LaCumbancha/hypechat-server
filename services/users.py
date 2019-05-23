@@ -56,6 +56,7 @@ class UserService:
 
         if user and hashing.verify(authentication_data.password(), user.password):
             user.auth_token = Authenticator.generate()
+            user.online = True
             db.session.commit()
             cls.logger().info(f"Logging in user {user.user_id}")
             return SuccessfulUserResponse(user)
