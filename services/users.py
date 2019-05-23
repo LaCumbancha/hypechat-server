@@ -35,15 +35,18 @@ class UserService:
             db.session.add(new_user)
             db.session.flush()
             db.session.commit()
-            cls.logger().info(f"User with ID {new_client.client_id} created.")
+            cls.logger().info(f"User #{new_client.client_id} created.")
         except exc.IntegrityError:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
-                cls.logger().info(f"Failing to create user with ID {new_client.client_id}. Email already in use for other user.")
+                cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use for other user.")
                 return UserAlreadyCreatedResponse("Email already in use for other user.")
+            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username()).first():
+                cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
+                return UserAlreadyCreatedResponse("Username already in use for other user.")
             else:
-                cls.logger().info(f"Failing to create user with ID {new_client.client_id}. User already exists.")
-                return UserAlreadyCreatedResponse("User already exists.")
+                cls.logger().info(f"Failing to create user #{new_client.client_id}.")
+                return UnsuccessfulUserResponse("Couldn't create user.")
         else:
             return SuccessfulUserResponse(new_user)
 
@@ -54,10 +57,10 @@ class UserService:
         if user and hashing.verify(authentication_data.password(), user.password):
             user.auth_token = Authenticator.generate()
             db.session.commit()
-            cls.logger().info(f"Logging in user with ID {user.user_id}")
+            cls.logger().info(f"Logging in user {user.user_id}")
             return SuccessfulUserResponse(user)
         else:
-            cls.logger().info(f"Wrong credentials while attempting to log in user with ID {user.user_id}")
+            cls.logger().info(f"Wrong credentials while attempting to log in user #{user.user_id}")
             return WrongCredentialsResponse("Wrong email or password.")
 
     @classmethod
@@ -65,7 +68,7 @@ class UserService:
         user = Authenticator.authenticate(authentication_data)
         user.auth_token = None
         db.session.commit()
-        cls.logger().info(f"User with ID {user.user_id} logged out.")
+        cls.logger().info(f"User #{user.user_id} logged out.")
         return UserLoggedOutResponse("User logged out.")
 
     @classmethod
@@ -73,7 +76,7 @@ class UserService:
         user = Authenticator.authenticate(authentication_data)
         user.online = True
         db.session.commit()
-        cls.logger().info(f"User with ID {user.user_id} set online.")
+        cls.logger().info(f"User #{user.user_id} set online.")
         return SuccessfulUserResponse(user)
 
     @classmethod
@@ -81,5 +84,5 @@ class UserService:
         user = Authenticator.authenticate(authentication_data)
         user.online = False
         db.session.commit()
-        cls.logger().info(f"User with ID {user.user_id} set offline.")
+        cls.logger().info(f"User #{user.user_id} set offline.")
         return SuccessfulUserResponse(user)
