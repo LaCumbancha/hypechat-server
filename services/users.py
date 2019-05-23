@@ -24,12 +24,12 @@ class UserService:
             db.session.flush()
             new_user = UserTableEntry(
                 user_id=new_client.client_id,
-                username=new_user_data.username(),
-                email=new_user_data.email(),
-                password=hashing.hash(new_user_data.password()),
-                first_name=new_user_data.first_name(),
-                last_name=new_user_data.last_name(),
-                profile_pic=new_user_data.profile_pic(),
+                username=new_user_data.username,
+                email=new_user_data.email,
+                password=hashing.hash(new_user_data.password),
+                first_name=new_user_data.first_name,
+                last_name=new_user_data.last_name,
+                profile_pic=new_user_data.profile_pic,
                 token=Authenticator.generate()
             )
             db.session.add(new_user)
@@ -38,11 +38,13 @@ class UserService:
             cls.logger().info(f"User #{new_client.client_id} created.")
         except exc.IntegrityError:
             db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
-                cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use for other user.")
+            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).first():
+                cls.logger().info(
+                    f"Failing to create user {new_client.client_id}. Email already in use for other user.")
                 return ClientAlreadyCreatedResponse("Email already in use for other user.")
-            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username()).first():
-                cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
+            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username).first():
+                cls.logger().info(
+                    f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
                 return ClientAlreadyCreatedResponse("Username already in use for other user.")
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
@@ -52,9 +54,10 @@ class UserService:
 
     @classmethod
     def login_user(cls, authentication_data):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == authentication_data.email()).one_or_none()
+        user = db.session.query(UserTableEntry).filter(
+            UserTableEntry.email == authentication_data.email).one_or_none()
 
-        if user and hashing.verify(authentication_data.password(), user.password):
+        if user and hashing.verify(authentication_data.password, user.password):
             user.auth_token = Authenticator.generate()
             user.online = True
             db.session.commit()

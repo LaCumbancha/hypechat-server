@@ -24,10 +24,10 @@ class Authenticator:
         logger = logging.getLogger(cls.__name__)
 
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.username == authentication_data.username()).one_or_none()
+            UserTableEntry.username == authentication_data.username).one_or_none()
 
         if user:
-            if user.auth_token == authentication_data.token():
+            if user.auth_token == authentication_data.token:
                 logger.info(f"User #{user.user_id} authenticated.")
                 return user
             else:
@@ -35,5 +35,5 @@ class Authenticator:
                 raise WrongTokenError("You must be logged to perform this action.",
                                       UserResponseStatus.WRONG_TOKEN.value)
         else:
-            logger.info(f"User #{authentication_data.username()} not found.")
+            logger.info(f"User #{authentication_data.username} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)

@@ -10,15 +10,6 @@ import logging
 logger = logging.getLogger("UsersController")
 
 
-@app.route('/users', methods=['GET'])
-def get_users():
-    logger.info("Attempting to get users")
-    req = ClientRequest(request)
-    Authenticator.authenticate(req.authentication_data())
-    all_users = UserService.query.all()
-    return [user.username() for user in all_users]
-
-
 @app.route('/users', methods=['POST'])
 def register_user():
     logger.info("Attempting to register new user")
