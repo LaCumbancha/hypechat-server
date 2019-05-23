@@ -31,5 +31,5 @@ class Authenticator:
             logger.info(f"User with ID {user.id} authenticated.")
             return user
         else:
-            logger.info(f"Failing to authenticate user.")
+            logger.info(f"Failing to authenticate user {authentication_data.username}.")
             raise WrongTokenError("You must be logged to perform this action.", UserResponseStatus.WRONG_TOKEN.value)
