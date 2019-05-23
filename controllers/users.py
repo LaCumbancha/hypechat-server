@@ -32,7 +32,7 @@ def login():
     logger.info("Attempting to login")
     req = ClientRequest(request)
     login_user = UserService.login_user(req.login_data())
-    return jsonify(login_user), StatusCode.OK.value
+    return jsonify(login_user.json()), StatusCode.OK.value
 
 
 @app.route('/users/logout', methods=['POST'])
