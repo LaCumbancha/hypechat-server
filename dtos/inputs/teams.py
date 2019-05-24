@@ -1,3 +1,7 @@
+from models.constants import TeamRoles, TeamResponseStatus
+from exceptions.exceptions import RoleNotAvailableError
+
+
 class NewTeamDTO:
 
     def __init__(self, username, token, team_name, location, description, welcome_message):
@@ -16,4 +20,7 @@ class NewUserTeamDTO:
         self.token = token
         self.team_id = team_id
         self.user_addable_id = user_addable_id
-        self.role = role
+        try:
+            self.role = TeamRoles[role].value
+        except KeyError:
+            raise RoleNotAvailableError(f"Role {role} is not defined.", TeamResponseStatus.ROLE_UNAVAILABLE.value)
