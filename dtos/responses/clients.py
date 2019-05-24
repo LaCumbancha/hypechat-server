@@ -39,19 +39,6 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
             return UserResponseStatus.OFFLINE.value
 
 
-class SuccessfulTeamResponse(SuccessfulClientResponse):
-
-    def __init__(self, team):
-        client = ActiveTeamResponse(team)
-        super(SuccessfulTeamResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
-
-    def json(self):
-        return {
-            "status": self.status,
-            "team": self.client.json()
-        }
-
-
 class UnsuccessfulClientResponse(Jsonizable):
 
     def __init__(self, message):
@@ -78,19 +65,6 @@ class ActiveUserResponse(Jsonizable):
         self.profile_pic = user.profile_pic
         self.token = user.auth_token
         self.online = user.online
-
-    def json(self):
-        return vars(self)
-
-
-class ActiveTeamResponse(Jsonizable):
-
-    def __init__(self, team):
-        self.team_id = team.team_id
-        self.team_name = team.team_name
-        self.location = team.location
-        self.description = team.description
-        self.welcome_message = team.welcome_message
 
     def json(self):
         return vars(self)

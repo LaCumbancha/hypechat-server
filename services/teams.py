@@ -44,7 +44,7 @@ class TeamService:
             if db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == new_team_data.team_name).first():
                 cls.logger().info(
                     f"Failing to create team {new_team_data.team_name}. Name already in use for other team.")
-                return ClientAlreadyCreatedResponse(f"Name {new_team_data.team_name} already in use for other team.")
+                return TeamAlreadyCreatedResponse(f"Name {new_team_data.team_name} already in use for other team.")
             else:
                 cls.logger().info(f"Failing to create team {new_team_data.team_name}.")
                 return UnsuccessfulTeamResponse("Couldn't create team.")
