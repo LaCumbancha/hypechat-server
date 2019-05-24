@@ -17,18 +17,14 @@ class TeamService:
     @classmethod
     def create_team(cls, new_team_data):
         user = Authenticator.authenticate(new_team_data)
-        new_client = ClientTableEntry()
+        new_team = TeamTableEntry(
+            team_name=new_team_data.team_name,
+            location=new_team_data.location,
+            description=new_team_data.description,
+            welcome_message=new_team_data.welcome_message
+        )
 
         try:
-            db.session.add(new_client)
-            db.session.flush()
-            new_team = TeamTableEntry(
-                team_id=new_client.client_id,
-                team_name=new_team_data.team_name,
-                location=new_team_data.location,
-                description=new_team_data.description,
-                welcome_message=new_team_data.welcome_message
-            )
             db.session.add(new_team)
             db.session.flush()
             new_user_by_team = UsersByTeamsTableEntry(
@@ -39,9 +35,9 @@ class TeamService:
             db.session.add(new_user_by_team)
             db.session.flush()
             db.session.commit()
-            cls.logger().info(f"Team #{new_client.client_id} created.")
+            cls.logger().info(f"Team #{new_team.team_id} created.")
             cls.logger().info(
-                f"User #{user.user_id} assigned as team #{new_client.client_id} #{new_user_by_team.role}.")
+                f"User #{user.user_id} assigned as team #{new_team.team_id} ({new_team.team_name}) #{new_user_by_team.role}.")
         except exc.IntegrityError:
             db.session.rollback()
             if db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == new_team_data.team_name).first():
