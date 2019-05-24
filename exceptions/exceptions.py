@@ -14,7 +14,17 @@ class UserError(Exception):
 
 
 class UserNotFoundError(UserError):
-    status_code = StatusCode.BAD_REQUEST.value
+    status_code = StatusCode.NOT_FOUND.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
+class TeamNotFoundError(UserError):
+    status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
         UserError()

@@ -4,7 +4,7 @@ from dtos.responses.teams import *
 from models.authentication import Authenticator
 from tables.users import *
 from models.constants import TeamRoles
-from sqlalchemy import exc
+from sqlalchemy import exc, and_
 
 import logging
 
@@ -47,13 +47,20 @@ class TeamService:
                 return ClientAlreadyCreatedResponse(f"Name {new_team_data.team_name} already in use for other team.")
             else:
                 cls.logger().info(f"Failing to create team {new_team_data.team_name}.")
-                return UnsuccessfulClientResponse("Couldn't create team.")
+                return UnsuccessfulTeamResponse("Couldn't create team.")
         else:
             return SuccessfulTeamResponse(new_team)
 
     @classmethod
     def register_user_team(cls, registration_data):
         team_admin = Authenticator.authenticate_admin(registration_data)
+
+        if db.session.query(UsersByTeamsTableEntry).filter(and_(
+            UsersByTeamsTableEntry.user_id == registration_data.user_addable_id,
+            UsersByTeamsTableEntry.team_id == registration_data.team_id
+        )).one_or_none():
+            return RelationAlreadyCreatedResponse("The given user already belongs to the team.")
+
         new_user_by_team = UsersByTeamsTableEntry(
             user_id=registration_data.user_addable_id,
             team_id=registration_data.team_id,
@@ -69,9 +76,11 @@ class TeamService:
         except exc.IntegrityError:
             db.session.rollback()
             if not db.session.query(UserTableEntry).filter(
-                    UserTableEntry.user_id == registration_data.user_addable_id).first():
+                    UserTableEntry.user_id == registration_data.user_addable_id).one_or_none():
                 cls.logger().info(
                     f"Failing to add user #{registration_data.team_id} to team #{registration_data.team_id}. User not found.")
                 raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+            else:
+                return UnsuccessfulTeamResponse("Couldn't add user to team.")
         else:
             return SuccessfulUserAddedResponse("User added.")

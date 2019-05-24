@@ -6,6 +6,7 @@ class StatusCode(Enum):
     BAD_REQUEST = 400
     UNAUTHORIZED = 401
     FORBIDDEN = 403
+    NOT_FOUND = 404
     SERVER_ERROR = 500
 
 
@@ -26,6 +27,7 @@ class TeamResponseStatus(Enum):
     USER_ADDED = "USER_ADDED"
     NOT_ENOUGH_PERMISSIONS = "NOT_ENOUGH_PERMISSIONS"
     ALREADY_REGISTERED = "ALREADY_REGISTERED"
+    TEAM_NOT_FOUND = "TEAM_NOT_FOUND"
 
 
 class TeamRoles(Enum):
