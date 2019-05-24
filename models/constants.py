@@ -23,6 +23,8 @@ class UserResponseStatus(Enum):
 
 class TeamResponseStatus(Enum):
     CREATED = "CREATED"
+    USER_ADDED = "USER_ADDED"
+    NOT_ENOUGH_PERMISSIONS = "NOT_ENOUGH_PERMISSIONS"
     ALREADY_REGISTERED = "ALREADY_REGISTERED"
 
 

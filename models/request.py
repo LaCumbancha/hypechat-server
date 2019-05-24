@@ -52,3 +52,12 @@ class ClientRequest:
             description=self.json_body().get("description"),
             welcome_message=self.json_body().get("welcome_message"),
         )
+
+    def new_user_team_data(self):
+        return NewUserTeamDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            team_id=self.json_body().get("team_id"),
+            user_addable_id=self.json_body().get("user_addable_id"),
+            role=self.json_body().get("role"),
+        )

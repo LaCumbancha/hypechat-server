@@ -31,3 +31,13 @@ class WrongTokenError(UserError):
         self.message = message
         self.status = status
         self.payload = payload
+
+
+class NoPermissionsError(UserError):
+    status_code = StatusCode.FORBIDDEN.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
