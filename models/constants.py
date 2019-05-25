@@ -10,6 +10,7 @@ class StatusCode(Enum):
 
 
 class UserResponseStatus(Enum):
+    ERROR = "ERROR"
     ACTIVE = "ACTIVE"
     OFFLINE = "OFFLINE"
     LOGGED_OUT = "LOGGED_OUT"

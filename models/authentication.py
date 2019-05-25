@@ -28,8 +28,8 @@ class Authenticator:
             UserTableEntry.username == authentication_data.username())).one_or_none()
 
         if user:
-            logger.info(f"User with ID {user.id} authenticated.")
+            logger.info(f"User with ID {user.user_id} authenticated.")
             return user
         else:
-            logger.info(f"Failing to authenticate user.")
+            logger.info(f"Failing to authenticate user {authentication_data.username}.")
             raise WrongTokenError("You must be logged to perform this action.", UserResponseStatus.WRONG_TOKEN.value)

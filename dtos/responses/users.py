@@ -24,9 +24,25 @@ class SuccessfulUserResponse(Jsonizable):
         return StatusCode.OK.value
 
 
+class UnsuccessfulUserResponse(Jsonizable):
+
+    def __init__(self, message):
+        self.message = message
+
+    def json(self):
+        return {
+            "status": UserResponseStatus.ERROR.value,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.SERVER_ERROR.value
+
+
 class ActiveUserResponse(Jsonizable):
 
     def __init__(self, user):
+        self.id = user.user_id
         self.username = user.username
         self.email = user.email
         self.first_name = user.first_name
