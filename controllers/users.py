@@ -1,5 +1,3 @@
-from models.authentication import Authenticator
-from models.constants import StatusCode
 from models.request import ClientRequest
 from services.users import UserService
 
@@ -16,6 +14,14 @@ def register_user():
     req = ClientRequest(request)
     new_user = UserService.create_user(req.new_user_data())
     return jsonify(new_user.json()), new_user.status_code()
+
+
+@app.route('/users/<searched_username>', methods=['GET'])
+def search_user(searched_username):
+    logger.info("Attempting to search for user")
+    req = ClientRequest(request)
+    found_users = UserService.search_users(req.search_users_data(searched_username))
+    return jsonify(found_users.json()), found_users.status_code()
 
 
 @app.route('/users/login', methods=['POST'])

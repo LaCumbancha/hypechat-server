@@ -39,6 +39,21 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
             return UserResponseStatus.OFFLINE.value
 
 
+class SuccessfulUsersListResponse(Jsonizable):
+
+    def __init__(self, users_list):
+        self.users_list = users_list
+
+    def json(self):
+        return {
+            "status": UserResponseStatus.LIST.value,
+            "users_list": self.users_list
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class UnsuccessfulClientResponse(Jsonizable):
 
     def __init__(self, message):

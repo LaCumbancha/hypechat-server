@@ -11,6 +11,7 @@ class StatusCode(Enum):
 
 
 class UserResponseStatus(Enum):
+    LIST = "LIST"
     ERROR = "ERROR"
     ACTIVE = "ACTIVE"
     OFFLINE = "OFFLINE"
@@ -20,6 +21,13 @@ class UserResponseStatus(Enum):
     ALREADY_LOGGED_IN = "ALREADY_LOGGED_IN"
     ALREADY_REGISTERED = "ALREADY_REGISTERED"
     USER_NOT_FOUND = "USER_NOT_FOUND"
+
+
+class MessageResponseStatus(Enum):
+    LIST = "LIST"
+    SENT = "SENT"
+    ERROR = "ERROR"
+    CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
 
 
 class TeamResponseStatus(Enum):

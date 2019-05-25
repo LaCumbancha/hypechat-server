@@ -71,6 +71,7 @@ CREATE TABLE messages(
 	sender_id INTEGER NOT NULL,
 	receiver_id INTEGER NOT NULL,
 	content VARCHAR(256) NOT NULL,
+	timestamp TIMESTAMP NOT NULL DEFAULT now(),
 	PRIMARY KEY (id),
 	FOREIGN KEY (sender_id) REFERENCES users (id),
 	FOREIGN KEY (receiver_id) REFERENCES clients (id)

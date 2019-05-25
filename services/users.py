@@ -38,11 +38,12 @@ class UserService:
             cls.logger().info(f"User #{new_client.client_id} created.")
         except exc.IntegrityError:
             db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).first():
+            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).one_or_none():
                 cls.logger().info(
                     f"Failing to create user {new_client.client_id}. Email already in use for other user.")
                 return ClientAlreadyCreatedResponse("Email already in use for other user.")
-            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username).first():
+            elif db.session.query(UserTableEntry).filter(
+                    UserTableEntry.username == new_user_data.username).one_or_none():
                 cls.logger().info(
                     f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
                 return ClientAlreadyCreatedResponse("Username already in use for other user.")
@@ -94,3 +95,30 @@ class UserService:
         db.session.commit()
         cls.logger().info(f"User #{user.user_id} set offline.")
         return SuccessfulUserResponse(user)
+
+    @classmethod
+    def search_users(cls, searched_users_data):
+        user = Authenticator.authenticate(searched_users_data)
+
+        found_users = db.session.query(UserTableEntry).filter(
+            UserTableEntry.username.like(f"%{searched_users_data.searched_username}%")).all()
+
+        cls.logger().info(
+            f"Found {len(found_users)} users for user #{user.user_id} with keyword {searched_users_data.username} .")
+        return SuccessfulUsersListResponse(cls._users_searched_data(found_users))
+
+    @classmethod
+    def _users_searched_data(cls, users_list):
+        users = []
+
+        for user in users_list:
+            users += [{
+                "user_id": user.user_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic,
+                "online": user.online
+            }]
+
+        return users
