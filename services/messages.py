@@ -29,7 +29,9 @@ class MessageService:
         #     .having(and_(MessageTableEntry.receiver_id == user.user_id, MessageTableEntry.timestamp == func.max()))\
         #     .all()
 
-        return
+        # TODO: Group by operation
+
+        pass
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):
