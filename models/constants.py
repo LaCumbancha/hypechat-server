@@ -23,8 +23,10 @@ class UserResponseStatus(Enum):
 
 
 class MessageResponseStatus(Enum):
+    LIST = "LIST"
     SENT = "SENT"
     ERROR = "ERROR"
+    CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
 
 
 class TeamResponseStatus(Enum):

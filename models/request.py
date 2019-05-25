@@ -45,12 +45,19 @@ class ClientRequest:
             token=self.json_body().get("auth_token")
         )
 
-    def chat_data(self):
+    def inbox_data(self):
+        return InboxDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            chat_id=self.json_body().get("chat_id"),
+            text_content=self.json_body().get("text_content"),
+        )
+
+    def chat_data(self, chat_id):
         return ChatDTO(
             username=self.json_body().get("username"),
             token=self.json_body().get("auth_token"),
-            receiver_id=self.json_body().get("receiver_id"),
-            text_content=self.json_body().get("text_content"),
+            chat_id=chat_id
         )
 
     def new_team_data(self):
