@@ -1,4 +1,6 @@
 from dtos.inputs.users import *
+from dtos.inputs.teams import *
+from exceptions.exceptions import RoleNotAvailableError
 
 import logging
 
@@ -41,3 +43,26 @@ class ClientRequest:
             username=self.json_body().get("username"),
             token=self.json_body().get("auth_token")
         )
+
+    def new_team_data(self):
+        return NewTeamDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            team_name=self.json_body().get("team_name"),
+            location=self.json_body().get("location"),
+            description=self.json_body().get("description"),
+            welcome_message=self.json_body().get("welcome_message"),
+        )
+
+    def new_user_team_data(self):
+        try:
+            return NewUserTeamDTO(
+                username=self.json_body().get("username"),
+                token=self.json_body().get("auth_token"),
+                team_id=self.json_body().get("team_id"),
+                user_addable_id=self.json_body().get("user_addable_id"),
+                role=self.json_body().get("role"),
+            )
+        except RoleNotAvailableError:
+            logging.getLogger(self.__class__.__name__).warning(f"Role {self.json_body().get('role')} not defined.")
+            raise

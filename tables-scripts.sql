@@ -1,5 +1,5 @@
 DROP TYPE IF EXISTS TITLE CASCADE;
-CREATE TYPE TITLE AS ENUM ('CREATOR', 'MODERATOR', 'MEMBER');
+CREATE TYPE TITLE AS ENUM ('CREATOR', 'ADMIN', 'MEMBER');
 
 DROP TYPE IF EXISTS VISIBILITY CASCADE;
 CREATE TYPE VISIBILITY AS ENUM ('PUBLIC', 'PRIVATE');
@@ -21,6 +21,7 @@ CREATE TABLE users(
 	profile_pic VARCHAR(256) NULL,
 	auth_token VARCHAR(40) UNIQUE,
 	online BOOLEAN NOT NULL DEFAULT TRUE,
+	PRIMARY KEY (id),
 	FOREIGN KEY (id) REFERENCES clients (id)
 );
 
@@ -39,6 +40,7 @@ CREATE TABLE users_teams(
 	user_id INTEGER NOT NULL,
 	team_id INTEGER NOT NULL,
 	role TITLE NOT NULL,
+	PRIMARY KEY (user_id, team_id),
 	FOREIGN KEY (user_id) REFERENCES users (id),
 	FOREIGN KEY (team_id) REFERENCES teams (id)
 );
@@ -49,6 +51,7 @@ CREATE TABLE channels(
 	visibility VISIBILITY NOT NULL,
 	description VARCHAR(256) NULL,
 	welcome_message VARCHAR(256) NULL,
+	PRIMARY KEY (id),
 	FOREIGN KEY (id) REFERENCES clients (id)
 );
 
@@ -57,6 +60,7 @@ CREATE TABLE users_channels(
 	user_id INTEGER NOT NULL,
 	channel_id INTEGER NOT NULL,
 	role TITLE NOT NULL,
+	PRIMARY KEY (user_id, channel_id),
 	FOREIGN KEY (user_id) REFERENCES users (id),
 	FOREIGN KEY (channel_id) REFERENCES channels (id)
 );

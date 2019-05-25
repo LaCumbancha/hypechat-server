@@ -1,5 +1,6 @@
 from app import db
 from sqlalchemy import exc, ForeignKey
+from models.constants import TeamRoles
 
 
 class ClientTableEntry(db.Model):
@@ -50,7 +51,10 @@ class UsersByTeamsTableEntry(db.Model):
                         nullable=False, primary_key=True)
     team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
                         nullable=False, primary_key=True)
-    role = db.Column(name='role', type_=db.String(), nullable=False)
+    role = db.Column(name='role', type_=db.String(), nullable=False, default=TeamRoles.MEMBER.value)
+
+    def is_admin(self):
+        return self.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
 
 
 class Channels(db.Model):

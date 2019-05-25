@@ -13,8 +13,8 @@ class UserError(Exception):
         return rv
 
 
-class UserCreationFailureError(UserError):
-    status_code = StatusCode.BAD_REQUEST.value
+class UserNotFoundError(UserError):
+    status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
         UserError()
@@ -23,8 +23,8 @@ class UserCreationFailureError(UserError):
         self.payload = payload
 
 
-class CredentialsError(UserError):
-    status_code = StatusCode.BAD_REQUEST.value
+class TeamNotFoundError(UserError):
+    status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
         UserError()
@@ -35,6 +35,26 @@ class CredentialsError(UserError):
 
 class WrongTokenError(UserError):
     status_code = StatusCode.FORBIDDEN.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
+class NoPermissionsError(UserError):
+    status_code = StatusCode.FORBIDDEN.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
+class RoleNotAvailableError(UserError):
+    status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
         UserError()

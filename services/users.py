@@ -1,5 +1,5 @@
 from app import db
-from dtos.responses.users import *
+from dtos.responses.clients import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
@@ -24,12 +24,12 @@ class UserService:
             db.session.flush()
             new_user = UserTableEntry(
                 user_id=new_client.client_id,
-                username=new_user_data.username(),
-                email=new_user_data.email(),
-                password=hashing.hash(new_user_data.password()),
-                first_name=new_user_data.first_name(),
-                last_name=new_user_data.last_name(),
-                profile_pic=new_user_data.profile_pic(),
+                username=new_user_data.username,
+                email=new_user_data.email,
+                password=hashing.hash(new_user_data.password),
+                first_name=new_user_data.first_name,
+                last_name=new_user_data.last_name,
+                profile_pic=new_user_data.profile_pic,
                 token=Authenticator.generate()
             )
             db.session.add(new_user)
@@ -38,30 +38,38 @@ class UserService:
             cls.logger().info(f"User #{new_client.client_id} created.")
         except exc.IntegrityError:
             db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email()).first():
-                cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use for other user.")
-                return UserAlreadyCreatedResponse("Email already in use for other user.")
-            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username()).first():
-                cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
-                return UserAlreadyCreatedResponse("Username already in use for other user.")
+            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).first():
+                cls.logger().info(
+                    f"Failing to create user {new_client.client_id}. Email already in use for other user.")
+                return ClientAlreadyCreatedResponse("Email already in use for other user.")
+            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username).first():
+                cls.logger().info(
+                    f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
+                return ClientAlreadyCreatedResponse("Username already in use for other user.")
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
-                return UnsuccessfulUserResponse("Couldn't create user.")
+                return UnsuccessfulClientResponse("Couldn't create user.")
         else:
             return SuccessfulUserResponse(new_user)
 
     @classmethod
-    def login_user(cls, authentication_data):
-        user = db.session.query(UserTableEntry).filter(UserTableEntry.email == authentication_data.email()).one_or_none()
+    def login_user(cls, login_data):
+        user = db.session.query(UserTableEntry).filter(
+            UserTableEntry.email == login_data.email).one_or_none()
 
-        if user and hashing.verify(authentication_data.password(), user.password):
-            user.auth_token = Authenticator.generate()
-            db.session.commit()
-            cls.logger().info(f"Logging in user {user.user_id}")
-            return SuccessfulUserResponse(user)
+        if user:
+            if hashing.verify(login_data.password, user.password):
+                user.auth_token = Authenticator.generate()
+                user.online = True
+                db.session.commit()
+                cls.logger().info(f"Logging in user {user.user_id}")
+                return SuccessfulUserResponse(user)
+            else:
+                cls.logger().info(f"Wrong credentials while attempting to log in user #{login_data.email}")
+                return WrongCredentialsResponse("Wrong email or password.")
         else:
-            cls.logger().info(f"Wrong credentials while attempting to log in user #{user.user_id}")
-            return WrongCredentialsResponse("Wrong email or password.")
+            cls.logger().info(f"User #{login_data.email} not found.")
+            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
     def logout_user(cls, authentication_data):
