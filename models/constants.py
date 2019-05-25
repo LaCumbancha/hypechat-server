@@ -11,6 +11,7 @@ class StatusCode(Enum):
 
 
 class UserResponseStatus(Enum):
+    LIST = "LIST"
     ERROR = "ERROR"
     ACTIVE = "ACTIVE"
     OFFLINE = "OFFLINE"

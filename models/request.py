@@ -39,6 +39,13 @@ class ClientRequest:
             password=self.json_body().get("password")
         )
 
+    def search_users_data(self, searched_username):
+        return SearchUsersDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            searched_username=searched_username
+        )
+
     def authentication_data(self):
         return AuthenticationDTO(
             username=self.json_body().get("username"),

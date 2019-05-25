@@ -3,7 +3,7 @@ from dtos.responses.messages import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.messages import *
-from sqlalchemy import exc, and_
+from sqlalchemy import exc, func, and_
 
 import logging
 
@@ -15,8 +15,21 @@ class MessageService:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def get_preview_messages(cls, user_data):
-        user = Authenticator.authenticate(user_data)
+    def get_preview_messages(cls, authentication_data):
+        user = Authenticator.authenticate(authentication_data)
+
+        chat = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user.user_id).one_or_none()
+
+        messages = db.session.query(MessageTableEntry) \
+            .having(MessageTableEntry.message_id == func.max(MessageTableEntry.message_id)) \
+            .all()
+
+        # messages = db.session.query(MessageTableEntry)\
+        #     .group_by(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)\
+        #     .having(and_(MessageTableEntry.receiver_id == user.user_id, MessageTableEntry.timestamp == func.max()))\
+        #     .all()
+
+        return
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):

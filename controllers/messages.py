@@ -8,6 +8,14 @@ import logging
 logger = logging.getLogger("MessagesController")
 
 
+@app.route('/messages', methods=['GET'])
+def get_preview_messages():
+    logger.info("Attempting to get all preview messages from user.")
+    req = ClientRequest(request)
+    messages = MessageService.get_preview_messages(req.authentication_data())
+    return jsonify(messages.json()), messages.status_code()
+
+
 @app.route('/messages/<chat_id>', methods=['GET'])
 def get_messages_from_direct_chat(chat_id):
     logger.info("Attempting to get all messages from specific chat from user.")
