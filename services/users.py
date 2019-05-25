@@ -113,7 +113,7 @@ class UserService:
 
         for user in users_list:
             users += [{
-                "user_id": user.user_id,
+                "id": user.user_id,
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,

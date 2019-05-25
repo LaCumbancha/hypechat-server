@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger("MessagesController")
 
 
-@app.route('/messages', methods=['GET'])
+@app.route('/messages/previews', methods=['GET'])
 def get_preview_messages():
     logger.info("Attempting to get all preview messages from user.")
     req = ClientRequest(request)

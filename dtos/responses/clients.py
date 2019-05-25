@@ -47,7 +47,7 @@ class SuccessfulUsersListResponse(Jsonizable):
     def json(self):
         return {
             "status": UserResponseStatus.LIST.value,
-            "users_list": self.users_list
+            "users": self.users_list
         }
 
     def status_code(self):
