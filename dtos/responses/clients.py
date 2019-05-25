@@ -112,7 +112,7 @@ class WrongCredentialsResponse(Jsonizable):
         }
 
     def status_code(self):
-        return StatusCode.FORBIDDEN.value
+        return StatusCode.OK.value
 
 
 class UserLoggedOutResponse(Jsonizable):
