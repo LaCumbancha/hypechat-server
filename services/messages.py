@@ -2,8 +2,9 @@ from app import db
 from dtos.responses.messages import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
+from tables.users import *
 from tables.messages import *
-from sqlalchemy import exc, func, and_
+from sqlalchemy import exc, func, and_, or_
 
 import logging
 
@@ -18,20 +19,88 @@ class MessageService:
     def get_preview_messages(cls, authentication_data):
         user = Authenticator.authenticate(authentication_data)
 
-        chat = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user.user_id).one_or_none()
+        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user.user_id).subquery("sq1")
 
-        messages = db.session.query(MessageTableEntry) \
-            .having(MessageTableEntry.message_id == func.max(MessageTableEntry.message_id)) \
-            .all()
+        last_messages_mixed = db.session.query(
+            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user1"),
+            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user2"),
+            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
+        ).filter(or_(
+            MessageTableEntry.receiver_id == user.user_id,
+            MessageTableEntry.sender_id == user.user_id
+        )).group_by(
+            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
+            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
+        ).subquery("sq2")
 
-        # messages = db.session.query(MessageTableEntry)\
-        #     .group_by(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)\
-        #     .having(and_(MessageTableEntry.receiver_id == user.user_id, MessageTableEntry.timestamp == func.max()))\
-        #     .all()
+        last_messages = db.session.query(
+            MessageTableEntry.sender_id,
+            MessageTableEntry.receiver_id,
+            UserTableEntry.username,
+            UserTableEntry.profile_pic,
+            MessageTableEntry.text_content,
+            MessageTableEntry.timestamp,
+            chats.c.unseen
+        ).join(
+            last_messages_mixed,
+            and_(
+                or_(
+                    MessageTableEntry.sender_id == last_messages_mixed.c.user1,
+                    MessageTableEntry.sender_id == last_messages_mixed.c.user2,
+                ),
+                or_(
+                    MessageTableEntry.receiver_id == last_messages_mixed.c.user1,
+                    MessageTableEntry.receiver_id == last_messages_mixed.c.user2,
+                ),
+                MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp
+            )
+        ).join(
+            chats,
+            and_(
+                or_(
+                    MessageTableEntry.sender_id == chats.c.chat_id,
+                    MessageTableEntry.receiver_id == chats.c.chat_id,
+                ),
+                or_(
+                    MessageTableEntry.sender_id == chats.c.user_id,
+                    MessageTableEntry.receiver_id == chats.c.user_id,
+                )
+            )
+        ).join(
+            UserTableEntry,
+            or_(
+                and_(
+                    UserTableEntry.user_id == last_messages_mixed.c.user1,
+                    UserTableEntry.user_id != user.user_id
+                ),
+                and_(
+                    UserTableEntry.user_id == last_messages_mixed.c.user2,
+                    UserTableEntry.user_id != user.user_id
+                )
+            )
+        ).all()
 
-        # TODO: Group by operation
+        cls.logger().info(f"Retrieved {len(last_messages)} chats from user #{user.user_id} ({user.username}).")
+        return ChatsListResponse(cls._generate_chats_list(last_messages))
 
-        pass
+    @classmethod
+    def _generate_chats_list(cls, last_messages):
+        chats = []
+
+        last_messages.sort(key=lambda msg: msg.timestamp, reverse=True)
+        for message in last_messages:
+            chats += [{
+                "sender_id": message.sender_id,
+                "receiver_id": message.receiver_id,
+                "chat_name": message.username,
+                "chat_picture": message.profile_pic,
+                "content": message.text_content,
+                "timestamp": message.timestamp,
+                "unseen": True if (message.unseen > 0) else False,
+                "offset": message.unseen
+            }]
+
+        return chats
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):
@@ -49,10 +118,14 @@ class MessageService:
                 MessageTableEntry.sender_id == user.user_id, MessageTableEntry.receiver_id == chat_data.chat_id)).all()
             messages_received = db.session.query(MessageTableEntry).filter(and_(
                 MessageTableEntry.sender_id == chat_data.chat_id, MessageTableEntry.receiver_id == user.user_id)).all()
-            return MessageListResponse(cls._generate_message_list(messages_sent, messages_received, chat.unseen_offset))
+            cls.logger().info(
+                f"Retrieved {len(messages_sent) + len(messages_received)} messages from chat {chat_data.chat_id} " +
+                f"from user #{user.user_id} ({user.username}).")
+            return MessageListResponse(
+                cls._generate_messages_list(messages_sent, messages_received, chat.unseen_offset))
 
     @classmethod
-    def _generate_message_list(cls, messages_sent, messages_received, unseen_offset):
+    def _generate_messages_list(cls, messages_sent, messages_received, unseen_offset):
         messages = []
 
         messages_received.sort(key=lambda msg: msg.timestamp, reverse=True)

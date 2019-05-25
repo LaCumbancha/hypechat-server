@@ -45,3 +45,18 @@ class MessageListResponse(Jsonizable):
 
     def status_code(self):
         return StatusCode.OK.value
+
+
+class ChatsListResponse(Jsonizable):
+
+    def __init__(self, chats_list):
+        self.chats_list = chats_list
+
+    def json(self):
+        return {
+            "status": MessageResponseStatus.LIST.value,
+            "chats": self.chats_list
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
