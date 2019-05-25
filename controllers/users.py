@@ -1,5 +1,3 @@
-from models.authentication import Authenticator
-from models.constants import StatusCode
 from models.request import ClientRequest
 from services.users import UserService
 

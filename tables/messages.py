@@ -22,7 +22,7 @@ class ChatTableEntry(db.Model):
 
     user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='user_id', type_=db.Integer,
                         nullable=False, primary_key=True)
-    chat_id = db.Column(ForeignKey(ClientTableEntry.client_id),name='chat_id', type_=db.Integer,
+    chat_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='chat_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     unseen_offset = db.Column(name='unseen', type_=db.Integer, nullable=False, default=0)
 

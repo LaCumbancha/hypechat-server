@@ -38,11 +38,11 @@ class UserService:
             cls.logger().info(f"User #{new_client.client_id} created.")
         except exc.IntegrityError:
             db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).first():
+            if db.session.query(UserTableEntry).filter(UserTableEntry.email == new_user_data.email).one_or_none():
                 cls.logger().info(
                     f"Failing to create user {new_client.client_id}. Email already in use for other user.")
                 return ClientAlreadyCreatedResponse("Email already in use for other user.")
-            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username).first():
+            elif db.session.query(UserTableEntry).filter(UserTableEntry.username == new_user_data.username).one_or_none():
                 cls.logger().info(
                     f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
                 return ClientAlreadyCreatedResponse("Username already in use for other user.")

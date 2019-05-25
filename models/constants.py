@@ -22,6 +22,11 @@ class UserResponseStatus(Enum):
     USER_NOT_FOUND = "USER_NOT_FOUND"
 
 
+class MessageResponseStatus(Enum):
+    SENT = "SENT"
+    ERROR = "ERROR"
+
+
 class TeamResponseStatus(Enum):
     CREATED = "CREATED"
     USER_ADDED = "USER_ADDED"

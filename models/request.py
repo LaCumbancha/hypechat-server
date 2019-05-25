@@ -1,4 +1,5 @@
 from dtos.inputs.users import *
+from dtos.inputs.messages import *
 from dtos.inputs.teams import *
 from exceptions.exceptions import RoleNotAvailableError
 
@@ -42,6 +43,14 @@ class ClientRequest:
         return AuthenticationDTO(
             username=self.json_body().get("username"),
             token=self.json_body().get("auth_token")
+        )
+
+    def chat_data(self):
+        return ChatDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            receiver_id=self.json_body().get("receiver_id"),
+            text_content=self.json_body().get("text_content"),
         )
 
     def new_team_data(self):
