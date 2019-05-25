@@ -19,6 +19,10 @@ class MessageService:
         user = Authenticator.authenticate(user_data)
 
     @classmethod
+    def get_messages_from_chat(cls, chat_data):
+        user = Authenticator.authenticate(chat_data)
+
+    @classmethod
     def send_message(cls, chat_data):
         user = Authenticator.authenticate(chat_data)
 
