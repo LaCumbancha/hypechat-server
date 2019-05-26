@@ -16,8 +16,8 @@ class MessageService:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def get_preview_messages(cls, authentication_data):
-        user = Authenticator.authenticate(authentication_data)
+    def get_preview_messages(cls, user_data):
+        user = Authenticator.authenticate(user_data)
 
         chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user.user_id).subquery("sq1")
 
@@ -104,7 +104,7 @@ class MessageService:
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):
-        user = Authenticator.authenticate(chat_data)
+        user = Authenticator.authenticate(chat_data.authentication)
 
         chat = db.session.query(ChatTableEntry).filter(and_(ChatTableEntry.user_id == user.user_id,
                                                             ChatTableEntry.chat_id == chat_data.chat_id)).one_or_none()
@@ -160,7 +160,7 @@ class MessageService:
 
     @classmethod
     def send_direct_message(cls, inbox_data):
-        user = Authenticator.authenticate(inbox_data)
+        user = Authenticator.authenticate(inbox_data.authentication)
 
         new_message = MessageTableEntry(
             sender_id=user.user_id,

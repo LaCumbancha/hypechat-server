@@ -18,7 +18,7 @@ class TeamService:
 
     @classmethod
     def create_team(cls, new_team_data):
-        user = Authenticator.authenticate(new_team_data)
+        user = Authenticator.authenticate(new_team_data.authentication)
         new_team = TeamTableEntry(
             team_name=new_team_data.team_name,
             location=new_team_data.location,
@@ -54,7 +54,7 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_admin(invite_data)
+        team_admin = Authenticator.authenticate_admin(invite_data.authentication)
 
         already_member = db.session.query(
             UserTableEntry.user_id
@@ -70,7 +70,7 @@ class TeamService:
             return RelationAlreadyCreatedResponse("This user already belongs to the team.")
 
         new_invite = TeamsInvitesTableEntry(
-            team_id=invite_data.team_id,
+            team_id=invite_data.authentication.team_id,
             email=invite_data.email,
             invite_token=Authenticator.team_generate()
         )
@@ -89,17 +89,18 @@ class TeamService:
 
     @classmethod
     def accept_invite(cls, invitation_data):
-        user = Authenticator.authenticate(invitation_data)
+        user = Authenticator.authenticate(invitation_data.authentication)
         invite = db.session.query(TeamsInvitesTableEntry).filter(and_(
             TeamsInvitesTableEntry.team_id == invitation_data.team_id, TeamsInvitesTableEntry.email == user.email))\
             .one_or_none()
 
         if not invite or invite.invite_token != invitation_data.invite_token:
             if db.session.query(UsersByTeamsTableEntry).filter(and_(
-                    UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id)).one_or_none():
-                return RelationAlreadyCreatedResponse("You are already part of this organization.")
+                    UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id))\
+                    .one_or_none():
+                return RelationAlreadyCreatedResponse("You are already part of this team.")
             else:
-                return WrongCredentialsResponse("You weren't invited to this organization.")
+                return WrongCredentialsResponse("You weren't invited to this team.")
 
         new_user_team = UsersByTeamsTableEntry(
             user_id=user.user_id,
@@ -117,6 +118,6 @@ class TeamService:
                 f"User #{user.user_id} joined team #{invite.team_id}.")
         except exc.IntegrityError:
             db.session.rollback()
-            return UnsuccessfulTeamResponse("Couldn't join organization.")
+            return UnsuccessfulTeamResponse("Couldn't join team.")
         else:
-            return SuccessfulUserAddedResponse("Organization joined!")
+            return SuccessfulUserAddedResponse("Team joined!")
