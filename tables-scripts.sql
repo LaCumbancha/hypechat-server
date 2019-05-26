@@ -40,6 +40,7 @@ CREATE TABLE users_teams(
 	user_id INTEGER NOT NULL,
 	team_id INTEGER NOT NULL,
 	role TITLE NOT NULL,
+	invite_token VARCHAR(8) NULL,
 	PRIMARY KEY (user_id, team_id),
 	FOREIGN KEY (user_id) REFERENCES users (id),
 	FOREIGN KEY (team_id) REFERENCES teams (id)

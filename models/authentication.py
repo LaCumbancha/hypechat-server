@@ -13,11 +13,17 @@ import logging
 
 class Authenticator:
     _token_length = os.getenv('SECURITY_TOKEN_LENGTH')
+    _invite_token_length = os.getenv('INVITE_TOKEN_LENGTH')
 
     @classmethod
     def generate(cls):
         chars = string.ascii_letters + string.digits
         return "".join(random.choice(chars) for _ in range(int(cls._token_length)))
+
+    @classmethod
+    def team_generate(cls):
+        chars = string.ascii_letters
+        return "".join(random.choice(chars) for _ in range(int(cls._invite_token_length)))
 
     @classmethod
     def authenticate(cls, authentication_data):

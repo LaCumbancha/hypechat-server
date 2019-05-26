@@ -52,6 +52,7 @@ class UsersByTeamsTableEntry(db.Model):
     team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     role = db.Column(name='role', type_=db.String(), nullable=False, default=TeamRoles.MEMBER.value)
+    invite_token = db.Column(name='invite_token', type_=db.String(), nullable=True, default=None)
 
     def is_admin(self):
         return self.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]

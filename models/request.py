@@ -77,15 +77,24 @@ class ClientRequest:
             welcome_message=self.json_body().get("welcome_message"),
         )
 
-    def new_user_team_data(self):
+    def invite_data(self, team_id):
+        role = self.json_body().get("role")
         try:
-            return NewUserTeamDTO(
+            return TeamInviteDTO(
                 username=self.json_body().get("username"),
                 token=self.json_body().get("auth_token"),
-                team_id=self.json_body().get("team_id"),
-                user_addable_id=self.json_body().get("user_addable_id"),
-                role=self.json_body().get("role"),
+                team_id=team_id,
+                new_user_id=self.json_body().get("new_user_id"),
+                role=role if role else TeamRoles.MEMBER.value,
             )
         except RoleNotAvailableError:
             logging.getLogger(self.__class__.__name__).warning(f"Role {self.json_body().get('role')} not defined.")
             raise
+
+    def accept_invite(self, team_id):
+        return TeamInviteAcceptDTO(
+            username=self.json_body().get("username"),
+            token=self.json_body().get("auth_token"),
+            team_id=team_id,
+            invite_token=self.json_body().get("invite_token")
+        )
