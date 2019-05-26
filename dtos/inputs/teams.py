@@ -15,15 +15,11 @@ class NewTeamDTO:
 
 class TeamInviteDTO:
 
-    def __init__(self, username, token, team_id, new_user_id, role):
+    def __init__(self, username, token, team_id, email):
         self.username = username
         self.token = token
         self.team_id = team_id
-        self.user_addable_id = new_user_id
-        try:
-            self.role = TeamRoles[role].value
-        except KeyError:
-            raise RoleNotAvailableError(f"Role {role} is not defined.", TeamResponseStatus.ROLE_UNAVAILABLE.value)
+        self.email = email
 
 
 class TeamInviteAcceptDTO:

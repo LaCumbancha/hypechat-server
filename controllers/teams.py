@@ -21,8 +21,8 @@ def register_team():
 def invite_user(team_id):
     logger.info("Attempting to invite new user into team.")
     req = ClientRequest(request)
-    new_user_team = TeamService.invite_user(req.invite_data(team_id))
-    return jsonify(new_user_team.json()), new_user_team.status_code()
+    new_invite = TeamService.invite_user(req.invite_data(team_id))
+    return jsonify(new_invite.json()), new_invite.status_code()
 
 
 @app.route('/teams/<team_id>/join', methods=['POST'])
