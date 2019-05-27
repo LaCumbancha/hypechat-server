@@ -45,7 +45,7 @@ class Authenticator:
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
-    def authenticate_team(cls, authentication_data, role_verifying):
+    def authenticate_team(cls, authentication_data, role_verifying=lambda _: True):
         logger = logging.getLogger(cls.__name__)
 
         user = db.session.query(UserTableEntry).filter(
@@ -56,17 +56,25 @@ class Authenticator:
                 team_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
                     UsersByTeamsTableEntry.user_id == user.user_id,
                     UsersByTeamsTableEntry.team_id == authentication_data.team_id)).one_or_none()
-                if team_user and role_verifying(team_user):
-                    logger.info(
-                        f"User {user.username} authenticated as team #{authentication_data.team_id} {team_user.role}.")
-                    return user
-                else:
-                    if not db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == authentication_data.team_id).one_or_none():
-                        logger.info(f"Team #{authentication_data.team_id} not found.")
-                        raise TeamNotFoundError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
+                if team_user:
+                    if role_verifying(team_user):
+                        logger.info(
+                            f"User {user.username} authenticated as team #{authentication_data.team_id} {team_user.role}.")
+                        return user
                     else:
                         logger.info(f"User {user.username} does not have permissions to perform this action.")
                         raise NoPermissionsError("You don't have enough permissions to perform this action.",
+                                                 TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+                else:
+                    if not db.session.query(TeamTableEntry).filter(
+                            TeamTableEntry.team_id == authentication_data.team_id).one_or_none():
+                        logger.info(f"Team #{authentication_data.team_id} not found.")
+                        raise TeamNotFoundError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
+                    else:
+                        logger.info(
+                            f"User {user.username} triyng to access information from team " +
+                            "#{authentication_data.team_id}, when it's not part of it.")
+                        raise NoPermissionsError("You're not part of this team!",
                                                  TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
                 logger.info(f"Failing to authenticate user {authentication_data.username}.")

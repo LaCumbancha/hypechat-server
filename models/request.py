@@ -112,3 +112,10 @@ class ClientRequest:
         except RoleNotAvailableError:
             logging.getLogger(self.__class__.__name__).warning(f"Role {self.json_body().get('new_role')} not defined.")
             raise
+
+    def team_authentication(self, team_id):
+        return TeamAuthenticationDTO(
+            username=self.cookies().get("username"),
+            token=self.cookies().get("auth_token"),
+            team_id=team_id
+        )

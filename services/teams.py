@@ -131,13 +131,46 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't join team.")
         else:
-            return SuccessfulTeamResponse("Team joined!")
+            return SuccessfulTeamResponse("Team joined!", TeamResponseStatus.USER_ADDED.value)
+
+    @classmethod
+    def team_users(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+
+        team_users = db.session.query(UserTableEntry).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
+                UsersByTeamsTableEntry.team_id == user_data.team_id
+            )
+        ).all()
+
+        cls.logger().info(f"User {user.username} got {len(team_users)} users from team #{user_data.team_id}.")
+        return SuccessfulUsersListResponse(cls._team_users_list(team_users))
+
+    @classmethod
+    def _team_users_list(cls, user_list):
+        users = []
+
+        for user in user_list:
+            users += [{
+                "id": user.user_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic,
+                "online": user.online
+            }]
+
+        return users
 
     @classmethod
     def change_role(cls, change_role_data):
         team_admin = Authenticator.authenticate_team(change_role_data.authentication, lambda user: user.is_creator())
 
         if change_role_data.new_role == TeamRoles.CREATOR.value:
+            cls.logger().info(
+                f"Trying to set user as team #{change_role_data.authentication.team_id} {TeamRoles.CREATOR.value}")
             return BadRequestTeamResponse("You cannot set a MEMBER as team CREATOR.",
                                           TeamResponseStatus.ROLE_UNAVAILABLE.value)
 
@@ -147,6 +180,8 @@ class TeamService:
         ).one_or_none()
 
         if not user_team:
+            cls.logger().info(
+                f"Trying to modify role from user #{user_team.user_id}, who's not part of team #{user_team.team_id}")
             return BadRequestTeamResponse("The given user is not part this team.",
                                           TeamResponseStatus.USER_NOT_MEMBER.value)
 

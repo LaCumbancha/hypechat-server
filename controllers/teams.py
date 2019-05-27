@@ -39,3 +39,11 @@ def change_role(team_id):
     req = ClientRequest(request)
     roles_changed = TeamService.change_role(req.change_role(team_id))
     return jsonify(roles_changed.json()), roles_changed.status_code()
+
+
+@app.route('/teams/<team_id>/users', methods=['GET'])
+def team_users(team_id):
+    logger.info(f"Attempting to get all users from team {team_id}.")
+    req = ClientRequest(request)
+    users = TeamService.team_users(req.team_authentication(team_id))
+    return jsonify(users.json()), users.status_code()
