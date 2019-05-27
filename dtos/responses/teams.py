@@ -1,12 +1,13 @@
 from dtos.responses.clients import SuccessfulClientResponse
 from models.constants import *
 from utils.serializer import Jsonizable
+from utils.responses import Response
 
 
 class SuccessfulTeamResponse(SuccessfulClientResponse):
 
     def __init__(self, team):
-        client = ActiveTeamResponse(team)
+        client = ActiveTeamOutput(team)
         super(SuccessfulTeamResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
 
     def json(self):
@@ -16,7 +17,7 @@ class SuccessfulTeamResponse(SuccessfulClientResponse):
         }
 
 
-class ActiveTeamResponse(Jsonizable):
+class ActiveTeamOutput(Jsonizable):
 
     def __init__(self, team):
         self.team_id = team.team_id
@@ -29,7 +30,7 @@ class ActiveTeamResponse(Jsonizable):
         return vars(self)
 
 
-class SuccessfulUserAddedResponse(Jsonizable):
+class SuccessfulUserAddedResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -44,7 +45,7 @@ class SuccessfulUserAddedResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class TeamAlreadyCreatedResponse(Jsonizable):
+class TeamAlreadyCreatedResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -59,7 +60,7 @@ class TeamAlreadyCreatedResponse(Jsonizable):
         return StatusCode.BAD_REQUEST.value
 
 
-class RelationAlreadyCreatedResponse(Jsonizable):
+class RelationAlreadyCreatedResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -74,7 +75,7 @@ class RelationAlreadyCreatedResponse(Jsonizable):
         return StatusCode.BAD_REQUEST.value
 
 
-class UnsuccessfulTeamResponse(Jsonizable):
+class UnsuccessfulTeamResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message

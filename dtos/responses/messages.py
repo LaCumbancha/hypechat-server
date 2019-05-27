@@ -1,8 +1,9 @@
 from models.constants import *
 from utils.serializer import Jsonizable
+from utils.responses import Response
 
 
-class SuccessfulMessageSentResponse(Jsonizable):
+class SuccessfulMessageSentResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -17,7 +18,7 @@ class SuccessfulMessageSentResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class UnsuccessfulMessageSentResponse(Jsonizable):
+class UnsuccessfulMessageSentResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -32,7 +33,7 @@ class UnsuccessfulMessageSentResponse(Jsonizable):
         return StatusCode.SERVER_ERROR.value
 
 
-class MessageListResponse(Jsonizable):
+class MessageListResponse(Jsonizable, Response):
 
     def __init__(self, messages_list):
         self.messages_list = messages_list
@@ -47,7 +48,7 @@ class MessageListResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class ChatsListResponse(Jsonizable):
+class ChatsListResponse(Jsonizable, Response):
 
     def __init__(self, chats_list):
         self.chats_list = chats_list

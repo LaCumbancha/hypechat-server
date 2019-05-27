@@ -1,9 +1,10 @@
 from models.constants import *
 from utils.serializer import Jsonizable
+from utils.responses import Response
 from abc import abstractmethod
 
 
-class SuccessfulClientResponse(Jsonizable):
+class SuccessfulClientResponse(Jsonizable, Response):
 
     def __init__(self, client, status):
         self.client = client
@@ -22,7 +23,7 @@ class SuccessfulClientResponse(Jsonizable):
 class SuccessfulUserResponse(SuccessfulClientResponse):
 
     def __init__(self, user):
-        client = ActiveUserResponse(user)
+        client = ActiveUserOutput(user)
         super(SuccessfulUserResponse, self).__init__(client, self._status(client))
 
     def json(self):
@@ -39,7 +40,7 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
             return UserResponseStatus.OFFLINE.value
 
 
-class SuccessfulUsersListResponse(Jsonizable):
+class SuccessfulUsersListResponse(Jsonizable, Response):
 
     def __init__(self, users_list):
         self.users_list = users_list
@@ -54,7 +55,7 @@ class SuccessfulUsersListResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class UnsuccessfulClientResponse(Jsonizable):
+class UnsuccessfulClientResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -69,7 +70,7 @@ class UnsuccessfulClientResponse(Jsonizable):
         return StatusCode.SERVER_ERROR.value
 
 
-class ActiveUserResponse(Jsonizable):
+class ActiveUserOutput(Jsonizable):
 
     def __init__(self, user):
         self.id = user.user_id
@@ -78,14 +79,13 @@ class ActiveUserResponse(Jsonizable):
         self.first_name = user.first_name
         self.last_name = user.last_name
         self.profile_pic = user.profile_pic
-        self.token = user.auth_token
         self.online = user.online
 
     def json(self):
         return vars(self)
 
 
-class ClientAlreadyCreatedResponse(Jsonizable):
+class ClientAlreadyCreatedResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -100,7 +100,7 @@ class ClientAlreadyCreatedResponse(Jsonizable):
         return StatusCode.BAD_REQUEST.value
 
 
-class WrongCredentialsResponse(Jsonizable):
+class WrongCredentialsResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -115,7 +115,7 @@ class WrongCredentialsResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class UserLoggedOutResponse(Jsonizable):
+class UserLoggedOutResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
