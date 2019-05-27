@@ -56,6 +56,9 @@ class UsersByTeamsTableEntry(db.Model):
     def is_admin(self):
         return self.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
 
+    def is_creator(self):
+        return self.role == TeamRoles.CREATOR.value
+
 
 class Channels(db.Model):
     __tablename__ = 'channels'

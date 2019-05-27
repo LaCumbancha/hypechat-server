@@ -50,11 +50,11 @@ class TeamService:
                 cls.logger().info(f"Failing to create team {new_team_data.team_name}.")
                 return UnsuccessfulTeamResponse("Couldn't create team.")
         else:
-            return SuccessfulTeamResponse(new_team)
+            return SuccessfulTeamCreatedResponse(new_team)
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_admin(invite_data.authentication)
+        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: user.is_admin())
 
         already_member = db.session.query(
             UserTableEntry.user_id
@@ -91,12 +91,12 @@ class TeamService:
     def accept_invite(cls, invitation_data):
         user = Authenticator.authenticate(invitation_data.authentication)
         invite = db.session.query(TeamsInvitesTableEntry).filter(and_(
-            TeamsInvitesTableEntry.team_id == invitation_data.team_id, TeamsInvitesTableEntry.email == user.email))\
+            TeamsInvitesTableEntry.team_id == invitation_data.team_id, TeamsInvitesTableEntry.email == user.email)) \
             .one_or_none()
 
         if not invite or invite.invite_token != invitation_data.invite_token:
             if db.session.query(UsersByTeamsTableEntry).filter(and_(
-                    UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id))\
+                    UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id)) \
                     .one_or_none():
                 return RelationAlreadyCreatedResponse("You are already part of this team.")
             else:
@@ -121,3 +121,29 @@ class TeamService:
             return UnsuccessfulTeamResponse("Couldn't join team.")
         else:
             return SuccessfulUserAddedResponse("Team joined!")
+
+    @classmethod
+    def change_role(cls, change_role_data):
+        team_admin = Authenticator.authenticate_team(change_role_data.authentication, lambda user: user.is_creator())
+
+        user_team = db.session.query(UsersByTeamsTableEntry).filter(and_(
+            UsersByTeamsTableEntry.user_id == change_role_data.user_id,
+            UsersByTeamsTableEntry.team_id == change_role_data.authentication.team_id)
+        ).one_or_none()
+
+        if not user_team:
+            return RelationNotCreatedResponse("The given user is not part this team.")
+
+        user_team.role = change_role_data.new_role
+
+        try:
+            db.session.add(user_team)
+            db.session.commit()
+            cls.logger().info(
+                f"User #{user_team.user_id} seted as team #{user_team.team_id} {user_team.role} " +
+                f"by {team_admin.username}.")
+        except exc.IntegrityError:
+            db.session.rollback()
+            return UnsuccessfulTeamResponse("Couldn't modify user role.")
+        else:
+            return SuccessfulTeamResponse("Role modified", TeamResponseStatus.ROLE_MODIFIED.value)

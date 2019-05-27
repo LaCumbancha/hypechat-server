@@ -4,11 +4,11 @@ from utils.serializer import Jsonizable
 from utils.responses import Response
 
 
-class SuccessfulTeamResponse(SuccessfulClientResponse):
+class SuccessfulTeamCreatedResponse(SuccessfulClientResponse):
 
     def __init__(self, team):
         client = ActiveTeamOutput(team)
-        super(SuccessfulTeamResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
+        super(SuccessfulTeamCreatedResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
 
     def json(self):
         return {
@@ -75,6 +75,37 @@ class RelationAlreadyCreatedResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
+class RelationNotCreatedResponse(Jsonizable, Response):
+
+    def __init__(self, message):
+        self.message = message
+
+    def json(self):
+        return {
+            "status": TeamResponseStatus.USER_NOT_MEMBER.value,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.BAD_REQUEST.value
+
+
+class SuccessfulTeamResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
+        self.message = message
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class UnsuccessfulTeamResponse(Jsonizable, Response):
 
     def __init__(self, message):
@@ -82,7 +113,7 @@ class UnsuccessfulTeamResponse(Jsonizable, Response):
 
     def json(self):
         return {
-            "status": UserResponseStatus.ERROR.value,
+            "status": TeamResponseStatus.ERROR.value,
             "message": self.message
         }
 
