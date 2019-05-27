@@ -21,8 +21,8 @@ class Authenticator:
         return "".join(random.choice(chars) for _ in range(int(cls._token_length)))
 
     @classmethod
-    def team_generate(cls):
-        chars = string.ascii_letters
+    def team_invitation(cls):
+        chars = string.ascii_uppercase
         return "".join(random.choice(chars) for _ in range(int(cls._invite_token_length)))
 
     @classmethod

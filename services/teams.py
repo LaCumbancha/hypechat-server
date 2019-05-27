@@ -45,7 +45,8 @@ class TeamService:
             if db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == new_team_data.team_name).first():
                 cls.logger().info(
                     f"Failing to create team {new_team_data.team_name}. Name already in use for other team.")
-                return TeamAlreadyCreatedResponse(f"Name {new_team_data.team_name} already in use for other team.")
+                return BadRequestTeamResponse(f"Name {new_team_data.team_name} already in use for other team.",
+                                              TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().info(f"Failing to create team {new_team_data.team_name}.")
                 return UnsuccessfulTeamResponse("Couldn't create team.")
@@ -61,18 +62,27 @@ class TeamService:
         ).join(
             UsersByTeamsTableEntry,
             and_(
+                UsersByTeamsTableEntry.team_id == invite_data.authentication.team_id,
                 UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
                 UserTableEntry.email == invite_data.email
             )
         ).one_or_none()
 
         if already_member:
-            return RelationAlreadyCreatedResponse("This user already belongs to the team.")
+            return BadRequestTeamResponse("This user already belongs to the team.",
+                                          TeamResponseStatus.ALREADY_REGISTERED.value)
+
+        if db.session.query(TeamsInvitesTableEntry).filter(and_(
+                TeamsInvitesTableEntry.team_id == invite_data.authentication.team_id,
+                TeamsInvitesTableEntry.email == invite_data.email
+        )).one_or_none():
+            return BadRequestTeamResponse("This user was already invited to join the team.",
+                                          TeamResponseStatus.ALREADY_INVITED.value)
 
         new_invite = TeamsInvitesTableEntry(
             team_id=invite_data.authentication.team_id,
             email=invite_data.email,
-            invite_token=Authenticator.team_generate()
+            invite_token=Authenticator.team_invitation()
         )
 
         try:
@@ -85,7 +95,7 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't invite user to team.")
         else:
-            return SuccessfulUserAddedResponse("User invited.")
+            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.USER_INVITED)
 
     @classmethod
     def accept_invite(cls, invitation_data):
@@ -98,7 +108,8 @@ class TeamService:
             if db.session.query(UsersByTeamsTableEntry).filter(and_(
                     UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id)) \
                     .one_or_none():
-                return RelationAlreadyCreatedResponse("You are already part of this team.")
+                return BadRequestTeamResponse("You are already part of this team.",
+                                              TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
                 return WrongCredentialsResponse("You weren't invited to this team.")
 
@@ -120,11 +131,15 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't join team.")
         else:
-            return SuccessfulUserAddedResponse("Team joined!")
+            return SuccessfulTeamResponse("Team joined!")
 
     @classmethod
     def change_role(cls, change_role_data):
         team_admin = Authenticator.authenticate_team(change_role_data.authentication, lambda user: user.is_creator())
+
+        if change_role_data.new_role == TeamRoles.CREATOR.value:
+            return BadRequestTeamResponse("You cannot set a MEMBER as team CREATOR.",
+                                          TeamResponseStatus.ROLE_UNAVAILABLE.value)
 
         user_team = db.session.query(UsersByTeamsTableEntry).filter(and_(
             UsersByTeamsTableEntry.user_id == change_role_data.user_id,
@@ -132,7 +147,8 @@ class TeamService:
         ).one_or_none()
 
         if not user_team:
-            return RelationNotCreatedResponse("The given user is not part this team.")
+            return BadRequestTeamResponse("The given user is not part this team.",
+                                          TeamResponseStatus.USER_NOT_MEMBER.value)
 
         user_team.role = change_role_data.new_role
 
@@ -140,7 +156,7 @@ class TeamService:
             db.session.add(user_team)
             db.session.commit()
             cls.logger().info(
-                f"User #{user_team.user_id} seted as team #{user_team.team_id} {user_team.role} " +
+                f"User #{user_team.user_id} setted as team #{user_team.team_id} {user_team.role} " +
                 f"by {team_admin.username}.")
         except exc.IntegrityError:
             db.session.rollback()
