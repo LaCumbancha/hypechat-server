@@ -8,7 +8,7 @@ from sqlalchemy import exc, func, and_, or_
 
 import logging
 
-CHAT_MESSAGE_PAGE = 2
+CHAT_MESSAGE_PAGE = 50
 
 
 class MessageService:
