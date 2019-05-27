@@ -119,3 +119,11 @@ class ClientRequest:
             token=self.cookies().get("auth_token"),
             team_id=team_id
         )
+
+    def delete_user_data(self, team_id, delete_id):
+        return DeleteUserDTO(
+            username=self.cookies().get("username"),
+            token=self.cookies().get("auth_token"),
+            team_id=team_id,
+            delete_id=delete_id
+        )

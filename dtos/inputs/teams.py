@@ -45,3 +45,10 @@ class ChangeRoleDTO:
             self.new_role = TeamRoles[new_role].value
         except KeyError:
             raise RoleNotAvailableError(f"Role {new_role} is not defined.", TeamResponseStatus.ROLE_UNAVAILABLE.value)
+
+
+class DeleteUserDTO:
+
+    def __init__(self, username, token, team_id, delete_id):
+        self.authentication = TeamAuthenticationDTO(username, token, team_id)
+        self.delete_id = delete_id

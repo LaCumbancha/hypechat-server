@@ -35,6 +35,7 @@ class TeamResponseStatus(Enum):
     CREATED = "CREATED"
     USER_ADDED = "USER_ADDED"
     USER_INVITED = "USER_INVITED"
+    USER_REMOVED = "USER_REMOVED"
     NOT_ENOUGH_PERMISSIONS = "NOT_ENOUGH_PERMISSIONS"
     ALREADY_REGISTERED = "ALREADY_REGISTERED"
     ALREADY_INVITED = "ALREADY_INVITED"
@@ -48,3 +49,20 @@ class TeamRoles(Enum):
     CREATOR = "CREATOR"
     ADMIN = "ADMIN"
     MEMBER = "MEMBER"
+
+
+def is_admin(user):
+    return user.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
+
+
+def is_creator(user):
+    return user.role == TeamRoles.CREATOR.value
+
+
+def is_higher_role(user1, user2):
+    if user1.role == TeamRoles.CREATOR.value:
+        return True
+    elif user1.role == TeamRoles.ADMIN.value and user2.role == TeamRoles.MEMBER.value:
+        return True
+    else:
+        return False

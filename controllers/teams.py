@@ -47,3 +47,11 @@ def team_users(team_id):
     req = ClientRequest(request)
     users = TeamService.team_users(req.team_authentication(team_id))
     return jsonify(users.json()), users.status_code()
+
+
+@app.route('/teams/<team_id>/users/<delete_id>', methods=['DELETE'])
+def delete_users(team_id, delete_id):
+    logger.info(f"Attempting to delete user {delete_id} from team {team_id}.")
+    req = ClientRequest(request)
+    response = TeamService.delete_users(req.delete_user_data(team_id, delete_id))
+    return jsonify(response.json()), response.status_code()

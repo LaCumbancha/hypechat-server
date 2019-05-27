@@ -52,19 +52,36 @@ class Authenticator:
             UserTableEntry.username == authentication_data.username).one_or_none()
 
         if user:
+
             if user.auth_token == authentication_data.token:
-                team_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
-                    UsersByTeamsTableEntry.user_id == user.user_id,
-                    UsersByTeamsTableEntry.team_id == authentication_data.team_id)).one_or_none()
+                team_user = db.session.query(
+                            UserTableEntry.user_id,
+                            UserTableEntry.username,
+                            UserTableEntry.email,
+                            UserTableEntry.first_name,
+                            UserTableEntry.last_name,
+                            UserTableEntry.profile_pic,
+                            UserTableEntry.online,
+                            UsersByTeamsTableEntry.team_id,
+                            UsersByTeamsTableEntry.role
+                        ).join(
+                            UsersByTeamsTableEntry,
+                            and_(
+                                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                                UsersByTeamsTableEntry.user_id == user.user_id,
+                                UsersByTeamsTableEntry.team_id == authentication_data.team_id
+                            )
+                        ).one_or_none()
                 if team_user:
                     if role_verifying(team_user):
                         logger.info(
                             f"User {user.username} authenticated as team #{authentication_data.team_id} {team_user.role}.")
-                        return user
+                        return team_user
                     else:
                         logger.info(f"User {user.username} does not have permissions to perform this action.")
                         raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                                  TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+
                 else:
                     if not db.session.query(TeamTableEntry).filter(
                             TeamTableEntry.team_id == authentication_data.team_id).one_or_none():

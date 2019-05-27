@@ -62,6 +62,22 @@ class BadRequestTeamResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
+class ForbiddenTeamResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
+        self.message = message
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.FORBIDDEN.value
+
+
 class UnsuccessfulTeamResponse(Jsonizable, Response):
 
     def __init__(self, message):
@@ -75,3 +91,19 @@ class UnsuccessfulTeamResponse(Jsonizable, Response):
 
     def status_code(self):
         return StatusCode.SERVER_ERROR.value
+
+
+class NotFoundTeamResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
+        self.message = message
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.NOT_FOUND.value

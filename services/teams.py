@@ -165,6 +165,40 @@ class TeamService:
         return users
 
     @classmethod
+    def delete_users(cls, delete_data):
+        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: is_admin(user))
+
+        delete_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
+            UsersByTeamsTableEntry.user_id == delete_data.delete_id,
+            UsersByTeamsTableEntry.team_id == delete_data.authentication.team_id
+        )).one_or_none()
+
+        if delete_user:
+
+            if is_higher_role(user, delete_user):
+                try:
+                    db.session.delete(delete_user)
+                    db.session.commit()
+                    cls.logger().info(
+                        f"User #{delete_user.user_id} deleted from team #{delete_user.team_id} by {user.username}.")
+                    return SuccessfulTeamResponse("User removed!", TeamResponseStatus.USER_REMOVED.value)
+                except exc.IntegrityError:
+                    db.session.rollback()
+                return UnsuccessfulTeamResponse("Couldn't delete user.")
+            else:
+                cls.logger().info(
+                    f"Cannot delete user #{delete_user.user_id} because he's role ({delete_user.role})" +
+                    f" is higher than yours.")
+                return ForbiddenTeamResponse("You don't have enough permissions to delete this user.",
+                                             TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+
+        else:
+            cls.logger().info(
+                f"Trying to delete user #{delete_data.delete_id}, who's not part of the team" +
+                f" {delete_data.authentication.team_id}.")
+            return NotFoundTeamResponse("Couldn't find user to delete", UserResponseStatus.USER_NOT_FOUND.value)
+
+    @classmethod
     def change_role(cls, change_role_data):
         team_admin = Authenticator.authenticate_team(change_role_data.authentication, lambda user: user.is_creator())
 
