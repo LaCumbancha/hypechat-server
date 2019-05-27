@@ -135,28 +135,15 @@ class MessageService:
         messages.sort(key=lambda msg: msg.timestamp, reverse=True)
         for message in messages:
 
-            if message.sender_id == user_id:
-                output_messages += [{
-                    "user_id": message.sender_id,
-                    "text_content": message.text_content,
-                    "timestamp": message.timestamp,
-                    "seen": True
-                }]
-            elif unseen_offset > 0:
-                output_messages += [{
-                    "user_id": message.sender_id,
-                    "text_content": message.text_content,
-                    "timestamp": message.timestamp,
-                    "seen": False
-                }]
+            output_messages += [{
+                "user_id": message.sender_id,
+                "text_content": message.text_content,
+                "timestamp": message.timestamp,
+                "seen": False if message.sender_id != user_id and unseen_offset > 0 else True
+            }]
+
+            if message.sender_id != user_id:
                 unseen_offset -= 1
-            else:
-                output_messages += [{
-                    "user_id": message.sender_id,
-                    "text_content": message.text_content,
-                    "timestamp": message.timestamp,
-                    "seen": True
-                }]
 
         return output_messages
 
