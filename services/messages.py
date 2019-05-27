@@ -8,6 +8,8 @@ from sqlalchemy import exc, func, and_, or_
 
 import logging
 
+CHAT_MESSAGE_PAGE = 20
+
 
 class MessageService:
 
@@ -106,8 +108,9 @@ class MessageService:
     def get_messages_from_direct_chat(cls, chat_data):
         user = Authenticator.authenticate(chat_data.authentication)
 
-        chat = db.session.query(ChatTableEntry).filter(and_(ChatTableEntry.user_id == user.user_id,
-                                                            ChatTableEntry.chat_id == chat_data.chat_id)).one_or_none()
+        chat = db.session.query(ChatTableEntry).filter(and_(
+            ChatTableEntry.user_id == user.user_id, ChatTableEntry.chat_id == chat_data.chat_id)
+        ).one_or_none()
 
         if not chat:
             cls.logger().error(
@@ -161,6 +164,9 @@ class MessageService:
     @classmethod
     def send_direct_message(cls, inbox_data):
         user = Authenticator.authenticate(inbox_data.authentication)
+
+        if user.user_id == inbox_data.chat_id:
+            raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)
 
         new_message = MessageTableEntry(
             sender_id=user.user_id,

@@ -1,5 +1,6 @@
 from dtos.inputs.users import AuthenticationDTO
 
+
 class InboxDTO:
 
     def __init__(self, username, token, chat_id, text_content):
@@ -10,6 +11,7 @@ class InboxDTO:
 
 class ChatDTO:
 
-    def __init__(self, username, token, chat_id):
+    def __init__(self, username, token, chat_id, offset):
         self.authentication = AuthenticationDTO(username, token)
         self.chat_id = chat_id
+        self.offset = offset

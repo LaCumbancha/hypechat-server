@@ -20,6 +20,9 @@ class ClientRequest:
             "Cookies": data.cookies
         })
 
+    def query_params(self):
+        return self.data.args
+
     def cookies(self):
         return self.data.cookies
 
@@ -67,7 +70,8 @@ class ClientRequest:
         return ChatDTO(
             username=self.cookies().get("username"),
             token=self.cookies().get("auth_token"),
-            chat_id=chat_id
+            chat_id=chat_id,
+            offset=self.query_params().get("offset") or 0
         )
 
     def new_team_data(self):
