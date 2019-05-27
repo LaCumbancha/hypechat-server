@@ -13,7 +13,13 @@ def register_user():
     logger.info("Attempting to register new user")
     req = ClientRequest(request)
     new_user = UserService.create_user(req.new_user_data())
-    return jsonify(new_user.json()), new_user.status_code()
+
+    response = jsonify(new_user.json())
+    if new_user.cookies():
+        response.set_cookie("username", new_user.cookies().get("username"))
+        response.set_cookie("auth_token", new_user.cookies().get("auth_token"))
+
+    return response, new_user.status_code()
 
 
 @app.route('/users/<searched_username>', methods=['GET'])
@@ -29,10 +35,12 @@ def login():
     logger.info("Attempting to login")
     req = ClientRequest(request)
     login_user = UserService.login_user(req.login_data())
+
     response = jsonify(login_user.json())
     if login_user.cookies():
         response.set_cookie("username", login_user.cookies().get("username"))
         response.set_cookie("auth_token", login_user.cookies().get("auth_token"))
+
     return response, login_user.status_code()
 
 
