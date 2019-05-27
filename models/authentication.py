@@ -61,12 +61,12 @@ class Authenticator:
                         f"User {user.username} authenticated as team #{admin_authentication_data.team_id} {team_user.role}.")
                     return user
                 else:
-                    if not db.session.query(UserTableEntry).filter(TeamTableEntry.team_id == admin_authentication_data.team_id).one_or_none():
+                    if not db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == admin_authentication_data.team_id).one_or_none():
                         logger.info(f"Team #{admin_authentication_data.team_id} not found.")
-                        raise NoPermissionsError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
+                        raise TeamNotFoundError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
                     else:
                         logger.info(f"User {user.username} does not have permissions to perform this action.")
-                        raise TeamNotFoundError("You don't have enough permissions to perform this action.",
+                        raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                                  TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
                 logger.info(f"Failing to authenticate user {admin_authentication_data.username}.")
