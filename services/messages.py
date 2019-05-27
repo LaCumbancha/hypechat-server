@@ -8,7 +8,7 @@ from sqlalchemy import exc, func, and_, or_
 
 import logging
 
-CHAT_MESSAGE_PAGE = 20
+CHAT_MESSAGE_PAGE = 2
 
 
 class MessageService:
@@ -117,25 +117,33 @@ class MessageService:
                 f"User #{user.user_id} trying to retrieve messages from an nonexistent chat.")
             raise ChatNotFoundError("Chat not found.", MessageResponseStatus.CHAT_NOT_FOUND.value)
         else:
-            messages_sent = db.session.query(MessageTableEntry).filter(and_(
-                MessageTableEntry.sender_id == user.user_id, MessageTableEntry.receiver_id == chat_data.chat_id)).all()
-            messages_received = db.session.query(MessageTableEntry).filter(and_(
-                MessageTableEntry.sender_id == chat_data.chat_id, MessageTableEntry.receiver_id == user.user_id)).all()
+            messages = db.session.query(MessageTableEntry).filter(or_(
+                and_(MessageTableEntry.sender_id == user.user_id, MessageTableEntry.receiver_id == chat_data.chat_id),
+                and_(MessageTableEntry.sender_id == chat_data.chat_id, MessageTableEntry.receiver_id == user.user_id)
+            )).offset(chat_data.offset).limit(CHAT_MESSAGE_PAGE).all()
+
             cls.logger().info(
-                f"Retrieved {len(messages_sent) + len(messages_received)} messages from chat {chat_data.chat_id} " +
+                f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} " +
                 f"from user #{user.user_id} ({user.username}).")
             return MessageListResponse(
-                cls._generate_messages_list(messages_sent, messages_received, chat.unseen_offset))
+                cls._generate_messages_list(messages, chat.unseen_offset, user.user_id))
 
     @classmethod
-    def _generate_messages_list(cls, messages_sent, messages_received, unseen_offset):
-        messages = []
+    def _generate_messages_list(cls, messages, unseen_offset, user_id):
+        output_messages = []
 
-        messages_received.sort(key=lambda msg: msg.timestamp, reverse=True)
-        for message in messages_received:
+        messages.sort(key=lambda msg: msg.timestamp, reverse=True)
+        for message in messages:
 
-            if unseen_offset > 0:
-                messages += [{
+            if message.sender_id == user_id:
+                output_messages += [{
+                    "user_id": message.sender_id,
+                    "text_content": message.text_content,
+                    "timestamp": message.timestamp,
+                    "seen": True
+                }]
+            elif unseen_offset > 0:
+                output_messages += [{
                     "user_id": message.sender_id,
                     "text_content": message.text_content,
                     "timestamp": message.timestamp,
@@ -143,23 +151,14 @@ class MessageService:
                 }]
                 unseen_offset -= 1
             else:
-                messages += [{
+                output_messages += [{
                     "user_id": message.sender_id,
                     "text_content": message.text_content,
                     "timestamp": message.timestamp,
                     "seen": True
                 }]
 
-        for message in messages_sent:
-            messages += [{
-                "user_id": message.sender_id,
-                "text_content": message.text_content,
-                "timestamp": message.timestamp,
-                "seen": True
-            }]
-
-        messages.sort(key=lambda msg: msg["timestamp"], reverse=True)
-        return messages
+        return output_messages
 
     @classmethod
     def send_direct_message(cls, inbox_data):
