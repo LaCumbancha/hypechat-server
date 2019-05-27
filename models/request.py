@@ -101,10 +101,14 @@ class ClientRequest:
         )
 
     def change_role(self, team_id):
-        return ChangeRoleDTO(
-            username=self.cookies().get("username"),
-            token=self.cookies().get("auth_token"),
-            team_id=team_id,
-            user_id=self.json_body().get("user_id"),
-            new_role=self.json_body().get("new_role")
-        )
+        try:
+            return ChangeRoleDTO(
+                username=self.cookies().get("username"),
+                token=self.cookies().get("auth_token"),
+                team_id=team_id,
+                user_id=self.json_body().get("user_id"),
+                new_role=self.json_body().get("new_role")
+            )
+        except RoleNotAvailableError:
+            logging.getLogger(self.__class__.__name__).warning(f"Role {self.json_body().get('new_role')} not defined.")
+            raise

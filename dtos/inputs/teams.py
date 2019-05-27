@@ -41,4 +41,7 @@ class ChangeRoleDTO:
     def __init__(self, username, token, team_id, user_id, new_role):
         self.authentication = TeamAuthenticationDTO(username, token, team_id)
         self.user_id = user_id
-        self.new_role = new_role
+        try:
+            self.new_role = TeamRoles[new_role].value
+        except KeyError:
+            raise RoleNotAvailableError(f"Role {new_role} is not defined.", TeamResponseStatus.ROLE_UNAVAILABLE.value)
