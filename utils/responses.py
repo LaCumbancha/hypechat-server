@@ -7,5 +7,5 @@ class Response(ABC):
     def status_code(self):
         pass
 
-    def cookies(self):
+    def headers(self):
         return None

@@ -53,12 +53,6 @@ class UsersByTeamsTableEntry(db.Model):
                         nullable=False, primary_key=True)
     role = db.Column(name='role', type_=db.String(), nullable=False, default=TeamRoles.MEMBER.value)
 
-    def is_admin(self):
-        return self.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
-
-    def is_creator(self):
-        return self.role == TeamRoles.CREATOR.value
-
 
 class Channels(db.Model):
     __tablename__ = 'channels'

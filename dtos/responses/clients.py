@@ -22,8 +22,8 @@ class SuccessfulClientResponse(Jsonizable, Response):
 
 class SuccessfulUserResponse(SuccessfulClientResponse):
 
-    def __init__(self, user, cookies=None):
-        self._cookies = cookies
+    def __init__(self, user, headers=None):
+        self._headers = headers
         client = ActiveUserOutput(user)
         super(SuccessfulUserResponse, self).__init__(client, self._status(client))
 
@@ -40,8 +40,8 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
         else:
             return UserResponseStatus.OFFLINE.value
 
-    def cookies(self):
-        return self._cookies
+    def headers(self):
+        return self._headers
 
 
 class SuccessfulUsersListResponse(Jsonizable, Response):

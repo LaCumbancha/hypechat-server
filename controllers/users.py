@@ -15,9 +15,8 @@ def register_user():
     new_user = UserService.create_user(req.new_user_data())
 
     response = jsonify(new_user.json())
-    if new_user.cookies():
-        response.set_cookie("username", new_user.cookies().get("username"))
-        response.set_cookie("auth_token", new_user.cookies().get("auth_token"))
+    if new_user.headers():
+        register_token_headers(response, new_user.headers())
 
     return response, new_user.status_code()
 
@@ -37,9 +36,8 @@ def login():
     login_user = UserService.login_user(req.login_data())
 
     response = jsonify(login_user.json())
-    if login_user.cookies():
-        response.set_cookie("username", login_user.cookies().get("username"))
-        response.set_cookie("auth_token", login_user.cookies().get("auth_token"))
+    if login_user.headers():
+        register_token_headers(response, login_user.headers())
 
     return response, login_user.status_code()
 
@@ -66,3 +64,10 @@ def set_offline():
     req = ClientRequest(request)
     offline_user = UserService.set_user_offline(req.authentication_data())
     return jsonify(offline_user.json()), offline_user.status_code()
+
+
+def register_token_headers(response, headers):
+    response.headers["X-Auth-Username"] = headers.get("username")
+    response.headers["X-Auth-Token"] = headers.get("auth_token")
+    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Username'
+    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'

@@ -55,7 +55,7 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: user.is_admin())
+        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: TeamRoles.is_admin(user))
 
         already_member = db.session.query(
             UserTableEntry.user_id
@@ -95,7 +95,7 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't invite user to team.")
         else:
-            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.USER_INVITED)
+            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.USER_INVITED.value)
 
     @classmethod
     def accept_invite(cls, invitation_data):
@@ -106,8 +106,9 @@ class TeamService:
 
         if not invite or invite.invite_token != invitation_data.invite_token:
             if db.session.query(UsersByTeamsTableEntry).filter(and_(
-                    UsersByTeamsTableEntry.user_id == user.user_id, UsersByTeamsTableEntry.team_id == invite.team_id)) \
-                    .one_or_none():
+                    UsersByTeamsTableEntry.user_id == user.user_id,
+                    UsersByTeamsTableEntry.team_id == invitation_data.team_id)
+            ).one_or_none():
                 return BadRequestTeamResponse("You are already part of this team.",
                                               TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
@@ -137,7 +138,15 @@ class TeamService:
     def team_users(cls, user_data):
         user = Authenticator.authenticate_team(user_data)
 
-        team_users = db.session.query(UserTableEntry).join(
+        team_users = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            UsersByTeamsTableEntry.role
+        ).join(
             UsersByTeamsTableEntry,
             and_(
                 UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
@@ -159,14 +168,15 @@ class TeamService:
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "profile_pic": user.profile_pic,
-                "online": user.online
+                "online": user.online,
+                "role": user.role
             }]
 
         return users
 
     @classmethod
     def delete_users(cls, delete_data):
-        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: is_admin(user))
+        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: TeamRoles.is_admin(user))
 
         delete_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
             UsersByTeamsTableEntry.user_id == delete_data.delete_id,
@@ -175,7 +185,7 @@ class TeamService:
 
         if delete_user:
 
-            if is_higher_role(user, delete_user):
+            if TeamRoles.is_higher_role(user, delete_user):
                 try:
                     db.session.delete(delete_user)
                     db.session.commit()
@@ -200,12 +210,13 @@ class TeamService:
 
     @classmethod
     def change_role(cls, change_role_data):
-        team_admin = Authenticator.authenticate_team(change_role_data.authentication, lambda user: user.is_creator())
+        team_admin = Authenticator.authenticate_team(change_role_data.authentication,
+                                                     lambda user: TeamRoles.is_creator(user))
 
         if change_role_data.new_role == TeamRoles.CREATOR.value:
             cls.logger().info(
                 f"Trying to set user as team #{change_role_data.authentication.team_id} {TeamRoles.CREATOR.value}")
-            return BadRequestTeamResponse("You cannot set a MEMBER as team CREATOR.",
+            return BadRequestTeamResponse("You cannot set someone as team CREATOR.",
                                           TeamResponseStatus.ROLE_UNAVAILABLE.value)
 
         user_team = db.session.query(UsersByTeamsTableEntry).filter(and_(

@@ -51,11 +51,11 @@ class UserService:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
         else:
-            cookies = {
+            headers = {
                 "username": new_user.username,
                 "auth_token": new_user.auth_token
             }
-            return SuccessfulUserResponse(new_user, cookies)
+            return SuccessfulUserResponse(new_user, headers)
 
     @classmethod
     def login_user(cls, user_data):
@@ -68,11 +68,11 @@ class UserService:
                 user.online = True
                 db.session.commit()
                 cls.logger().info(f"Logging in user {user.user_id}")
-                cookies = {
+                headers = {
                     "username": user.username,
                     "auth_token": user.auth_token
                 }
-                return SuccessfulUserResponse(user, cookies)
+                return SuccessfulUserResponse(user, headers)
             else:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
                 return WrongCredentialsResponse("Wrong email or password.")
