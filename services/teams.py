@@ -229,6 +229,27 @@ class TeamService:
                 f"by {team_admin.username}.")
         except exc.IntegrityError:
             db.session.rollback()
+            cls.logger().info(f"Failing to modifying role of #{user.user_id} in team #{user.team_id}.")
             return UnsuccessfulTeamResponse("Couldn't modify user role.")
         else:
             return SuccessfulTeamResponse("Role modified", TeamResponseStatus.ROLE_MODIFIED.value)
+
+    @classmethod
+    def leave_team(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+
+        delete_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
+            UsersByTeamsTableEntry.user_id == user.user_id,
+            UsersByTeamsTableEntry.team_id == user.team_id
+        )).one_or_none()
+
+        try:
+            db.session.delete(delete_user)
+            db.session.commit()
+            cls.logger().info(
+                f"User #{user.user_id} leaved team #{user.team_id}.")
+            return SuccessfulTeamResponse("Team leaved!", TeamResponseStatus.USER_REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().info(f"User #{user.user_id} failing to leave team #{user.team_id}.")
+            return UnsuccessfulTeamResponse("Couldn't leave team.")
