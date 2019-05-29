@@ -69,3 +69,12 @@ def set_offline():
 def register_headers(response, header):
     response.headers["X-Auth-Token"] = header.get("auth_token")
     response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'
+
+
+@app.route('/users/teams', methods=['GET'])
+def get_user_teams():
+    logger.info(f"Attempting to get teams for user.")
+    req = ClientRequest(request)
+    teams = UserService.teams_for_user(req.authentication_data())
+    return jsonify(teams.json()), teams.status_code()
+

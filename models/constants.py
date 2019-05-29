@@ -31,6 +31,7 @@ class MessageResponseStatus(Enum):
 
 
 class TeamResponseStatus(Enum):
+    LIST = "LIST"
     ERROR = "ERROR"
     CREATED = "CREATED"
     USER_ADDED = "USER_ADDED"

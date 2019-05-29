@@ -1,10 +1,11 @@
 from app import db
 from dtos.responses.clients import *
+from dtos.responses.teams import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
 from passlib.apps import custom_app_context as hashing
-from sqlalchemy import exc
+from sqlalchemy import exc, and_
 
 import logging
 
@@ -113,10 +114,10 @@ class UserService:
 
         cls.logger().info(
             f"Found {len(found_users)} users for user #{user.user_id} with keyword {user.username} .")
-        return SuccessfulUsersListResponse(cls._users_searched_data(found_users))
+        return SuccessfulUsersListResponse(cls._generate_users_list(found_users))
 
     @classmethod
-    def _users_searched_data(cls, users_list):
+    def _generate_users_list(cls, users_list):
         users = []
 
         for user in users_list:
@@ -130,3 +131,40 @@ class UserService:
             }]
 
         return users
+
+    @classmethod
+    def teams_for_user(cls, user_data):
+        user = Authenticator.authenticate(user_data)
+
+        teams = db.session.query(
+            TeamTableEntry.team_id,
+            TeamTableEntry.team_name,
+            TeamTableEntry.location,
+            TeamTableEntry.description,
+            TeamTableEntry.welcome_message,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == user.user_id,
+                UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+            )
+        ).all()
+
+        return SuccessfulTeamsListResponse(cls._generate_teams_list(teams))
+
+    @classmethod
+    def _generate_teams_list(cls, teams_list):
+        teams = []
+
+        for team in teams_list:
+            teams += [{
+                "id": team.team_id,
+                "team_name": team.team_name,
+                "location": team.location,
+                "description": team.description,
+                "welcome_message": team.welcome_message,
+                "role": team.role
+            }]
+
+        return teams
