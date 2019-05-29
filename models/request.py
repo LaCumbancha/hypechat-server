@@ -116,3 +116,10 @@ class ClientRequest:
             team_id=team_id,
             delete_id=delete_id
         )
+
+    def team_update(self, team_id):
+        return TeamUpdateDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            updated_team=self.json_body()
+        )

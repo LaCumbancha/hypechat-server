@@ -89,7 +89,7 @@ class UnsuccessfulClientResponse(Jsonizable, Response):
         return StatusCode.SERVER_ERROR.value
 
 
-class BadRequestTeamResponse(Jsonizable, Response):
+class BadRequestUserMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -105,29 +105,15 @@ class BadRequestTeamResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
-class WrongCredentialsResponse(Jsonizable, Response):
+class SuccessfulUserMessageResponse(Jsonizable, Response):
 
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": UserResponseStatus.WRONG_CREDENTIALS.value,
-            "message": self.message
-        }
-
-    def status_code(self):
-        return StatusCode.OK.value
-
-
-class UserLoggedOutResponse(Jsonizable, Response):
-
-    def __init__(self, message):
-        self.message = message
-
-    def json(self):
-        return {
-            "status": UserResponseStatus.LOGGED_OUT.value,
+            "status": self.status,
             "message": self.message
         }
 

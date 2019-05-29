@@ -42,14 +42,14 @@ class UserService:
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == user_data.email).one_or_none():
                 cls.logger().info(
                     f"Failing to create user {new_client.client_id}. Email already in use for other user.")
-                return BadRequestTeamResponse("Email already in use for other user.",
-                                              UserResponseStatus.ALREADY_REGISTERED.value)
+                return BadRequestUserMessageResponse("Email already in use for other user.",
+                                                     UserResponseStatus.ALREADY_REGISTERED.value)
             elif db.session.query(UserTableEntry).filter(
                     UserTableEntry.username == user_data.username).one_or_none():
                 cls.logger().info(
                     f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
-                return BadRequestTeamResponse("Username already in use for other user.",
-                                              UserResponseStatus.ALREADY_REGISTERED.value)
+                return BadRequestUserMessageResponse("Username already in use for other user.",
+                                                     UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
@@ -78,7 +78,7 @@ class UserService:
                 return SuccessfulUserResponse(user, headers)
             else:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
-                return WrongCredentialsResponse("Wrong email or password.")
+                return SuccessfulUserMessageResponse("Wrong email or password.", UserResponseStatus.WRONG_CREDENTIALS.value)
         else:
             cls.logger().info(f"User #{user_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
@@ -89,7 +89,7 @@ class UserService:
         user.auth_token = None
         db.session.commit()
         cls.logger().info(f"User #{user.user_id} logged out.")
-        return UserLoggedOutResponse("User logged out.")
+        return SuccessfulUserMessageResponse("User logged out.", UserResponseStatus.LOGGED_OUT.value)
 
     @classmethod
     def set_user_online(cls, user_data):

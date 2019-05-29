@@ -51,3 +51,10 @@ class DeleteUserDTO:
     def __init__(self, token, team_id, delete_id):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.delete_id = delete_id
+
+
+class TeamUpdateDTO:
+
+    def __init__(self, token, team_id, updated_team):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.updated_team = updated_team

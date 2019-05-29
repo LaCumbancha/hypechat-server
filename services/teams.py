@@ -45,13 +45,13 @@ class TeamService:
             if db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == new_team_data.team_name).first():
                 cls.logger().info(
                     f"Failing to create team {new_team_data.team_name}. Name already in use for other team.")
-                return BadRequestTeamResponse(f"Name {new_team_data.team_name} already in use for other team.",
-                                              TeamResponseStatus.ALREADY_REGISTERED.value)
+                return BadRequestTeamMessageResponse(f"Name {new_team_data.team_name} already in use for other team.",
+                                                     TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
-                cls.logger().info(f"Failing to create team {new_team_data.team_name}.")
-                return UnsuccessfulTeamResponse("Couldn't create team.")
+                cls.logger().error(f"Failing to create team {new_team_data.team_name}.")
+                return UnsuccessfulTeamMessageResponse("Couldn't create team.")
         else:
-            return SuccessfulTeamCreatedResponse(new_team)
+            return SuccessfulTeamResponse(new_team, TeamResponseStatus.CREATED.value)
 
     @classmethod
     def invite_user(cls, invite_data):
@@ -69,15 +69,15 @@ class TeamService:
         ).one_or_none()
 
         if already_member:
-            return BadRequestTeamResponse("This user already belongs to the team.",
-                                          TeamResponseStatus.ALREADY_REGISTERED.value)
+            return BadRequestTeamMessageResponse("This user already belongs to the team.",
+                                                 TeamResponseStatus.ALREADY_REGISTERED.value)
 
         if db.session.query(TeamsInvitesTableEntry).filter(and_(
                 TeamsInvitesTableEntry.team_id == invite_data.authentication.team_id,
                 TeamsInvitesTableEntry.email == invite_data.email
         )).one_or_none():
-            return BadRequestTeamResponse("This user was already invited to join the team.",
-                                          TeamResponseStatus.ALREADY_INVITED.value)
+            return BadRequestTeamMessageResponse("This user was already invited to join the team.",
+                                                 TeamResponseStatus.ALREADY_INVITED.value)
 
         new_invite = TeamsInvitesTableEntry(
             team_id=invite_data.authentication.team_id,
@@ -93,9 +93,11 @@ class TeamService:
                 f"New invitation for {new_invite.email} to join team #{new_invite.team_id}, by {team_admin.username}.")
         except exc.IntegrityError:
             db.session.rollback()
-            return UnsuccessfulTeamResponse("Couldn't invite user to team.")
+            cls.logger().error(
+                f"Couldn't invite user {new_invite.email} to team #{new_invite.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't invite user to team.")
         else:
-            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.INVITED.value)
+            return SuccessfulTeamMessageResponse("User invited.", TeamResponseStatus.INVITED.value)
 
     @classmethod
     def accept_invite(cls, invitation_data):
@@ -109,10 +111,11 @@ class TeamService:
                     UsersByTeamsTableEntry.user_id == user.user_id,
                     UsersByTeamsTableEntry.team_id == invitation_data.team_id)
             ).one_or_none():
-                return BadRequestTeamResponse("You are already part of this team.",
-                                              TeamResponseStatus.ALREADY_REGISTERED.value)
+                return BadRequestTeamMessageResponse("You are already part of this team.",
+                                                     TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
-                return WrongCredentialsResponse("You weren't invited to this team.")
+                return BadRequestTeamMessageResponse("You weren't invited to this team.",
+                                                     UserResponseStatus.WRONG_CREDENTIALS.value)
 
         new_user_team = UsersByTeamsTableEntry(
             user_id=user.user_id,
@@ -126,13 +129,13 @@ class TeamService:
             db.session.delete(invite)
             db.session.flush()
             db.session.commit()
-            cls.logger().info(
-                f"User #{user.user_id} joined team #{invite.team_id}.")
+            cls.logger().info(f"User #{user.user_id} joined team #{invite.team_id}.")
         except exc.IntegrityError:
             db.session.rollback()
-            return UnsuccessfulTeamResponse("Couldn't join team.")
+            cls.logger().error(f"User #{user.user_id} failed at joining team #{invite.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't join team.")
         else:
-            return SuccessfulTeamResponse("Team joined!", TeamResponseStatus.ADDED.value)
+            return SuccessfulTeamMessageResponse("Team joined!", TeamResponseStatus.ADDED.value)
 
     @classmethod
     def team_users(cls, user_data):
@@ -191,22 +194,24 @@ class TeamService:
                     db.session.commit()
                     cls.logger().info(
                         f"User #{delete_user.user_id} deleted from team #{delete_user.team_id} by {user.username}.")
-                    return SuccessfulTeamResponse("User removed!", TeamResponseStatus.REMOVED.value)
+                    return SuccessfulTeamMessageResponse("User removed!", TeamResponseStatus.REMOVED.value)
                 except exc.IntegrityError:
                     db.session.rollback()
-                return UnsuccessfulTeamResponse("Couldn't delete user.")
+                    cls.logger().error(
+                        f"User #{user.username} failed to delete user {delete_user.user_id} from team #{delete_user.team_id}.")
+                    return UnsuccessfulTeamMessageResponse("Couldn't delete user.")
             else:
                 cls.logger().info(
                     f"Cannot delete user #{delete_user.user_id} because he's role ({delete_user.role})" +
                     f" is higher than yours.")
-                return ForbiddenTeamResponse("You don't have enough permissions to delete this user.",
-                                             TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+                return ForbiddenTeamMessageResponse("You don't have enough permissions to delete this user.",
+                                                    TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
 
         else:
             cls.logger().info(
                 f"Trying to delete user #{delete_data.delete_id}, who's not part of the team" +
                 f" {delete_data.authentication.team_id}.")
-            return NotFoundTeamResponse("Couldn't find user to delete", UserResponseStatus.USER_NOT_FOUND.value)
+            return NotFoundTeamMessageResponse("Couldn't find user to delete", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
     def change_role(cls, change_role_data):
@@ -216,8 +221,8 @@ class TeamService:
         if change_role_data.new_role == TeamRoles.CREATOR.value:
             cls.logger().info(
                 f"Trying to set user as team #{change_role_data.authentication.team_id} {TeamRoles.CREATOR.value}")
-            return BadRequestTeamResponse("You cannot set someone as team CREATOR.",
-                                          TeamResponseStatus.ROLE_UNAVAILABLE.value)
+            return BadRequestTeamMessageResponse("You cannot set someone as team CREATOR.",
+                                                 TeamResponseStatus.ROLE_UNAVAILABLE.value)
 
         user_team = db.session.query(UsersByTeamsTableEntry).filter(and_(
             UsersByTeamsTableEntry.user_id == change_role_data.user_id,
@@ -227,8 +232,8 @@ class TeamService:
         if not user_team:
             cls.logger().info(
                 f"Trying to modify role from user #{user_team.user_id}, who's not part of team #{user_team.team_id}")
-            return BadRequestTeamResponse("The given user is not part this team.",
-                                          TeamResponseStatus.USER_NOT_MEMBER.value)
+            return BadRequestTeamMessageResponse("The given user is not part this team.",
+                                                 TeamResponseStatus.USER_NOT_MEMBER.value)
 
         user_team.role = change_role_data.new_role
 
@@ -240,10 +245,10 @@ class TeamService:
                 f"by {team_admin.username}.")
         except exc.IntegrityError:
             db.session.rollback()
-            cls.logger().info(f"Failing to modifying role of #{user.user_id} in team #{user.team_id}.")
-            return UnsuccessfulTeamResponse("Couldn't modify user role.")
+            cls.logger().error(f"Failing to modifying role of #{user.user_id} in team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't modify user role.")
         else:
-            return SuccessfulTeamResponse("Role modified", TeamResponseStatus.ROLE_MODIFIED.value)
+            return SuccessfulTeamMessageResponse("Role modified", TeamResponseStatus.ROLE_MODIFIED.value)
 
     @classmethod
     def leave_team(cls, user_data):
@@ -259,11 +264,11 @@ class TeamService:
             db.session.commit()
             cls.logger().info(
                 f"User #{user.user_id} leaved team #{user.team_id}.")
-            return SuccessfulTeamResponse("Team leaved!", TeamResponseStatus.REMOVED.value)
+            return SuccessfulTeamMessageResponse("Team leaved!", TeamResponseStatus.REMOVED.value)
         except exc.IntegrityError:
             db.session.rollback()
-            cls.logger().info(f"User #{user.user_id} failing to leave team #{user.team_id}.")
-            return UnsuccessfulTeamResponse("Couldn't leave team.")
+            cls.logger().error(f"User #{user.user_id} failing to leave team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't leave team.")
 
     @classmethod
     def delete_team(cls, user_data):
@@ -281,8 +286,42 @@ class TeamService:
             db.session.commit()
             cls.logger().info(
                 f"Team #{user.team_id} deleted, and {users} users-team relations released.")
-            return SuccessfulTeamResponse("Team removed!", TeamResponseStatus.REMOVED.value)
+            return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
         except exc.IntegrityError:
             db.session.rollback()
-            cls.logger().info(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
-            return UnsuccessfulTeamResponse("Couldn't remove team.")
+            cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")
+
+    @classmethod
+    def update_information(cls, update_data):
+        user = Authenticator.authenticate_team(update_data.authentication, lambda user: TeamRoles.is_admin(user))
+        team = db.session.query(TeamTableEntry).filter(
+            TeamTableEntry.team_id == update_data.authentication.team_id
+        ).one_or_none()
+
+        team.team_name = \
+            update_data.updated_team["team_name"] if "team_name" in update_data.updated_team else team.team_name
+        team.location = \
+            update_data.updated_team["location"] if "location" in update_data.updated_team else team.location
+        team.description = \
+            update_data.updated_team["description"] if "description" in update_data.updated_team else team.description
+        team.welcome_message = \
+            update_data.updated_team["welcome_message"] if "welcome_message" in update_data.updated_team else team.welcome_message
+
+        try:
+            db.session.commit()
+            cls.logger().info(
+                f"Team {team.team_id} information updated by user {user.username}, who's team {user.role}-")
+            return SuccessfulTeamResponse(team, TeamResponseStatus.UPDATED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(TeamTableEntry).filter(
+                    TeamTableEntry.team_name == update_data.updated_team.get("team_name")
+            ).one_or_none():
+                cls.logger().info(f"Trying to update team {update_data.authentication.team_id}'s name with " +
+                                  f"{update_data.updated_team.get('team_name')}, that currently exists.")
+                return BadRequestTeamMessageResponse(f"Name {update_data.updated_team.get('team_name')}" +
+                                                     " is already in use!", TeamResponseStatus.ALREADY_REGISTERED.value)
+            else:
+                cls.logger().error(f"Couldn't update team {team_id} information.")
+                return UnsuccessfulTeamMessageResponse("Couldn't update team information!")

@@ -71,3 +71,11 @@ def delete_team(team_id):
     req = ClientRequest(request)
     response = TeamService.delete_team(req.team_authentication(team_id))
     return jsonify(response.json()), response.status_code()
+
+
+@app.route('/teams/<team_id>', methods=['PATCH'])
+def update_team_information(team_id):
+    logger.info(f"Attempting to update team {team_id} information.")
+    req = ClientRequest(request)
+    team_updated = TeamService.update_information(req.team_update(team_id))
+    return jsonify(team_updated.json()), team_updated.status_code()

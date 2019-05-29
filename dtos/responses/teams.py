@@ -4,11 +4,11 @@ from utils.serializer import Jsonizable
 from utils.responses import Response
 
 
-class SuccessfulTeamCreatedResponse(SuccessfulClientResponse):
+class SuccessfulTeamResponse(SuccessfulClientResponse):
 
-    def __init__(self, team):
+    def __init__(self, team, status):
         client = ActiveTeamOutput(team)
-        super(SuccessfulTeamCreatedResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
+        super(SuccessfulTeamResponse, self).__init__(client, status)
 
     def json(self):
         return {
@@ -45,7 +45,7 @@ class SuccessfulTeamsListResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
-class SuccessfulTeamResponse(Jsonizable, Response):
+class SuccessfulTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -61,7 +61,7 @@ class SuccessfulTeamResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
-class BadRequestTeamResponse(Jsonizable, Response):
+class BadRequestTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -77,7 +77,7 @@ class BadRequestTeamResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
-class ForbiddenTeamResponse(Jsonizable, Response):
+class ForbiddenTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -93,7 +93,7 @@ class ForbiddenTeamResponse(Jsonizable, Response):
         return StatusCode.FORBIDDEN.value
 
 
-class UnsuccessfulTeamResponse(Jsonizable, Response):
+class UnsuccessfulTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -108,7 +108,7 @@ class UnsuccessfulTeamResponse(Jsonizable, Response):
         return StatusCode.SERVER_ERROR.value
 
 
-class NotFoundTeamResponse(Jsonizable, Response):
+class NotFoundTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
