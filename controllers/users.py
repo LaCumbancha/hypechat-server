@@ -69,5 +69,4 @@ def set_offline():
 def register_token_headers(response, headers):
     response.headers["X-Auth-Username"] = headers.get("username")
     response.headers["X-Auth-Token"] = headers.get("auth_token")
-    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Username'
-    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'
+    response.headers['Access-Control-Expose-Headers'] = ['X-Auth-Username', 'X-Auth-Token']
