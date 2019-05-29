@@ -63,3 +63,11 @@ def leave_team(team_id):
     req = ClientRequest(request)
     response = TeamService.leave_team(req.team_authentication(team_id))
     return jsonify(response.json()), response.status_code()
+
+
+@app.route('/teams/<team_id>', methods=['DELETE'])
+def delete_team(team_id):
+    logger.info(f"Attempting to delete team {team_id}.")
+    req = ClientRequest(request)
+    response = TeamService.delete_team(req.team_authentication(team_id))
+    return jsonify(response.json()), response.status_code()

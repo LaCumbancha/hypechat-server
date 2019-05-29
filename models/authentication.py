@@ -92,7 +92,7 @@ class Authenticator:
             if not db.session.query(TeamTableEntry).filter(
                     TeamTableEntry.team_id == authentication.team_id
             ).one_or_none():
-                logger.info(f"Team #{authentication_data.team_id} not found.")
+                logger.info(f"Team #{authentication.team_id} not found.")
                 raise TeamNotFoundError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
             else:
                 logger.info(

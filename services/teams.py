@@ -95,7 +95,7 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't invite user to team.")
         else:
-            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.USER_INVITED.value)
+            return SuccessfulTeamResponse("User invited.", TeamResponseStatus.INVITED.value)
 
     @classmethod
     def accept_invite(cls, invitation_data):
@@ -132,7 +132,7 @@ class TeamService:
             db.session.rollback()
             return UnsuccessfulTeamResponse("Couldn't join team.")
         else:
-            return SuccessfulTeamResponse("Team joined!", TeamResponseStatus.USER_ADDED.value)
+            return SuccessfulTeamResponse("Team joined!", TeamResponseStatus.ADDED.value)
 
     @classmethod
     def team_users(cls, user_data):
@@ -191,7 +191,7 @@ class TeamService:
                     db.session.commit()
                     cls.logger().info(
                         f"User #{delete_user.user_id} deleted from team #{delete_user.team_id} by {user.username}.")
-                    return SuccessfulTeamResponse("User removed!", TeamResponseStatus.USER_REMOVED.value)
+                    return SuccessfulTeamResponse("User removed!", TeamResponseStatus.REMOVED.value)
                 except exc.IntegrityError:
                     db.session.rollback()
                 return UnsuccessfulTeamResponse("Couldn't delete user.")
@@ -259,8 +259,30 @@ class TeamService:
             db.session.commit()
             cls.logger().info(
                 f"User #{user.user_id} leaved team #{user.team_id}.")
-            return SuccessfulTeamResponse("Team leaved!", TeamResponseStatus.USER_REMOVED.value)
+            return SuccessfulTeamResponse("Team leaved!", TeamResponseStatus.REMOVED.value)
         except exc.IntegrityError:
             db.session.rollback()
             cls.logger().info(f"User #{user.user_id} failing to leave team #{user.team_id}.")
             return UnsuccessfulTeamResponse("Couldn't leave team.")
+
+    @classmethod
+    def delete_team(cls, user_data):
+        user = Authenticator.authenticate_team(user_data, lambda user: TeamRoles.is_admin(user))
+
+        team_users = db.session.query(UsersByTeamsTableEntry)\
+            .filter(UsersByTeamsTableEntry.team_id == user.team_id)
+
+        team = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == user.team_id).one_or_none()
+
+        try:
+            users = team_users.delete()
+            db.session.flush()
+            db.session.delete(team)
+            db.session.commit()
+            cls.logger().info(
+                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
+            return SuccessfulTeamResponse("Team removed!", TeamResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().info(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
+            return UnsuccessfulTeamResponse("Couldn't remove team.")
