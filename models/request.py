@@ -46,20 +46,17 @@ class ClientRequest:
 
     def search_users_data(self, searched_username):
         return SearchUsersDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             searched_username=searched_username
         )
 
     def authentication_data(self):
         return AuthenticationDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token")
         )
 
     def inbox_data(self):
         return InboxDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             chat_id=self.json_body().get("chat_id"),
             text_content=self.json_body().get("text_content"),
@@ -67,7 +64,6 @@ class ClientRequest:
 
     def chat_data(self, chat_id):
         return ChatDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             chat_id=chat_id,
             offset=self.query_params().get("offset") or 0
@@ -75,7 +71,6 @@ class ClientRequest:
 
     def new_team_data(self):
         return NewTeamDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             team_name=self.json_body().get("team_name"),
             location=self.json_body().get("location"),
@@ -85,7 +80,6 @@ class ClientRequest:
 
     def invite_data(self, team_id):
         return TeamInviteDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id,
             email=self.json_body().get("email")
@@ -93,7 +87,6 @@ class ClientRequest:
 
     def accept_invite(self, team_id):
         return TeamInviteAcceptDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id,
             invite_token=self.json_body().get("invite_token")
@@ -102,7 +95,6 @@ class ClientRequest:
     def change_role(self, team_id):
         try:
             return ChangeRoleDTO(
-                username=self.headers().get("X-Auth-Username"),
                 token=self.headers().get("X-Auth-Token"),
                 team_id=team_id,
                 user_id=self.json_body().get("user_id"),
@@ -114,14 +106,12 @@ class ClientRequest:
 
     def team_authentication(self, team_id):
         return TeamAuthenticationDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id
         )
 
     def delete_user_data(self, team_id, delete_id):
         return DeleteUserDTO(
-            username=self.headers().get("X-Auth-Username"),
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id,
             delete_id=delete_id

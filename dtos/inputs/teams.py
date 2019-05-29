@@ -5,16 +5,15 @@ from dtos.inputs.users import AuthenticationDTO
 
 class TeamAuthenticationDTO:
 
-    def __init__(self, username, token, team_id):
-        self.username = username
+    def __init__(self, token, team_id):
         self.token = token
         self.team_id = team_id
 
 
 class NewTeamDTO:
 
-    def __init__(self, username, token, team_name, location, description, welcome_message):
-        self.authentication = AuthenticationDTO(username, token)
+    def __init__(self, token, team_name, location, description, welcome_message):
+        self.token = token
         self.team_name = team_name
         self.location = location
         self.description = description
@@ -23,23 +22,23 @@ class NewTeamDTO:
 
 class TeamInviteDTO:
 
-    def __init__(self, username, token, team_id, email):
-        self.authentication = TeamAuthenticationDTO(username, token, team_id)
+    def __init__(self, token, team_id, email):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
         self.email = email
 
 
 class TeamInviteAcceptDTO:
 
-    def __init__(self, username, token, team_id, invite_token):
-        self.authentication = AuthenticationDTO(username, token)
+    def __init__(self, token, team_id, invite_token):
+        self.token = token
         self.team_id = team_id
         self.invite_token = invite_token
 
 
 class ChangeRoleDTO:
 
-    def __init__(self, username, token, team_id, user_id, new_role):
-        self.authentication = TeamAuthenticationDTO(username, token, team_id)
+    def __init__(self, token, team_id, user_id, new_role):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
         self.user_id = user_id
         try:
             self.new_role = TeamRoles[new_role].value
@@ -49,6 +48,6 @@ class ChangeRoleDTO:
 
 class DeleteUserDTO:
 
-    def __init__(self, username, token, team_id, delete_id):
-        self.authentication = TeamAuthenticationDTO(username, token, team_id)
+    def __init__(self, token, team_id, delete_id):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
         self.delete_id = delete_id

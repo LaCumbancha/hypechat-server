@@ -3,6 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 import logging
 
+
 class Config(object):
     TESTING = False
     CSRF_ENABLED = True

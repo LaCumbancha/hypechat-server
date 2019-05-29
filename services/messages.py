@@ -106,7 +106,7 @@ class MessageService:
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):
-        user = Authenticator.authenticate(chat_data.authentication)
+        user = Authenticator.authenticate(chat_data)
 
         chat = db.session.query(ChatTableEntry).filter(and_(
             ChatTableEntry.user_id == user.user_id, ChatTableEntry.chat_id == chat_data.chat_id)
@@ -149,7 +149,7 @@ class MessageService:
 
     @classmethod
     def send_direct_message(cls, inbox_data):
-        user = Authenticator.authenticate(inbox_data.authentication)
+        user = Authenticator.authenticate(inbox_data)
 
         if user.user_id == inbox_data.chat_id:
             raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)

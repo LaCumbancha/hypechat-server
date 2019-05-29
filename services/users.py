@@ -30,7 +30,7 @@ class UserService:
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
-                token=Authenticator.generate()
+                token=Authenticator.generate(user_data.username, user_data.password)
             )
             db.session.add(new_user)
             db.session.flush()
@@ -64,7 +64,7 @@ class UserService:
 
         if user:
             if hashing.verify(user_data.password, user.password):
-                user.auth_token = Authenticator.generate()
+                user.auth_token = Authenticator.generate(user.username, user_data.password)
                 user.online = True
                 db.session.commit()
                 cls.logger().info(f"Logging in user {user.user_id}")
@@ -106,7 +106,7 @@ class UserService:
 
     @classmethod
     def search_users(cls, user_data):
-        user = Authenticator.authenticate(user_data.authentication)
+        user = Authenticator.authenticate(user_data)
 
         found_users = db.session.query(UserTableEntry).filter(
             UserTableEntry.username.like(f"%{user_data.searched_username}%")).all()

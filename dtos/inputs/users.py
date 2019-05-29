@@ -1,7 +1,6 @@
 class AuthenticationDTO:
 
-    def __init__(self, username, token):
-        self.username = username
+    def __init__(self, token):
         self.token = token
 
 
@@ -25,6 +24,6 @@ class LoginDTO:
 
 class SearchUsersDTO:
 
-    def __init__(self, username, token, searched_username):
-        self.authentication = AuthenticationDTO(username, token)
+    def __init__(self, token, searched_username):
+        self.token = token
         self.searched_username = searched_username

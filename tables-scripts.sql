@@ -19,7 +19,7 @@ CREATE TABLE users(
 	first_name VARCHAR(256) NULL,
 	last_name VARCHAR(256) NULL,
 	profile_pic VARCHAR(256) NULL,
-	auth_token VARCHAR(40) UNIQUE,
+	auth_token VARCHAR(900) UNIQUE,
 	online BOOLEAN NOT NULL DEFAULT TRUE,
 	PRIMARY KEY (id),
 	FOREIGN KEY (id) REFERENCES clients (id)

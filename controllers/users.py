@@ -16,7 +16,7 @@ def register_user():
 
     response = jsonify(new_user.json())
     if new_user.headers():
-        register_token_headers(response, new_user.headers())
+        register_headers(response, new_user.headers())
 
     return response, new_user.status_code()
 
@@ -37,7 +37,7 @@ def login():
 
     response = jsonify(login_user.json())
     if login_user.headers():
-        register_token_headers(response, login_user.headers())
+        register_headers(response, login_user.headers())
 
     return response, login_user.status_code()
 
@@ -66,7 +66,6 @@ def set_offline():
     return jsonify(offline_user.json()), offline_user.status_code()
 
 
-def register_token_headers(response, headers):
-    response.headers["X-Auth-Username"] = headers.get("username")
-    response.headers["X-Auth-Token"] = headers.get("auth_token")
-    response.headers['Access-Control-Expose-Headers'] = ['X-Auth-Username', 'X-Auth-Token']
+def register_headers(response, header):
+    response.headers["X-Auth-Token"] = header.get("auth_token")
+    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'

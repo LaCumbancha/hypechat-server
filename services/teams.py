@@ -18,7 +18,7 @@ class TeamService:
 
     @classmethod
     def create_team(cls, new_team_data):
-        user = Authenticator.authenticate(new_team_data.authentication)
+        user = Authenticator.authenticate(new_team_data)
         new_team = TeamTableEntry(
             team_name=new_team_data.team_name,
             location=new_team_data.location,
@@ -99,7 +99,7 @@ class TeamService:
 
     @classmethod
     def accept_invite(cls, invitation_data):
-        user = Authenticator.authenticate(invitation_data.authentication)
+        user = Authenticator.authenticate(invitation_data)
         invite = db.session.query(TeamsInvitesTableEntry).filter(and_(
             TeamsInvitesTableEntry.team_id == invitation_data.team_id, TeamsInvitesTableEntry.email == user.email)) \
             .one_or_none()
