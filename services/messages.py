@@ -122,11 +122,21 @@ class MessageService:
                 and_(MessageTableEntry.sender_id == chat_data.chat_id, MessageTableEntry.receiver_id == user.user_id)
             )).offset(chat_data.offset).limit(CHAT_MESSAGE_PAGE).all()
 
+            unseen_messages = chat.unseen_offset
+            try:
+                chat.unseen_offset = 0
+                db.session.commit()
+                cls.logger().error(
+                    f"{unseen_messages} messages set as seen for user {user.user_id} in chat {chat.chat_id}.")
+            except exc.IntegrityError:
+                db.session().rollback()
+                cls.logger().error(f"Couldn't set seen messages for user {user.user_id} in chat {chat.chat_id}.")
+
             cls.logger().info(
                 f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} " +
                 f"from user #{user.user_id} ({user.username}).")
             return MessageListResponse(
-                cls._generate_messages_list(messages, chat.unseen_offset, user.user_id))
+                cls._generate_messages_list(messages, unseen_messages, user.user_id))
 
     @classmethod
     def _generate_messages_list(cls, messages, unseen_offset, user_id):
