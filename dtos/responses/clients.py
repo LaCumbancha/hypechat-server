@@ -1,9 +1,10 @@
 from models.constants import *
 from utils.serializer import Jsonizable
+from utils.responses import Response
 from abc import abstractmethod
 
 
-class SuccessfulClientResponse(Jsonizable):
+class SuccessfulClientResponse(Jsonizable, Response):
 
     def __init__(self, client, status):
         self.client = client
@@ -21,8 +22,9 @@ class SuccessfulClientResponse(Jsonizable):
 
 class SuccessfulUserResponse(SuccessfulClientResponse):
 
-    def __init__(self, user):
-        client = ActiveUserResponse(user)
+    def __init__(self, user, headers=None):
+        self._headers = headers
+        client = ActiveUserOutput(user)
         super(SuccessfulUserResponse, self).__init__(client, self._status(client))
 
     def json(self):
@@ -38,8 +40,26 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
         else:
             return UserResponseStatus.OFFLINE.value
 
+    def headers(self):
+        return self._headers
 
-class SuccessfulUsersListResponse(Jsonizable):
+
+class ActiveUserOutput(Jsonizable):
+
+    def __init__(self, user):
+        self.id = user.user_id
+        self.username = user.username
+        self.email = user.email
+        self.first_name = user.first_name
+        self.last_name = user.last_name
+        self.profile_pic = user.profile_pic
+        self.online = user.online
+
+    def json(self):
+        return vars(self)
+
+
+class SuccessfulUsersListResponse(Jsonizable, Response):
 
     def __init__(self, users_list):
         self.users_list = users_list
@@ -54,7 +74,7 @@ class SuccessfulUsersListResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class UnsuccessfulClientResponse(Jsonizable):
+class UnsuccessfulClientResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -69,30 +89,15 @@ class UnsuccessfulClientResponse(Jsonizable):
         return StatusCode.SERVER_ERROR.value
 
 
-class ActiveUserResponse(Jsonizable):
+class BadRequestUserMessageResponse(Jsonizable, Response):
 
-    def __init__(self, user):
-        self.id = user.user_id
-        self.username = user.username
-        self.email = user.email
-        self.first_name = user.first_name
-        self.last_name = user.last_name
-        self.profile_pic = user.profile_pic
-        self.token = user.auth_token
-        self.online = user.online
-
-    def json(self):
-        return vars(self)
-
-
-class ClientAlreadyCreatedResponse(Jsonizable):
-
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": UserResponseStatus.ALREADY_REGISTERED.value,
+            "status": self.status,
             "message": self.message
         }
 
@@ -100,29 +105,15 @@ class ClientAlreadyCreatedResponse(Jsonizable):
         return StatusCode.BAD_REQUEST.value
 
 
-class WrongCredentialsResponse(Jsonizable):
+class SuccessfulUserMessageResponse(Jsonizable, Response):
 
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": UserResponseStatus.WRONG_CREDENTIALS.value,
-            "message": self.message
-        }
-
-    def status_code(self):
-        return StatusCode.OK.value
-
-
-class UserLoggedOutResponse(Jsonizable):
-
-    def __init__(self, message):
-        self.message = message
-
-    def json(self):
-        return {
-            "status": UserResponseStatus.LOGGED_OUT.value,
+            "status": self.status,
             "message": self.message
         }
 

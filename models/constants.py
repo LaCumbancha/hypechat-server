@@ -31,15 +31,40 @@ class MessageResponseStatus(Enum):
 
 
 class TeamResponseStatus(Enum):
+    LIST = "LIST"
+    ERROR = "ERROR"
     CREATED = "CREATED"
-    USER_ADDED = "USER_ADDED"
+    ADDED = "ADDED"
+    INVITED = "INVITED"
+    REMOVED = "REMOVED"
+    UPDATED = "UPDATED"
     NOT_ENOUGH_PERMISSIONS = "NOT_ENOUGH_PERMISSIONS"
     ALREADY_REGISTERED = "ALREADY_REGISTERED"
+    ALREADY_INVITED = "ALREADY_INVITED"
     TEAM_NOT_FOUND = "TEAM_NOT_FOUND"
     ROLE_UNAVAILABLE = "ROLE_UNAVAILABLE"
+    ROLE_MODIFIED = "ROLE_MODIFIED"
+    USER_NOT_MEMBER = "USER_NOT_MEMBER"
 
 
 class TeamRoles(Enum):
     CREATOR = "CREATOR"
     ADMIN = "ADMIN"
     MEMBER = "MEMBER"
+
+    @classmethod
+    def is_admin(cls, user):
+        return user.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
+
+    @classmethod
+    def is_creator(cls, user):
+        return user.role == TeamRoles.CREATOR.value
+
+    @classmethod
+    def is_higher_role(cls, user1, user2):
+        if user1.role == TeamRoles.CREATOR.value:
+            return True
+        elif user1.role == TeamRoles.ADMIN.value and user2.role == TeamRoles.MEMBER.value:
+            return True
+        else:
+            return False

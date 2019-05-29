@@ -6,7 +6,7 @@ RUN apk update
 RUN apk --no-cache add python3-dev
 RUN pip3 install --upgrade pip
 RUN apk add --no-cache postgresql postgresql-contrib postgresql-dev gcc musl-dev
-RUN pip install psycopg2
+RUN pip3 install psycopg2
 
 # Creating Docker's working directory
 WORKDIR /app

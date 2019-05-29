@@ -13,7 +13,12 @@ def register_user():
     logger.info("Attempting to register new user")
     req = ClientRequest(request)
     new_user = UserService.create_user(req.new_user_data())
-    return jsonify(new_user.json()), new_user.status_code()
+
+    response = jsonify(new_user.json())
+    if new_user.headers():
+        register_headers(response, new_user.headers())
+
+    return response, new_user.status_code()
 
 
 @app.route('/users/<searched_username>', methods=['GET'])
@@ -29,7 +34,12 @@ def login():
     logger.info("Attempting to login")
     req = ClientRequest(request)
     login_user = UserService.login_user(req.login_data())
-    return jsonify(login_user.json()), login_user.status_code()
+
+    response = jsonify(login_user.json())
+    if login_user.headers():
+        register_headers(response, login_user.headers())
+
+    return response, login_user.status_code()
 
 
 @app.route('/users/logout', methods=['POST'])
@@ -40,7 +50,7 @@ def logout():
     return jsonify(logout_user.json()), logout_user.status_code()
 
 
-@app.route('/users/online', methods=['POST'])
+@app.route('/users/online', methods=['PUT'])
 def set_online():
     logger.info("Attempting to set user online")
     req = ClientRequest(request)
@@ -48,9 +58,23 @@ def set_online():
     return jsonify(online_user.json()), online_user.status_code()
 
 
-@app.route('/users/offline', methods=['POST'])
+@app.route('/users/offline', methods=['PUT'])
 def set_offline():
     logger.info("Attempting to set user offline")
     req = ClientRequest(request)
     offline_user = UserService.set_user_offline(req.authentication_data())
     return jsonify(offline_user.json()), offline_user.status_code()
+
+
+def register_headers(response, header):
+    response.headers["X-Auth-Token"] = header.get("auth_token")
+    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'
+
+
+@app.route('/users/teams', methods=['GET'])
+def get_user_teams():
+    logger.info(f"Attempting to get teams for user.")
+    req = ClientRequest(request)
+    teams = UserService.teams_for_user(req.authentication_data())
+    return jsonify(teams.json()), teams.status_code()
+

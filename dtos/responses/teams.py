@@ -1,13 +1,14 @@
 from dtos.responses.clients import SuccessfulClientResponse
 from models.constants import *
 from utils.serializer import Jsonizable
+from utils.responses import Response
 
 
 class SuccessfulTeamResponse(SuccessfulClientResponse):
 
-    def __init__(self, team):
-        client = ActiveTeamResponse(team)
-        super(SuccessfulTeamResponse, self).__init__(client, TeamResponseStatus.CREATED.value)
+    def __init__(self, team, status):
+        client = ActiveTeamOutput(team)
+        super(SuccessfulTeamResponse, self).__init__(client, status)
 
     def json(self):
         return {
@@ -16,7 +17,7 @@ class SuccessfulTeamResponse(SuccessfulClientResponse):
         }
 
 
-class ActiveTeamResponse(Jsonizable):
+class ActiveTeamOutput(Jsonizable):
 
     def __init__(self, team):
         self.team_id = team.team_id
@@ -29,14 +30,30 @@ class ActiveTeamResponse(Jsonizable):
         return vars(self)
 
 
-class SuccessfulUserAddedResponse(Jsonizable):
+class SuccessfulTeamsListResponse(Jsonizable, Response):
 
-    def __init__(self, message):
+    def __init__(self, teams_list):
+        self.teams_list = teams_list
+
+    def json(self):
+        return {
+            "status": TeamResponseStatus.LIST.value,
+            "teams": self.teams_list
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
+class SuccessfulTeamMessageResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": TeamResponseStatus.USER_ADDED.value,
+            "status": self.status,
             "message": self.message
         }
 
@@ -44,14 +61,15 @@ class SuccessfulUserAddedResponse(Jsonizable):
         return StatusCode.OK.value
 
 
-class TeamAlreadyCreatedResponse(Jsonizable):
+class BadRequestTeamMessageResponse(Jsonizable, Response):
 
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": TeamResponseStatus.ALREADY_REGISTERED.value,
+            "status": self.status,
             "message": self.message
         }
 
@@ -59,31 +77,48 @@ class TeamAlreadyCreatedResponse(Jsonizable):
         return StatusCode.BAD_REQUEST.value
 
 
-class RelationAlreadyCreatedResponse(Jsonizable):
+class ForbiddenTeamMessageResponse(Jsonizable, Response):
 
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": TeamResponseStatus.ALREADY_REGISTERED.value,
+            "status": self.status,
             "message": self.message
         }
 
     def status_code(self):
-        return StatusCode.BAD_REQUEST.value
+        return StatusCode.FORBIDDEN.value
 
 
-class UnsuccessfulTeamResponse(Jsonizable):
+class UnsuccessfulTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
 
     def json(self):
         return {
-            "status": UserResponseStatus.ERROR.value,
+            "status": TeamResponseStatus.ERROR.value,
             "message": self.message
         }
 
     def status_code(self):
         return StatusCode.SERVER_ERROR.value
+
+
+class NotFoundTeamMessageResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
+        self.message = message
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.NOT_FOUND.value

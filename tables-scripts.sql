@@ -19,7 +19,7 @@ CREATE TABLE users(
 	first_name VARCHAR(256) NULL,
 	last_name VARCHAR(256) NULL,
 	profile_pic VARCHAR(256) NULL,
-	auth_token VARCHAR(40) UNIQUE,
+	auth_token VARCHAR(900) UNIQUE,
 	online BOOLEAN NOT NULL DEFAULT TRUE,
 	PRIMARY KEY (id),
 	FOREIGN KEY (id) REFERENCES clients (id)
@@ -42,6 +42,15 @@ CREATE TABLE users_teams(
 	role TITLE NOT NULL,
 	PRIMARY KEY (user_id, team_id),
 	FOREIGN KEY (user_id) REFERENCES users (id),
+	FOREIGN KEY (team_id) REFERENCES teams (id)
+);
+
+DROP TABLE IF EXISTS teams_invites CASCADE;
+CREATE TABLE teams_invites(
+	team_id INTEGER NOT NULL,
+	email VARCHAR(256) NOT NULL,
+	invite_token VARCHAR(8) NULL UNIQUE,
+	PRIMARY KEY (team_id, email),
 	FOREIGN KEY (team_id) REFERENCES teams (id)
 );
 
