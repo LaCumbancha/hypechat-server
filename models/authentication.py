@@ -12,10 +12,6 @@ from app import db
 import logging
 
 import jwt
-from jwt.contrib.algorithms.pycrypto import RSAAlgorithm
-
-jwt.unregister_algorithm('RS256')
-jwt.register_algorithm('RS256', RSAAlgorithm(RSAAlgorithm.SHA256))
 
 
 class Authenticator:
