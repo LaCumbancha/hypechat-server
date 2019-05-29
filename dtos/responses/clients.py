@@ -44,6 +44,21 @@ class SuccessfulUserResponse(SuccessfulClientResponse):
         return self._headers
 
 
+class ActiveUserOutput(Jsonizable):
+
+    def __init__(self, user):
+        self.id = user.user_id
+        self.username = user.username
+        self.email = user.email
+        self.first_name = user.first_name
+        self.last_name = user.last_name
+        self.profile_pic = user.profile_pic
+        self.online = user.online
+
+    def json(self):
+        return vars(self)
+
+
 class SuccessfulUsersListResponse(Jsonizable, Response):
 
     def __init__(self, users_list):
@@ -74,29 +89,15 @@ class UnsuccessfulClientResponse(Jsonizable, Response):
         return StatusCode.SERVER_ERROR.value
 
 
-class ActiveUserOutput(Jsonizable):
+class BadRequestTeamResponse(Jsonizable, Response):
 
-    def __init__(self, user):
-        self.id = user.user_id
-        self.username = user.username
-        self.email = user.email
-        self.first_name = user.first_name
-        self.last_name = user.last_name
-        self.profile_pic = user.profile_pic
-        self.online = user.online
-
-    def json(self):
-        return vars(self)
-
-
-class ClientAlreadyCreatedResponse(Jsonizable, Response):
-
-    def __init__(self, message):
+    def __init__(self, message, status):
+        self.status = status
         self.message = message
 
     def json(self):
         return {
-            "status": UserResponseStatus.ALREADY_REGISTERED.value,
+            "status": self.status,
             "message": self.message
         }
 

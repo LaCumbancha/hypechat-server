@@ -42,12 +42,14 @@ class UserService:
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == user_data.email).one_or_none():
                 cls.logger().info(
                     f"Failing to create user {new_client.client_id}. Email already in use for other user.")
-                return ClientAlreadyCreatedResponse("Email already in use for other user.")
+                return BadRequestTeamResponse("Email already in use for other user.",
+                                              UserResponseStatus.ALREADY_REGISTERED.value)
             elif db.session.query(UserTableEntry).filter(
                     UserTableEntry.username == user_data.username).one_or_none():
                 cls.logger().info(
                     f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
-                return ClientAlreadyCreatedResponse("Username already in use for other user.")
+                return BadRequestTeamResponse("Username already in use for other user.",
+                                              UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
