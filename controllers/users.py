@@ -73,7 +73,15 @@ def get_user_teams():
 
 @app.route('/users', methods=['PATCH'])
 def update_user():
-    logger.info("Attempting to update user information")
+    logger.info("Attempting to update user information.")
     req = ClientRequest(request)
     updated_user = UserService.update_user(req.user_update())
     return jsonify(updated_user.json()), updated_user.status_code()
+
+
+@app.route('/users/profile', methods=['GET'])
+def user_profile():
+    logger.info("Attempting to get user profile.")
+    req = ClientRequest(request)
+    user = UserService.user_profile(req.authentication_data())
+    return jsonify(user.json()), user.status_code()

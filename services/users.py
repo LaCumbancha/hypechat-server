@@ -115,6 +115,7 @@ class UserService:
         teams = db.session.query(
             TeamTableEntry.team_id,
             TeamTableEntry.team_name,
+            TeamTableEntry.picture,
             TeamTableEntry.location,
             TeamTableEntry.description,
             TeamTableEntry.welcome_message,
@@ -137,6 +138,7 @@ class UserService:
             teams += [{
                 "id": team.team_id,
                 "team_name": team.team_name,
+                "picture": team.picture,
                 "location": team.location,
                 "description": team.description,
                 "welcome_message": team.welcome_message,
@@ -184,3 +186,59 @@ class UserService:
             else:
                 cls.logger().error(f"Couldn't update user {user.user_id} information.")
                 return UnsuccessfulUserMessageResponse("Couldn't update user information!")
+
+    @classmethod
+    def user_profile(cls, user_data):
+        user = Authenticator.authenticate(user_data)
+
+        full_user = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            TeamTableEntry.team_id,
+            TeamTableEntry.team_name,
+            TeamTableEntry.picture,
+            TeamTableEntry.location,
+            TeamTableEntry.description,
+            TeamTableEntry.welcome_message,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+        ).join(
+            TeamTableEntry,
+            UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+        ).filter(
+            UserTableEntry.user_id == user.user_id
+        ).all()
+
+        cls.logger().info(f"Retrieved user {user.username} profile.")
+        return SuccessfulFullUserResponse(cls._generate_full_user(full_user))
+
+    @classmethod
+    def _generate_full_user(cls, full_user):
+        teams = []
+
+        for team in full_user:
+            teams += [{
+                "id": team.team_id,
+                "name": team.team_name,
+                "location": team.location,
+                "picture": team.picture,
+                "description": team.description,
+                "welcome_message": team.welcome_message,
+                "role": team.role
+            }]
+
+        return {
+            "id": full_user[0].user_id,
+            "username": full_user[0].username,
+            "email": full_user[0].email,
+            "first_name": full_user[0].first_name,
+            "last_name": full_user[0].last_name,
+            "profile_pic": full_user[0].profile_pic,
+            "teams": teams
+        }
