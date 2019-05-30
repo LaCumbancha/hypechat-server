@@ -66,3 +66,10 @@ class SearchUsersDTO:
     def __init__(self, token, team_id, searched_username):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.searched_username = searched_username
+
+
+class SearchUserByIdDTO:
+
+    def __init__(self, token, team_id, user_id):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.user_id = user_id

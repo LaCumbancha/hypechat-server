@@ -57,6 +57,14 @@ def team_users(team_id):
     return jsonify(users.json()), users.status_code()
 
 
+@app.route('/teams/<team_id>/users/<user_id>/profile', methods=['GET'])
+def team_user_profile(team_id, user_id):
+    logger.info(f"Attempting to get user {user_id} from team {team_id} profile.")
+    req = ClientRequest(request)
+    users = TeamService.team_user_by_id(req.search_user_by_id(team_id, user_id))
+    return jsonify(users.json()), users.status_code()
+
+
 @app.route('/teams/<team_id>/users/<delete_id>', methods=['DELETE'])
 def delete_users(team_id, delete_id):
     logger.info(f"Attempting to delete user {delete_id} from team {team_id}.")

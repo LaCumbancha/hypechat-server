@@ -105,6 +105,22 @@ class BadRequestUserMessageResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
+class NotFoundUserMessageResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.status = status
+        self.message = message
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.NOT_FOUND.value
+
+
 class SuccessfulUserMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):

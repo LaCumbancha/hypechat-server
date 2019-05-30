@@ -145,6 +145,7 @@ class TeamService:
         team_users = db.session.query(
             UserTableEntry.user_id,
             UserTableEntry.username,
+            UserTableEntry.email,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
             UserTableEntry.profile_pic,
@@ -169,6 +170,7 @@ class TeamService:
             users += [{
                 "id": user.user_id,
                 "username": user.username,
+                "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "profile_pic": user.profile_pic,
@@ -177,6 +179,37 @@ class TeamService:
             }]
 
         return users
+
+    @classmethod
+    def team_user_by_id(cls, user_data):
+        user = Authenticator.authenticate_team(user_data.authentication)
+
+        user_found = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
+                UserTableEntry.user_id == user_data.user_id,
+                UsersByTeamsTableEntry.team_id == user.team_id
+            )
+        ).one_or_none()
+
+        if not user_found:
+            cls.logger().info(
+                f"User {user.username} couldn't find user #{user_data.user_id} profile (in team {user.team_id}.")
+            return NotFoundUserMessageResponse(
+                f"User {user_data.user_id} not found!", UserResponseStatus.USER_NOT_FOUND.value)
+
+        cls.logger().info(f"User {user.username} got user #{user_data.user_id} profile.")
+        return SuccessfulUserResponse(user_found)
 
     @classmethod
     def delete_users(cls, delete_data):

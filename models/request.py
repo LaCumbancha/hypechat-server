@@ -58,6 +58,13 @@ class ClientRequest:
             searched_username=searched_username,
         )
 
+    def search_user_by_id(self, team_id, user_id):
+        return SearchUserByIdDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            user_id=user_id
+        )
+
     def authentication_data(self):
         return AuthenticationDTO(
             token=self.headers().get("X-Auth-Token")
