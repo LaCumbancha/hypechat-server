@@ -44,6 +44,12 @@ class ClientRequest:
             password=self.json_body().get("password")
         )
 
+    def user_update(self):
+        return UserUpdateDTO(
+            token=self.headers().get("X-Auth-Token"),
+            updated_user=self.json_body()
+        )
+
     def search_users_data(self, team_id, searched_username):
         return SearchUsersDTO(
             token=self.headers().get("X-Auth-Token"),

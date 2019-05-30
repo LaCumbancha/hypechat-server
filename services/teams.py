@@ -326,7 +326,7 @@ class TeamService:
                 return BadRequestTeamMessageResponse(f"Name {update_data.updated_team.get('team_name')}" +
                                                      " is already in use!", TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
-                cls.logger().error(f"Couldn't update team {team_id} information.")
+                cls.logger().error(f"Couldn't update team {update_data.authentication.team_id} information.")
                 return UnsuccessfulTeamMessageResponse("Couldn't update team information!")
 
     @classmethod

@@ -144,3 +144,43 @@ class UserService:
             }]
 
         return teams
+
+    @classmethod
+    def update_user(cls, update_data):
+        user = Authenticator.authenticate(update_data)
+
+        user.username = \
+            update_data.updated_user["username"] if "username" in update_data.updated_user else user.username
+        user.email = \
+            update_data.updated_user["email"] if "email" in update_data.updated_user else user.email
+        user.password = \
+            hashing.hash(update_data.updated_user["password"]) if "password" in update_data.updated_user else user.password
+        user.first_name = \
+            update_data.updated_user["first_name"] if "first_name" in update_data.updated_user else user.first_name
+        user.last_name = \
+            update_data.updated_user["last_name"] if "last_name" in update_data.updated_user else user.last_name
+        user.profile_pic = \
+            update_data.updated_user["profile_pic"] if "profile_pic" in update_data.updated_user else user.profile_pic
+
+        try:
+            db.session.commit()
+            cls.logger().info(
+                f"User {user.user_id} information updated.")
+            return SuccessfulUserResponse(user)
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(UserTableEntry).filter(
+                    UserTableEntry.username == update_data.updated_user.get("username")
+            ).one_or_none():
+                cls.logger().info(f"Name {update_data.updated_user.get('username')} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Name {update_data.updated_user.get('username')}" +
+                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
+            elif db.session.query(UserTableEntry).filter(
+                    UserTableEntry.email == update_data.updated_user.get("email")
+            ).one_or_none():
+                cls.logger().info(f"Email {update_data.updated_user.get('email')} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Email {update_data.updated_user.get('email')}" +
+                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
+            else:
+                cls.logger().error(f"Couldn't update user {user.user_id} information.")
+                return UnsuccessfulUserMessageResponse("Couldn't update user information!")

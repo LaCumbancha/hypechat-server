@@ -70,3 +70,10 @@ def get_user_teams():
     teams = UserService.teams_for_user(req.authentication_data())
     return jsonify(teams.json()), teams.status_code()
 
+
+@app.route('/users', methods=['PATCH'])
+def update_user():
+    logger.info("Attempting to update user information")
+    req = ClientRequest(request)
+    updated_user = UserService.update_user(req.user_update())
+    return jsonify(updated_user.json()), updated_user.status_code()
