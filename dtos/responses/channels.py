@@ -4,34 +4,35 @@ from utils.serializer import Jsonizable
 from utils.responses import Response
 
 
-class SuccessfulTeamResponse(SuccessfulClientResponse):
+class SuccessfulChannelResponse(SuccessfulClientResponse):
 
-    def __init__(self, team, status):
-        client = ActiveTeamOutput(team)
-        super(SuccessfulTeamResponse, self).__init__(client, status)
+    def __init__(self, channel, status):
+        client = ActiveChannelOutput(channel)
+        super(SuccessfulChannelResponse, self).__init__(client, status)
 
     def json(self):
         return {
             "status": self.status,
-            "team": self.client.json()
+            "channel": self.client.json()
         }
 
 
-class ActiveTeamOutput(Jsonizable):
+class ActiveChannelOutput(Jsonizable):
 
-    def __init__(self, team):
-        self.team_id = team.team_id
-        self.team_name = team.team_name
-        self.picture = team.picture
-        self.location = team.location
-        self.description = team.description
-        self.welcome_message = team.welcome_message
+    def __init__(self, channel):
+        self.channel_id = channel.channel_id
+        self.team_id = channel.team_id
+        self.name = channel.name
+        self.creator = channel.creator
+        self.visibility = channel.visibility
+        self.description = channel.description
+        self.welcome_message = channel.welcome_message
 
     def json(self):
         return vars(self)
 
 
-class SuccessfulTeamsListResponse(Jsonizable, Response):
+class SuccessfulChannelsListResponse(Jsonizable, Response):
 
     def __init__(self, teams_list):
         self.teams_list = teams_list
@@ -46,7 +47,7 @@ class SuccessfulTeamsListResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
-class SuccessfulTeamMessageResponse(Jsonizable, Response):
+class SuccessfulChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -62,7 +63,7 @@ class SuccessfulTeamMessageResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
-class BadRequestTeamMessageResponse(Jsonizable, Response):
+class BadRequestChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -78,7 +79,7 @@ class BadRequestTeamMessageResponse(Jsonizable, Response):
         return StatusCode.BAD_REQUEST.value
 
 
-class ForbiddenTeamMessageResponse(Jsonizable, Response):
+class ForbiddenChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status
@@ -94,7 +95,7 @@ class ForbiddenTeamMessageResponse(Jsonizable, Response):
         return StatusCode.FORBIDDEN.value
 
 
-class UnsuccessfulTeamMessageResponse(Jsonizable, Response):
+class UnsuccessfulChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message):
         self.message = message
@@ -109,7 +110,7 @@ class UnsuccessfulTeamMessageResponse(Jsonizable, Response):
         return StatusCode.SERVER_ERROR.value
 
 
-class NotFoundTeamMessageResponse(Jsonizable, Response):
+class NotFoundChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
         self.status = status

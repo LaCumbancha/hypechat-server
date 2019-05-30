@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS teams CASCADE;
 CREATE TABLE teams(
 	id SERIAL,
 	name VARCHAR(256) NOT NULL UNIQUE,
+	picture VARCHAR(256) NULL,
 	location VARCHAR(256) NULL,
 	description VARCHAR(256) NULL,
 	welcome_message VARCHAR(256) NULL,
@@ -49,7 +50,7 @@ DROP TABLE IF EXISTS teams_invites CASCADE;
 CREATE TABLE teams_invites(
 	team_id INTEGER NOT NULL,
 	email VARCHAR(256) NOT NULL,
-	invite_token VARCHAR(8) NULL UNIQUE,
+	invite_token VARCHAR(8) NOT NULL UNIQUE,
 	PRIMARY KEY (team_id, email),
 	FOREIGN KEY (team_id) REFERENCES teams (id)
 );
@@ -57,18 +58,21 @@ CREATE TABLE teams_invites(
 DROP TABLE IF EXISTS channels CASCADE;
 CREATE TABLE channels(
 	id INTEGER NOT NULL UNIQUE,
+	team_id INTEGER NOT NULL,
+	name VARCHAR(256) NOT NULL UNIQUE,
+	creator INTEGER NOT NULL,
 	visibility VISIBILITY NOT NULL,
 	description VARCHAR(256) NULL,
 	welcome_message VARCHAR(256) NULL,
 	PRIMARY KEY (id),
-	FOREIGN KEY (id) REFERENCES clients (id)
+	FOREIGN KEY (id) REFERENCES clients (id),
+	FOREIGN KEY (team_id) REFERENCES teams (id)
 );
 
 DROP TABLE IF EXISTS users_channels CASCADE;
 CREATE TABLE users_channels(
 	user_id INTEGER NOT NULL,
 	channel_id INTEGER NOT NULL,
-	role TITLE NOT NULL,
 	PRIMARY KEY (user_id, channel_id),
 	FOREIGN KEY (user_id) REFERENCES users (id),
 	FOREIGN KEY (channel_id) REFERENCES channels (id)
@@ -79,11 +83,13 @@ CREATE TABLE messages(
 	id SERIAL,
 	sender_id INTEGER NOT NULL,
 	receiver_id INTEGER NOT NULL,
+	team_id INTEGER NOT NULL,
 	content VARCHAR(256) NOT NULL,
 	timestamp TIMESTAMP NOT NULL DEFAULT now(),
 	PRIMARY KEY (id),
 	FOREIGN KEY (sender_id) REFERENCES users (id),
-	FOREIGN KEY (receiver_id) REFERENCES clients (id)
+	FOREIGN KEY (receiver_id) REFERENCES clients (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id)
 );
 
 DROP TABLE IF EXISTS chats_messages CASCADE;

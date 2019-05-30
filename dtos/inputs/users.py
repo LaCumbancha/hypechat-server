@@ -22,8 +22,8 @@ class LoginDTO:
         self.password = password
 
 
-class SearchUsersDTO:
+class UserUpdateDTO:
 
-    def __init__(self, token, searched_username):
+    def __init__(self, token, updated_user):
         self.token = token
-        self.searched_username = searched_username
+        self.updated_user = updated_user

@@ -12,9 +12,10 @@ class TeamAuthenticationDTO:
 
 class NewTeamDTO:
 
-    def __init__(self, token, team_name, location, description, welcome_message):
+    def __init__(self, token, team_name, picture, location, description, welcome_message):
         self.token = token
         self.team_name = team_name
+        self.picture = picture
         self.location = location
         self.description = description
         self.welcome_message = welcome_message
@@ -58,3 +59,17 @@ class TeamUpdateDTO:
     def __init__(self, token, team_id, updated_team):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.updated_team = updated_team
+
+
+class SearchUsersDTO:
+
+    def __init__(self, token, team_id, searched_username):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.searched_username = searched_username
+
+
+class SearchUserByIdDTO:
+
+    def __init__(self, token, team_id, user_id):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.user_id = user_id

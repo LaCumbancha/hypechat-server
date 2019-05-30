@@ -4,6 +4,7 @@ from dtos.responses.teams import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
+from tables.teams import *
 from passlib.apps import custom_app_context as hashing
 from sqlalchemy import exc, and_
 
@@ -108,39 +109,13 @@ class UserService:
         return SuccessfulUserResponse(user)
 
     @classmethod
-    def search_users(cls, user_data):
-        user = Authenticator.authenticate(user_data)
-
-        found_users = db.session.query(UserTableEntry).filter(
-            UserTableEntry.username.like(f"%{user_data.searched_username}%")).all()
-
-        cls.logger().info(
-            f"Found {len(found_users)} users for user #{user.user_id} with keyword {user.username} .")
-        return SuccessfulUsersListResponse(cls._generate_users_list(found_users))
-
-    @classmethod
-    def _generate_users_list(cls, users_list):
-        users = []
-
-        for user in users_list:
-            users += [{
-                "id": user.user_id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "profile_pic": user.profile_pic,
-                "online": user.online
-            }]
-
-        return users
-
-    @classmethod
     def teams_for_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
 
         teams = db.session.query(
             TeamTableEntry.team_id,
             TeamTableEntry.team_name,
+            TeamTableEntry.picture,
             TeamTableEntry.location,
             TeamTableEntry.description,
             TeamTableEntry.welcome_message,
@@ -163,6 +138,7 @@ class UserService:
             teams += [{
                 "id": team.team_id,
                 "team_name": team.team_name,
+                "picture": team.picture,
                 "location": team.location,
                 "description": team.description,
                 "welcome_message": team.welcome_message,
@@ -170,3 +146,99 @@ class UserService:
             }]
 
         return teams
+
+    @classmethod
+    def update_user(cls, update_data):
+        user = Authenticator.authenticate(update_data)
+
+        user.username = \
+            update_data.updated_user["username"] if "username" in update_data.updated_user else user.username
+        user.email = \
+            update_data.updated_user["email"] if "email" in update_data.updated_user else user.email
+        user.password = \
+            hashing.hash(update_data.updated_user["password"]) if "password" in update_data.updated_user else user.password
+        user.first_name = \
+            update_data.updated_user["first_name"] if "first_name" in update_data.updated_user else user.first_name
+        user.last_name = \
+            update_data.updated_user["last_name"] if "last_name" in update_data.updated_user else user.last_name
+        user.profile_pic = \
+            update_data.updated_user["profile_pic"] if "profile_pic" in update_data.updated_user else user.profile_pic
+
+        try:
+            db.session.commit()
+            cls.logger().info(
+                f"User {user.user_id} information updated.")
+            return SuccessfulUserResponse(user)
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(UserTableEntry).filter(
+                    UserTableEntry.username == update_data.updated_user.get("username")
+            ).one_or_none():
+                cls.logger().info(f"Name {update_data.updated_user.get('username')} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Name {update_data.updated_user.get('username')}" +
+                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
+            elif db.session.query(UserTableEntry).filter(
+                    UserTableEntry.email == update_data.updated_user.get("email")
+            ).one_or_none():
+                cls.logger().info(f"Email {update_data.updated_user.get('email')} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Email {update_data.updated_user.get('email')}" +
+                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
+            else:
+                cls.logger().error(f"Couldn't update user {user.user_id} information.")
+                return UnsuccessfulUserMessageResponse("Couldn't update user information!")
+
+    @classmethod
+    def user_profile(cls, user_data):
+        user = Authenticator.authenticate(user_data)
+
+        full_user = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            TeamTableEntry.team_id,
+            TeamTableEntry.team_name,
+            TeamTableEntry.picture,
+            TeamTableEntry.location,
+            TeamTableEntry.description,
+            TeamTableEntry.welcome_message,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+        ).join(
+            TeamTableEntry,
+            UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+        ).filter(
+            UserTableEntry.user_id == user.user_id
+        ).all()
+
+        cls.logger().info(f"Retrieved user {user.username} profile.")
+        return SuccessfulFullUserResponse(cls._generate_full_user(full_user))
+
+    @classmethod
+    def _generate_full_user(cls, full_user):
+        teams = []
+
+        for team in full_user:
+            teams += [{
+                "id": team.team_id,
+                "name": team.team_name,
+                "location": team.location,
+                "picture": team.picture,
+                "description": team.description,
+                "welcome_message": team.welcome_message,
+                "role": team.role
+            }]
+
+        return {
+            "id": full_user[0].user_id,
+            "username": full_user[0].username,
+            "email": full_user[0].email,
+            "first_name": full_user[0].first_name,
+            "last_name": full_user[0].last_name,
+            "profile_pic": full_user[0].profile_pic,
+            "teams": teams
+        }

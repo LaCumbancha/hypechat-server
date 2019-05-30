@@ -21,6 +21,7 @@ class TeamService:
         user = Authenticator.authenticate(new_team_data)
         new_team = TeamTableEntry(
             team_name=new_team_data.team_name,
+            picture=new_team_data.picture,
             location=new_team_data.location,
             description=new_team_data.description,
             welcome_message=new_team_data.welcome_message
@@ -144,6 +145,7 @@ class TeamService:
         team_users = db.session.query(
             UserTableEntry.user_id,
             UserTableEntry.username,
+            UserTableEntry.email,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
             UserTableEntry.profile_pic,
@@ -168,6 +170,7 @@ class TeamService:
             users += [{
                 "id": user.user_id,
                 "username": user.username,
+                "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "profile_pic": user.profile_pic,
@@ -176,6 +179,37 @@ class TeamService:
             }]
 
         return users
+
+    @classmethod
+    def team_user_by_id(cls, user_data):
+        user = Authenticator.authenticate_team(user_data.authentication)
+
+        user_found = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
+                UserTableEntry.user_id == user_data.user_id,
+                UsersByTeamsTableEntry.team_id == user.team_id
+            )
+        ).one_or_none()
+
+        if not user_found:
+            cls.logger().info(
+                f"User {user.username} couldn't find user #{user_data.user_id} profile (in team {user.team_id}.")
+            return NotFoundUserMessageResponse(
+                f"User {user_data.user_id} not found!", UserResponseStatus.USER_NOT_FOUND.value)
+
+        cls.logger().info(f"User {user.username} got user #{user_data.user_id} profile.")
+        return SuccessfulUserResponse(user_found)
 
     @classmethod
     def delete_users(cls, delete_data):
@@ -301,6 +335,8 @@ class TeamService:
 
         team.team_name = \
             update_data.updated_team["team_name"] if "team_name" in update_data.updated_team else team.team_name
+        team.picture = \
+            update_data.updated_team["picture"] if "picture" in update_data.updated_team else team.picture
         team.location = \
             update_data.updated_team["location"] if "location" in update_data.updated_team else team.location
         team.description = \
@@ -323,5 +359,40 @@ class TeamService:
                 return BadRequestTeamMessageResponse(f"Name {update_data.updated_team.get('team_name')}" +
                                                      " is already in use!", TeamResponseStatus.ALREADY_REGISTERED.value)
             else:
-                cls.logger().error(f"Couldn't update team {team_id} information.")
+                cls.logger().error(f"Couldn't update team {update_data.authentication.team_id} information.")
                 return UnsuccessfulTeamMessageResponse("Couldn't update team information!")
+
+    @classmethod
+    def search_users(cls, user_data):
+        user = Authenticator.authenticate_team(user_data.authentication)
+
+        found_users = db.session.query(
+            UserTableEntry
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByTeamsTableEntry.team_id == user_data.authentication.team_id,
+                UserTableEntry.username.like(f"%{user_data.searched_username}%")
+            )
+        ).all()
+
+        cls.logger().info(
+            f"Found {len(found_users)} users for user #{user.user_id} with keyword {user.username} .")
+        return SuccessfulUsersListResponse(cls._generate_users_list(found_users))
+
+    @classmethod
+    def _generate_users_list(cls, users_list):
+        users = []
+
+        for user in users_list:
+            users += [{
+                "id": user.user_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic,
+                "online": user.online
+            }]
+
+        return users

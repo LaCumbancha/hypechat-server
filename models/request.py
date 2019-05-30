@@ -1,6 +1,7 @@
 from dtos.inputs.users import *
 from dtos.inputs.messages import *
 from dtos.inputs.teams import *
+from dtos.inputs.channels import *
 from exceptions.exceptions import RoleNotAvailableError
 
 import logging
@@ -44,10 +45,24 @@ class ClientRequest:
             password=self.json_body().get("password")
         )
 
-    def search_users_data(self, searched_username):
+    def user_update(self):
+        return UserUpdateDTO(
+            token=self.headers().get("X-Auth-Token"),
+            updated_user=self.json_body()
+        )
+
+    def search_users_data(self, team_id, searched_username):
         return SearchUsersDTO(
             token=self.headers().get("X-Auth-Token"),
-            searched_username=searched_username
+            team_id=team_id,
+            searched_username=searched_username,
+        )
+
+    def search_user_by_id(self, team_id, user_id):
+        return SearchUserByIdDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            user_id=user_id
         )
 
     def authentication_data(self):
@@ -55,16 +70,18 @@ class ClientRequest:
             token=self.headers().get("X-Auth-Token")
         )
 
-    def inbox_data(self):
+    def inbox_data(self, team_id):
         return InboxDTO(
             token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
             chat_id=self.json_body().get("chat_id"),
             text_content=self.json_body().get("text_content"),
         )
 
-    def chat_data(self, chat_id):
+    def chat_data(self, team_id, chat_id):
         return ChatDTO(
             token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
             chat_id=chat_id,
             offset=self.query_params().get("offset") or 0
         )
@@ -73,6 +90,7 @@ class ClientRequest:
         return NewTeamDTO(
             token=self.headers().get("X-Auth-Token"),
             team_name=self.json_body().get("team_name"),
+            picture=self.json_body().get("picture"),
             location=self.json_body().get("location"),
             description=self.json_body().get("description"),
             welcome_message=self.json_body().get("welcome_message"),
@@ -123,3 +141,17 @@ class ClientRequest:
             team_id=team_id,
             updated_team=self.json_body()
         )
+
+    def new_channel_data(self, team_id):
+        try:
+            return NewChannelDTO(
+                token=self.headers().get("X-Auth-Token"),
+                team_id=team_id,
+                name=self.json_body().get("name"),
+                visibility=self.json_body().get("visibility"),
+                description=self.json_body().get("description"),
+                welcome_message=self.json_body().get("welcome_message")
+            )
+        except VisibilityNotAvailableError:
+            logging.getLogger(self.__class__.__name__).warning(f"Visibility {self.json_body().get('visibility')} not defined.")
+            raise

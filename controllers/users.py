@@ -21,14 +21,6 @@ def register_user():
     return response, new_user.status_code()
 
 
-@app.route('/users/<searched_username>', methods=['GET'])
-def search_user(searched_username):
-    logger.info("Attempting to search for user")
-    req = ClientRequest(request)
-    found_users = UserService.search_users(req.search_users_data(searched_username))
-    return jsonify(found_users.json()), found_users.status_code()
-
-
 @app.route('/users/login', methods=['POST'])
 def login():
     logger.info("Attempting to login")
@@ -78,3 +70,18 @@ def get_user_teams():
     teams = UserService.teams_for_user(req.authentication_data())
     return jsonify(teams.json()), teams.status_code()
 
+
+@app.route('/users', methods=['PATCH'])
+def update_user():
+    logger.info("Attempting to update user information.")
+    req = ClientRequest(request)
+    updated_user = UserService.update_user(req.user_update())
+    return jsonify(updated_user.json()), updated_user.status_code()
+
+
+@app.route('/users/profile', methods=['GET'])
+def user_profile():
+    logger.info("Attempting to get user profile.")
+    req = ClientRequest(request)
+    user = UserService.user_profile(req.authentication_data())
+    return jsonify(user.json()), user.status_code()

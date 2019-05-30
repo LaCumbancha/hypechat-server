@@ -8,25 +8,25 @@ import logging
 logger = logging.getLogger("MessagesController")
 
 
-@app.route('/messages/previews', methods=['GET'])
-def get_preview_messages():
-    logger.info("Attempting to get all preview messages from user.")
+@app.route('/teams/<team_id>/messages/previews', methods=['GET'])
+def get_preview_messages(team_id):
+    logger.info(f"Attempting to get all preview messages for user from team #{team_id}.")
     req = ClientRequest(request)
-    messages = MessageService.get_preview_messages(req.authentication_data())
+    messages = MessageService.get_preview_messages(req.team_authentication(team_id))
     return jsonify(messages.json()), messages.status_code()
 
 
-@app.route('/messages/<chat_id>', methods=['GET'])
-def get_messages_from_direct_chat(chat_id):
-    logger.info("Attempting to get all messages from specific chat from user.")
+@app.route('/teams/<team_id>/messages/<chat_id>', methods=['GET'])
+def get_messages_from_direct_chat(team_id, chat_id):
+    logger.info(f"Attempting to get all messages from specific chat from user in team #{team_id}.")
     req = ClientRequest(request)
-    messages = MessageService.get_messages_from_direct_chat(req.chat_data(chat_id))
+    messages = MessageService.get_messages_from_direct_chat(req.chat_data(team_id, chat_id))
     return jsonify(messages.json()), messages.status_code()
 
 
-@app.route('/messages', methods=['POST'])
-def send_direct_message():
-    logger.info("Attempting to send message.")
+@app.route('/teams/<team_id>/messages', methods=['POST'])
+def send_direct_message(team_id):
+    logger.info(f"Attempting to send message in team {team_id}.")
     req = ClientRequest(request)
-    response = MessageService.send_direct_message(req.inbox_data())
+    response = MessageService.send_direct_message(req.inbox_data(team_id))
     return jsonify(response.json()), response.status_code()

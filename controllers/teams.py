@@ -33,6 +33,14 @@ def accept_invite(team_id):
     return jsonify(new_user_team.json()), new_user_team.status_code()
 
 
+@app.route('/teams/<team_id>/users/<searched_username>', methods=['GET'])
+def search_user(team_id, searched_username):
+    logger.info(f"Attempting to search for user in team {team_id}")
+    req = ClientRequest(request)
+    found_users = TeamService.search_users(req.search_users_data(team_id, searched_username))
+    return jsonify(found_users.json()), found_users.status_code()
+
+
 @app.route('/teams/<team_id>/roles', methods=['PATCH'])
 def change_role(team_id):
     logger.info(f"Attempting to change roles in team {team_id}.")
@@ -46,6 +54,14 @@ def team_users(team_id):
     logger.info(f"Attempting to get all users from team {team_id}.")
     req = ClientRequest(request)
     users = TeamService.team_users(req.team_authentication(team_id))
+    return jsonify(users.json()), users.status_code()
+
+
+@app.route('/teams/<team_id>/users/<user_id>/profile', methods=['GET'])
+def team_user_profile(team_id, user_id):
+    logger.info(f"Attempting to get user {user_id} from team {team_id} profile.")
+    req = ClientRequest(request)
+    users = TeamService.team_user_by_id(req.search_user_by_id(team_id, user_id))
     return jsonify(users.json()), users.status_code()
 
 

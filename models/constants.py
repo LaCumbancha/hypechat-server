@@ -47,6 +47,10 @@ class TeamResponseStatus(Enum):
     USER_NOT_MEMBER = "USER_NOT_MEMBER"
 
 
+class ChannelResponseStatus(Enum):
+    VISIBILITY_UNAVAILABLE = "VISIBILITY_UNAVAILABLE"
+
+
 class TeamRoles(Enum):
     CREATOR = "CREATOR"
     ADMIN = "ADMIN"
@@ -68,3 +72,8 @@ class TeamRoles(Enum):
             return True
         else:
             return False
+
+
+class ChannelVisibilities(Enum):
+    PUBLIC = "PUBLIC"
+    PRIVATE = "PRIVATE"

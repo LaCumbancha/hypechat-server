@@ -3,7 +3,8 @@ import random
 import string
 import datetime
 
-from tables.users import UserTableEntry, TeamTableEntry, UsersByTeamsTableEntry
+from tables.users import UserTableEntry, UsersByTeamsTableEntry
+from tables.teams import TeamTableEntry
 from models.constants import UserResponseStatus, TeamResponseStatus
 from exceptions.exceptions import *
 from sqlalchemy import and_
