@@ -191,32 +191,40 @@ class UserService:
     def user_profile(cls, user_data):
         user = Authenticator.authenticate(user_data)
 
-        full_user = db.session.query(
-            UserTableEntry.user_id,
-            UserTableEntry.username,
-            UserTableEntry.email,
-            UserTableEntry.first_name,
-            UserTableEntry.last_name,
-            UserTableEntry.profile_pic,
-            TeamTableEntry.team_id,
-            TeamTableEntry.team_name,
-            TeamTableEntry.picture,
-            TeamTableEntry.location,
-            TeamTableEntry.description,
-            TeamTableEntry.welcome_message,
-            UsersByTeamsTableEntry.role
-        ).join(
-            UsersByTeamsTableEntry,
-            UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
-        ).join(
-            TeamTableEntry,
-            UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
-        ).filter(
-            UserTableEntry.user_id == user.user_id
+        user_teams = db.session.query(UsersByTeamsTableEntry).filter(
+            UsersByTeamsTableEntry.user_id == user.user_id
         ).all()
 
-        cls.logger().info(f"Retrieved user {user.username} profile.")
-        return SuccessfulFullUserResponse(cls._generate_full_user(full_user))
+        if len(user_teams) > 0:
+            full_user = db.session.query(
+                UserTableEntry.user_id,
+                UserTableEntry.username,
+                UserTableEntry.email,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
+                UserTableEntry.profile_pic,
+                TeamTableEntry.team_id,
+                TeamTableEntry.team_name,
+                TeamTableEntry.picture,
+                TeamTableEntry.location,
+                TeamTableEntry.description,
+                TeamTableEntry.welcome_message,
+                UsersByTeamsTableEntry.role
+            ).join(
+                UsersByTeamsTableEntry,
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+            ).join(
+                TeamTableEntry,
+                UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+            ).filter(
+                UserTableEntry.user_id == user.user_id
+            ).all()
+
+            cls.logger().info(f"Retrieved user {user.username} profile.")
+            return SuccessfulFullUserResponse(cls._generate_full_user(full_user))
+        else:
+            cls.logger().info(f"Retrieved user {user.username} profile.")
+            return SuccessfulUserResponse(user)
 
     @classmethod
     def _generate_full_user(cls, full_user):
