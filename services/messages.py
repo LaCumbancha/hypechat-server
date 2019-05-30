@@ -19,7 +19,7 @@ class MessageService:
 
     @classmethod
     def get_preview_messages(cls, user_data):
-        user = Authenticator.authenticate(user_data)
+        user = Authenticator.authenticate_team(user_data)
 
         chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user.user_id).subquery("sq1")
 
@@ -27,9 +27,12 @@ class MessageService:
             func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user1"),
             func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user2"),
             func.max(MessageTableEntry.timestamp).label("maxtimestamp")
-        ).filter(or_(
-            MessageTableEntry.receiver_id == user.user_id,
-            MessageTableEntry.sender_id == user.user_id
+        ).filter(and_(
+            or_(
+                MessageTableEntry.receiver_id == user.user_id,
+                MessageTableEntry.sender_id == user.user_id
+            ),
+            MessageTableEntry.team_id == user.team_id
         )).group_by(
             func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
             func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
@@ -106,7 +109,7 @@ class MessageService:
 
     @classmethod
     def get_messages_from_direct_chat(cls, chat_data):
-        user = Authenticator.authenticate(chat_data)
+        user = Authenticator.authenticate_team(chat_data.authentication)
 
         chat = db.session.query(ChatTableEntry).filter(and_(
             ChatTableEntry.user_id == user.user_id, ChatTableEntry.chat_id == chat_data.chat_id)
@@ -117,9 +120,16 @@ class MessageService:
                 f"User #{user.user_id} trying to retrieve messages from an nonexistent chat.")
             raise ChatNotFoundError("Chat not found.", MessageResponseStatus.CHAT_NOT_FOUND.value)
         else:
-            messages = db.session.query(MessageTableEntry).filter(or_(
-                and_(MessageTableEntry.sender_id == user.user_id, MessageTableEntry.receiver_id == chat_data.chat_id),
-                and_(MessageTableEntry.sender_id == chat_data.chat_id, MessageTableEntry.receiver_id == user.user_id)
+            messages = db.session.query(MessageTableEntry).filter(and_(
+                MessageTableEntry.team_id == user.team_id,
+                or_(
+                    and_(
+                        MessageTableEntry.sender_id == user.user_id,
+                        MessageTableEntry.receiver_id == chat_data.chat_id),
+                    and_(
+                        MessageTableEntry.sender_id == chat_data.chat_id,
+                        MessageTableEntry.receiver_id == user.user_id)
+                ),
             )).offset(chat_data.offset).limit(CHAT_MESSAGE_PAGE).all()
 
             unseen_messages = chat.unseen_offset
@@ -159,7 +169,7 @@ class MessageService:
 
     @classmethod
     def send_direct_message(cls, inbox_data):
-        user = Authenticator.authenticate(inbox_data)
+        user = Authenticator.authenticate_team(inbox_data.authentication)
 
         if user.user_id == inbox_data.chat_id:
             raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)
@@ -167,6 +177,7 @@ class MessageService:
         new_message = MessageTableEntry(
             sender_id=user.user_id,
             receiver_id=inbox_data.chat_id,
+            team_id=user.team_id,
             text_content=inbox_data.text_content
         )
 

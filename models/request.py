@@ -70,16 +70,18 @@ class ClientRequest:
             token=self.headers().get("X-Auth-Token")
         )
 
-    def inbox_data(self):
+    def inbox_data(self, team_id):
         return InboxDTO(
             token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
             chat_id=self.json_body().get("chat_id"),
             text_content=self.json_body().get("text_content"),
         )
 
-    def chat_data(self, chat_id):
+    def chat_data(self, team_id, chat_id):
         return ChatDTO(
             token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
             chat_id=chat_id,
             offset=self.query_params().get("offset") or 0
         )

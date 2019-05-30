@@ -2,6 +2,7 @@ from app import db
 from sqlalchemy import exc, ForeignKey
 from sqlalchemy.sql import func
 from tables.users import ClientTableEntry
+from tables.teams import TeamTableEntry
 
 
 class MessageTableEntry(db.Model):
@@ -10,12 +11,14 @@ class MessageTableEntry(db.Model):
     message_id = db.Column(name='id', type_=db.Integer, primary_key=True, autoincrement=True)
     sender_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='sender_id', type_=db.Integer, nullable=False)
     receiver_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='receiver_id', type_=db.Integer, nullable=False)
+    team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer, nullable=False)
     text_content = db.Column(name='content', type_=db.String(), nullable=False)
     timestamp = db.Column(name='timestamp', type_=db.DateTime(timezone=True), nullable=False, server_default=func.now())
 
-    def __init__(self, sender_id, receiver_id, text_content):
+    def __init__(self, sender_id, receiver_id, team_id, text_content):
         self.sender_id = sender_id
         self.receiver_id = receiver_id
+        self.team_id = team_id
         self.text_content = text_content
 
 

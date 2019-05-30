@@ -83,11 +83,13 @@ CREATE TABLE messages(
 	id SERIAL,
 	sender_id INTEGER NOT NULL,
 	receiver_id INTEGER NOT NULL,
+	team_id INTEGER NOT NULL,
 	content VARCHAR(256) NOT NULL,
 	timestamp TIMESTAMP NOT NULL DEFAULT now(),
 	PRIMARY KEY (id),
 	FOREIGN KEY (sender_id) REFERENCES users (id),
-	FOREIGN KEY (receiver_id) REFERENCES clients (id)
+	FOREIGN KEY (receiver_id) REFERENCES clients (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id)
 );
 
 DROP TABLE IF EXISTS chats_messages CASCADE;
