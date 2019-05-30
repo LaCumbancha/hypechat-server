@@ -328,3 +328,38 @@ class TeamService:
             else:
                 cls.logger().error(f"Couldn't update team {team_id} information.")
                 return UnsuccessfulTeamMessageResponse("Couldn't update team information!")
+
+    @classmethod
+    def search_users(cls, user_data):
+        user = Authenticator.authenticate_team(user_data.authentication)
+
+        found_users = db.session.query(
+            UserTableEntry
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByTeamsTableEntry.team_id == user_data.authentication.team_id,
+                UserTableEntry.username.like(f"%{user_data.searched_username}%")
+            )
+        ).all()
+
+        cls.logger().info(
+            f"Found {len(found_users)} users for user #{user.user_id} with keyword {user.username} .")
+        return SuccessfulUsersListResponse(cls._generate_users_list(found_users))
+
+    @classmethod
+    def _generate_users_list(cls, users_list):
+        users = []
+
+        for user in users_list:
+            users += [{
+                "id": user.user_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic,
+                "online": user.online
+            }]
+
+        return users

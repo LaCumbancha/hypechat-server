@@ -109,33 +109,6 @@ class UserService:
         return SuccessfulUserResponse(user)
 
     @classmethod
-    def search_users(cls, user_data):
-        user = Authenticator.authenticate(user_data)
-
-        found_users = db.session.query(UserTableEntry).filter(
-            UserTableEntry.username.like(f"%{user_data.searched_username}%")).all()
-
-        cls.logger().info(
-            f"Found {len(found_users)} users for user #{user.user_id} with keyword {user.username} .")
-        return SuccessfulUsersListResponse(cls._generate_users_list(found_users))
-
-    @classmethod
-    def _generate_users_list(cls, users_list):
-        users = []
-
-        for user in users_list:
-            users += [{
-                "id": user.user_id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "profile_pic": user.profile_pic,
-                "online": user.online
-            }]
-
-        return users
-
-    @classmethod
     def teams_for_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
 

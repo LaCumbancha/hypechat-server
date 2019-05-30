@@ -20,10 +20,3 @@ class LoginDTO:
     def __init__(self, email, password):
         self.email = email
         self.password = password
-
-
-class SearchUsersDTO:
-
-    def __init__(self, token, searched_username):
-        self.token = token
-        self.searched_username = searched_username
