@@ -79,7 +79,8 @@ class UserService:
                 return SuccessfulUserResponse(user, headers)
             else:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
-                return SuccessfulUserMessageResponse("Wrong email or password.", UserResponseStatus.WRONG_CREDENTIALS.value)
+                return SuccessfulUserMessageResponse("Wrong email or password.",
+                                                     UserResponseStatus.WRONG_CREDENTIALS.value)
         else:
             cls.logger().info(f"User #{user_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
@@ -156,7 +157,8 @@ class UserService:
         user.email = \
             update_data.updated_user["email"] if "email" in update_data.updated_user else user.email
         user.password = \
-            hashing.hash(update_data.updated_user["password"]) if "password" in update_data.updated_user else user.password
+            hashing.hash(
+                update_data.updated_user["password"]) if "password" in update_data.updated_user else user.password
         user.first_name = \
             update_data.updated_user["first_name"] if "first_name" in update_data.updated_user else user.first_name
         user.last_name = \
@@ -191,11 +193,11 @@ class UserService:
     def user_profile(cls, user_data):
         user = Authenticator.authenticate(user_data)
 
-        user_teams = db.session.query(UsersByTeamsTableEntry).filter(
+        has_teams = len(db.session.query(UsersByTeamsTableEntry).filter(
             UsersByTeamsTableEntry.user_id == user.user_id
-        ).all()
+        ).all()) > 0
 
-        if len(user_teams) > 0:
+        if has_teams:
             full_user = db.session.query(
                 UserTableEntry.user_id,
                 UserTableEntry.username,
@@ -221,32 +223,37 @@ class UserService:
             ).all()
 
             cls.logger().info(f"Retrieved user {user.username} profile.")
-            return SuccessfulFullUserResponse(cls._generate_full_user(full_user))
+            return SuccessfulFullUserResponse(cls._generate_full_user(full_user, has_teams))
         else:
             cls.logger().info(f"Retrieved user {user.username} profile.")
-            return SuccessfulUserResponse(user)
+            return SuccessfulFullUserResponse(cls._generate_full_user(user, has_teams))
 
     @classmethod
-    def _generate_full_user(cls, full_user):
+    def _generate_full_user(cls, full_user, has_teams):
         teams = []
+        user_data = full_user
 
-        for team in full_user:
-            teams += [{
-                "id": team.team_id,
-                "name": team.team_name,
-                "location": team.location,
-                "picture": team.picture,
-                "description": team.description,
-                "welcome_message": team.welcome_message,
-                "role": team.role
-            }]
+        if has_teams:
+
+            for team in full_user:
+                teams += [{
+                    "id": team.team_id,
+                    "name": team.team_name,
+                    "location": team.location,
+                    "picture": team.picture,
+                    "description": team.description,
+                    "welcome_message": team.welcome_message,
+                    "role": team.role
+                }]
+
+            user_data = full_user[0]
 
         return {
-            "id": full_user[0].user_id,
-            "username": full_user[0].username,
-            "email": full_user[0].email,
-            "first_name": full_user[0].first_name,
-            "last_name": full_user[0].last_name,
-            "profile_pic": full_user[0].profile_pic,
+            "id": user_data.user_id,
+            "username": user_data.username,
+            "email": user_data.email,
+            "first_name": user_data.first_name,
+            "last_name": user_data.last_name,
+            "profile_pic": user_data.profile_pic,
             "teams": teams
         }
