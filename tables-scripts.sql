@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS teams CASCADE;
 CREATE TABLE teams(
 	id SERIAL,
 	name VARCHAR(256) NOT NULL UNIQUE,
+	picture VARCHAR(256) NULL,
 	location VARCHAR(256) NULL,
 	description VARCHAR(256) NULL,
 	welcome_message VARCHAR(256) NULL,
@@ -57,11 +58,13 @@ CREATE TABLE teams_invites(
 DROP TABLE IF EXISTS channels CASCADE;
 CREATE TABLE channels(
 	id INTEGER NOT NULL UNIQUE,
+	team_id INTEGER NOT NULL,
 	visibility VISIBILITY NOT NULL,
 	description VARCHAR(256) NULL,
 	welcome_message VARCHAR(256) NULL,
 	PRIMARY KEY (id),
-	FOREIGN KEY (id) REFERENCES clients (id)
+	FOREIGN KEY (id) REFERENCES clients (id),
+	FOREIGN KEY (team_id) REFERENCES teams (id)
 );
 
 DROP TABLE IF EXISTS users_channels CASCADE;

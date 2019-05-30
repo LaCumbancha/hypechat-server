@@ -22,6 +22,7 @@ class ActiveTeamOutput(Jsonizable):
     def __init__(self, team):
         self.team_id = team.team_id
         self.team_name = team.team_name
+        self.picture = team.picture
         self.location = team.location
         self.description = team.description
         self.welcome_message = team.welcome_message

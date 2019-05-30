@@ -4,6 +4,7 @@ from dtos.responses.teams import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
+from tables.teams import *
 from passlib.apps import custom_app_context as hashing
 from sqlalchemy import exc, and_
 

@@ -73,6 +73,7 @@ class ClientRequest:
         return NewTeamDTO(
             token=self.headers().get("X-Auth-Token"),
             team_name=self.json_body().get("team_name"),
+            picture=self.json_body().get("picture"),
             location=self.json_body().get("location"),
             description=self.json_body().get("description"),
             welcome_message=self.json_body().get("welcome_message"),

@@ -1,6 +1,7 @@
 from app import db
 from sqlalchemy import exc, ForeignKey
 from models.constants import TeamRoles
+from tables.teams import TeamTableEntry
 
 
 class ClientTableEntry(db.Model):
@@ -34,16 +35,6 @@ class UserTableEntry(db.Model):
         self.auth_token = token
 
 
-class TeamTableEntry(db.Model):
-    __tablename__ = 'teams'
-
-    team_id = db.Column(name='id', type_=db.Integer, nullable=False, primary_key=True, autoincrement=True)
-    team_name = db.Column(name='name', type_=db.String(), nullable=False, unique=True)
-    location = db.Column(name='location', type_=db.String(), nullable=True)
-    description = db.Column(name='description', type_=db.String(), nullable=True)
-    welcome_message = db.Column(name='welcome_message', type_=db.String(), nullable=True)
-
-
 class UsersByTeamsTableEntry(db.Model):
     __tablename__ = 'users_teams'
 
@@ -59,6 +50,8 @@ class Channels(db.Model):
 
     channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='id', type_=db.Integer,
                            nullable=False, primary_key=True)
+    team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
+                        nullable=False, primary_key=True)
     visibility = db.Column(name='visibility', type_=db.String(), nullable=False)
     description = db.Column(name='description', type_=db.String(), nullable=True)
     welcome_message = db.Column(name='welcome_message', type_=db.String(), nullable=True)

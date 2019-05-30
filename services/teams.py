@@ -21,6 +21,7 @@ class TeamService:
         user = Authenticator.authenticate(new_team_data)
         new_team = TeamTableEntry(
             team_name=new_team_data.team_name,
+            picture=new_team_data.picture,
             location=new_team_data.location,
             description=new_team_data.description,
             welcome_message=new_team_data.welcome_message
@@ -301,6 +302,8 @@ class TeamService:
 
         team.team_name = \
             update_data.updated_team["team_name"] if "team_name" in update_data.updated_team else team.team_name
+        team.picture = \
+            update_data.updated_team["picture"] if "picture" in update_data.updated_team else team.picture
         team.location = \
             update_data.updated_team["location"] if "location" in update_data.updated_team else team.location
         team.description = \

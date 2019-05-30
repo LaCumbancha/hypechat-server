@@ -12,9 +12,10 @@ class TeamAuthenticationDTO:
 
 class NewTeamDTO:
 
-    def __init__(self, token, team_name, location, description, welcome_message):
+    def __init__(self, token, team_name, picture, location, description, welcome_message):
         self.token = token
         self.team_name = team_name
+        self.picture = picture
         self.location = location
         self.description = description
         self.welcome_message = welcome_message
