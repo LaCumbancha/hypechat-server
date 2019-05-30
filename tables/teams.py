@@ -19,4 +19,4 @@ class TeamsInvitesTableEntry(db.Model):
     team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     email = db.Column(name='email', type_=db.String(), nullable=False, primary_key=True)
-    invite_token = db.Column(name='invite_token', type_=db.String(), nullable=True, default=None)
+    invite_token = db.Column(name='invite_token', type_=db.String(), nullable=False)

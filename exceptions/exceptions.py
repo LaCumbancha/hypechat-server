@@ -73,6 +73,16 @@ class RoleNotAvailableError(UserError):
         self.payload = payload
 
 
+class VisibilityNotAvailableError(UserError):
+    status_code = StatusCode.BAD_REQUEST.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
 class WrongActionError(UserError):
     status_code = StatusCode.BAD_REQUEST.value
 

@@ -1,6 +1,7 @@
 from dtos.inputs.users import *
 from dtos.inputs.messages import *
 from dtos.inputs.teams import *
+from dtos.inputs.channels import *
 from exceptions.exceptions import RoleNotAvailableError
 
 import logging
@@ -131,3 +132,17 @@ class ClientRequest:
             team_id=team_id,
             updated_team=self.json_body()
         )
+
+    def new_channel_data(self, team_id):
+        try:
+            return NewChannelDTO(
+                token=self.headers().get("X-Auth-Token"),
+                team_id=team_id,
+                name=self.json_body().get("name"),
+                visibility=self.json_body().get("visibility"),
+                description=self.json_body().get("description"),
+                welcome_message=self.json_body().get("welcome_message")
+            )
+        except VisibilityNotAvailableError:
+            logging.getLogger(self.__class__.__name__).warning(f"Visibility {self.json_body().get('visibility')} not defined.")
+            raise

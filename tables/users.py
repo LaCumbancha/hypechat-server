@@ -43,25 +43,3 @@ class UsersByTeamsTableEntry(db.Model):
     team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     role = db.Column(name='role', type_=db.String(), nullable=False, default=TeamRoles.MEMBER.value)
-
-
-class Channels(db.Model):
-    __tablename__ = 'channels'
-
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='id', type_=db.Integer,
-                           nullable=False, primary_key=True)
-    team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
-                        nullable=False, primary_key=True)
-    visibility = db.Column(name='visibility', type_=db.String(), nullable=False)
-    description = db.Column(name='description', type_=db.String(), nullable=True)
-    welcome_message = db.Column(name='welcome_message', type_=db.String(), nullable=True)
-
-
-class UsersByChannels(db.Model):
-    __tablename__ = 'users_channels'
-
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='user_id', type_=db.Integer,
-                        nullable=False, primary_key=True)
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='channel_id', type_=db.Integer,
-                           nullable=False, primary_key=True)
-    role = db.Column(name='role', type_=db.String(), nullable=False)
