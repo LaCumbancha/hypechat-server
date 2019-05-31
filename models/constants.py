@@ -51,14 +51,19 @@ class ChannelResponseStatus(Enum):
     VISIBILITY_UNAVAILABLE = "VISIBILITY_UNAVAILABLE"
 
 
+class UserRoles(Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+
+
 class TeamRoles(Enum):
     CREATOR = "CREATOR"
-    ADMIN = "ADMIN"
+    MODERATOR = "MODERATOR"
     MEMBER = "MEMBER"
 
     @classmethod
     def is_admin(cls, user):
-        return user.role in [TeamRoles.CREATOR.value, TeamRoles.ADMIN.value]
+        return user.role in [TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
 
     @classmethod
     def is_creator(cls, user):
@@ -68,7 +73,7 @@ class TeamRoles(Enum):
     def is_higher_role(cls, user1, user2):
         if user1.role == TeamRoles.CREATOR.value:
             return True
-        elif user1.role == TeamRoles.ADMIN.value and user2.role == TeamRoles.MEMBER.value:
+        elif user1.role == TeamRoles.MODERATOR.value and user2.role == TeamRoles.MEMBER.value:
             return True
         else:
             return False

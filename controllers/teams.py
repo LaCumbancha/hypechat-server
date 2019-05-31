@@ -17,19 +17,19 @@ def register_team():
     return jsonify(new_team.json()), new_team.status_code()
 
 
-@app.route('/teams/<team_id>/invite', methods=['POST'])
-def invite_user(team_id):
-    logger.info(f"Attempting to invite new user to team {team_id}.")
+@app.route('/teams/invite', methods=['POST'])
+def invite_user():
+    logger.info(f"Attempting to invite new user to team.")
     req = ClientRequest(request)
-    new_invite = TeamService.invite_user(req.invite_data(team_id))
+    new_invite = TeamService.invite_user(req.invite_data())
     return jsonify(new_invite.json()), new_invite.status_code()
 
 
-@app.route('/teams/<team_id>/join', methods=['POST'])
-def accept_invite(team_id):
-    logger.info(f"Attempting to join team {team_id}.")
+@app.route('/teams/join', methods=['POST'])
+def accept_invite():
+    logger.info(f"Attempting to join team.")
     req = ClientRequest(request)
-    new_user_team = TeamService.accept_invite(req.accept_invite(team_id))
+    new_user_team = TeamService.accept_invite(req.accept_invite())
     return jsonify(new_user_team.json()), new_user_team.status_code()
 
 
