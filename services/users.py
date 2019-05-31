@@ -32,7 +32,9 @@ class UserService:
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
-                token=Authenticator.generate(user_data.username, user_data.password)
+                role=user_data.role or UserRoles.USER.value,
+                auth_token=Authenticator.generate(user_data.username, user_data.password),
+                online=True
             )
             db.session.add(new_user)
             db.session.flush()
@@ -205,6 +207,7 @@ class UserService:
                 UserTableEntry.first_name,
                 UserTableEntry.last_name,
                 UserTableEntry.profile_pic,
+                UserTableEntry.role,
                 TeamTableEntry.team_id,
                 TeamTableEntry.team_name,
                 TeamTableEntry.picture,
@@ -255,5 +258,6 @@ class UserService:
             "first_name": user_data.first_name,
             "last_name": user_data.last_name,
             "profile_pic": user_data.profile_pic,
+            "role": user_data.role,
             "teams": teams
         }

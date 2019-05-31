@@ -1,6 +1,6 @@
 from app import db
 from sqlalchemy import exc, ForeignKey
-from models.constants import TeamRoles
+from models.constants import TeamRoles, UserRoles
 from tables.teams import TeamTableEntry
 
 
@@ -21,18 +21,9 @@ class UserTableEntry(db.Model):
     first_name = db.Column(name='first_name', type_=db.String(), nullable=True)
     last_name = db.Column(name='last_name', type_=db.String(), nullable=True)
     profile_pic = db.Column(name='profile_pic', type_=db.String(), nullable=True)
+    role = db.Column(name='role', type_=db.String(), nullable=False, default=UserRoles.USER.value)
     auth_token = db.Column(name='auth_token', type_=db.String(), nullable=False, default=None)
     online = db.Column(name='online', type_=db.Boolean, nullable=False, default=True)
-
-    def __init__(self, user_id, username, email, password, first_name, last_name, profile_pic, token):
-        self.user_id = user_id
-        self.username = username
-        self.email = email
-        self.password = password
-        self.first_name = first_name
-        self.last_name = last_name
-        self.profile_pic = profile_pic
-        self.auth_token = token
 
 
 class UsersByTeamsTableEntry(db.Model):

@@ -36,7 +36,8 @@ class ClientRequest:
             password=self.json_body().get("password"),
             first_name=self.json_body().get("first_name"),
             last_name=self.json_body().get("last_name"),
-            profile_pic=self.json_body().get("profile_pic")
+            profile_pic=self.json_body().get("profile_pic"),
+            role=self.json_body().get("role")
         )
 
     def login_data(self):

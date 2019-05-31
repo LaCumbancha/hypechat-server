@@ -53,6 +53,7 @@ class ActiveUserOutput(Jsonizable):
         self.first_name = user.first_name
         self.last_name = user.last_name
         self.profile_pic = user.profile_pic
+        self.role = user.role
         self.online = user.online
 
     def json(self):
@@ -82,6 +83,7 @@ class ActiveFullUserOutput(Jsonizable):
         self.first_name = user["first_name"]
         self.last_name = user["last_name"]
         self.profile_pic = user["profile_pic"]
+        self.role = user["role"]
         self.teams = user["teams"]
 
     def json(self):

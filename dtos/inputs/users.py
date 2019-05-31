@@ -6,13 +6,14 @@ class AuthenticationDTO:
 
 class NewUserDTO:
 
-    def __init__(self, username, email, password, first_name, last_name, profile_pic):
+    def __init__(self, username, email, password, first_name, last_name, profile_pic, role):
         self.username = username
         self.email = email
         self.password = password
         self.first_name = first_name
         self.last_name = last_name
         self.profile_pic = profile_pic
+        self.role = role
 
 
 class LoginDTO:
