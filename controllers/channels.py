@@ -8,27 +8,27 @@ import logging
 logger = logging.getLogger("ChannelsController")
 
 
-@app.route('/teams/<team_id>/channels', methods=['POST'])
-def register_channel(team_id):
-    logger.info(f"Attempting to register new channel in team #{team_id}")
+@app.route('/teams/channels', methods=['POST'])
+def register_channel():
+    logger.info(f"Attempting to register new channel in team.")
     req = ClientRequest(request)
-    new_channel = ChannelService.create_channel(req.new_channel_data(team_id))
+    new_channel = ChannelService.create_channel(req.new_channel_data())
     return jsonify(new_channel.json()), new_channel.status_code()
 
 
-@app.route('/teams/<team_id>/channels/<channel_id>/invite', methods=['POST'])
-def add_member(team_id, channel_id):
-    logger.info(f"Attempting to add new member to channel #{channel_id}")
+@app.route('/teams/channels/invite', methods=['POST'])
+def add_member():
+    logger.info(f"Attempting to add new member to team channel.")
     req = ClientRequest(request)
-    new_member = ChannelService.add_member(req.channel_invitation_data(team_id, channel_id))
+    new_member = ChannelService.add_member(req.channel_invitation_data())
     return jsonify(new_member.json()), new_member.status_code()
 
 
-@app.route('/teams/<team_id>/channels/<channel_id>/join', methods=['POST'])
-def join_channel(team_id, channel_id):
-    logger.info(f"Attempting to join channel #{channel_id}")
+@app.route('/teams/channels/join', methods=['POST'])
+def join_channel():
+    logger.info(f"Attempting to join team channel.")
     req = ClientRequest(request)
-    new_member = ChannelService.join_channel(req.channel_registration_data(team_id, channel_id))
+    new_member = ChannelService.join_channel(req.channel_registration_data())
     return jsonify(new_member.json()), new_member.status_code()
 
 

@@ -70,10 +70,10 @@ class ClientRequest:
             token=self.headers().get("X-Auth-Token")
         )
 
-    def inbox_data(self, team_id):
+    def inbox_data(self):
         return InboxDTO(
             token=self.headers().get("X-Auth-Token"),
-            team_id=team_id,
+            team_id=self.json_body().get("team_id"),
             chat_id=self.json_body().get("chat_id"),
             text_content=self.json_body().get("text_content"),
         )
@@ -96,17 +96,17 @@ class ClientRequest:
             welcome_message=self.json_body().get("welcome_message"),
         )
 
-    def invite_data(self, team_id):
+    def invite_data(self):
         return TeamInviteDTO(
             token=self.headers().get("X-Auth-Token"),
-            team_id=team_id,
+            team_id=self.json_body().get("team_id"),
             email=self.json_body().get("email")
         )
 
-    def accept_invite(self, team_id):
+    def accept_invite(self):
         return TeamInviteAcceptDTO(
             token=self.headers().get("X-Auth-Token"),
-            team_id=team_id,
+            team_id=self.json_body().get("team_id"),
             invite_token=self.json_body().get("invite_token")
         )
 
@@ -142,11 +142,11 @@ class ClientRequest:
             updated_team=self.json_body()
         )
 
-    def new_channel_data(self, team_id):
+    def new_channel_data(self):
         try:
             return NewChannelDTO(
                 token=self.headers().get("X-Auth-Token"),
-                team_id=team_id,
+                team_id=self.json_body().get("team_id"),
                 name=self.json_body().get("name"),
                 visibility=self.json_body().get("visibility"),
                 description=self.json_body().get("description"),
