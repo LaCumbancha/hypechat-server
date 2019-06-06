@@ -52,7 +52,7 @@ def channel_members(team_id, channel_id):
 def leave_channel(team_id, channel_id):
     logger.info(f"Attempting to leave channel #{channel_id}")
     req = ClientRequest(request)
-    old_member = ChannelService.leave_channel(req.leave_channel_data(team_id, channel_id))
+    old_member = ChannelService.leave_channel(req.channel_authentication(team_id, channel_id))
     return jsonify(old_member.json()), old_member.status_code()
 
 

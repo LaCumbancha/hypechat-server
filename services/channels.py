@@ -212,7 +212,22 @@ class ChannelService:
 
     @classmethod
     def leave_channel(cls, user_data):
-        pass
+        user = Authenticator.authenticate_channel(user_data)
+
+        delete_user = db.session.query(UsersByChannelsTableEntry).filter(and_(
+            UsersByChannelsTableEntry.user_id == user.user_id,
+            UsersByChannelsTableEntry.channel_id == user_data.channel_id
+        )).one_or_none()
+
+        try:
+            db.session.delete(delete_user)
+            db.session.commit()
+            cls.logger().info(f"User #{user.user_id} leaved channel #{user_data.channel_id}.")
+            return SuccessfulChannelMessageResponse("Channel leaved!", ChannelResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} failing to leave channel #{user_data.channel_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't leave chanel.")
 
     @classmethod
     def delete_channel(cls, user_data):
