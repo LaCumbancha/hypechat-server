@@ -71,7 +71,7 @@ def get_user_teams():
     return jsonify(teams.json()), teams.status_code()
 
 
-@app.route('/users', methods=['PATCH'])
+@app.route('/users/profile', methods=['PATCH'])
 def update_user():
     logger.info("Attempting to update user information.")
     req = ClientRequest(request)
