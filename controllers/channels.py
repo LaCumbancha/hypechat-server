@@ -16,7 +16,7 @@ def register_channel():
     return jsonify(new_channel.json()), new_channel.status_code()
 
 
-@app.route('/teams/channels/invite', methods=['POST'])
+@app.route('/teams/channels/users', methods=['POST'])
 def add_member():
     logger.info(f"Attempting to add new member to team channel.")
     req = ClientRequest(request)
