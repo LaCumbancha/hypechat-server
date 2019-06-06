@@ -60,7 +60,7 @@ def leave_channel(team_id, channel_id):
 def delete_channel(team_id, channel_id):
     logger.info(f"Attempting to delete channel #{channel_id} from team #{team_id}")
     req = ClientRequest(request)
-    old_channel = ChannelService.delete_channel(req.delete_channel_data(team_id, channel_id))
+    old_channel = ChannelService.delete_channel(req.channel_authentication(team_id, channel_id))
     return jsonify(old_channel.json()), old_channel.status_code()
 
 

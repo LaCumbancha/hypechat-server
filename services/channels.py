@@ -4,6 +4,7 @@ from dtos.responses.clients import SuccessfulUsersListResponse
 from models.authentication import Authenticator
 from tables.users import UsersByChannelsTableEntry, UsersByTeamsTableEntry, UserTableEntry
 from tables.channels import *
+from tables.messages import *
 from sqlalchemy import exc, and_
 
 import logging
@@ -234,7 +235,42 @@ class ChannelService:
 
     @classmethod
     def delete_channel(cls, user_data):
-        pass
+        user = Authenticator.authenticate_channel(user_data)
+
+        channel_messages = db.session.query(MessageTableEntry).filter(
+            MessageTableEntry.team_id == user_data.team_id,
+            MessageTableEntry.receiver_id == user_data.channel_id
+        )
+
+        channel_chats = db.session.query(ChatTableEntry).filter(
+            ChatTableEntry.chat_id == user_data.channel_id
+        )
+
+        channel_members = db.session.query(UsersByChannelsTableEntry).filter(
+            UsersByChannelsTableEntry.channel_id == user_data.channel_id
+        )
+
+        channel = db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.channel_id == user_data.channel_id
+        ).one_or_none()
+
+        try:
+            messages = channel_messages.delete()
+            db.session.flush()
+            chats = channel_chats.delete()
+            db.session.flush()
+            members = channel_members.delete()
+            db.session.flush()
+            db.session.delete(channel)
+            db.session.commit()
+            cls.logger().info(
+                f"Channel #{channel.channel_id} deleted by user {user.username}. {chats} chats deleted, "
+                f"{messages} messages removed and {members} users-chats relations released.")
+            return SuccessfulChannelMessageResponse("Channel removed!", ChannelResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} couldn't remove channel #{user_data.channel_id}.")
+            return UnsuccessfulChannelMessageResponse("Couldn't remove channel.")
 
     @classmethod
     def update_information(cls, update_data):
