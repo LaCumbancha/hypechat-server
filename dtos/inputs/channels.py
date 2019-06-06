@@ -30,3 +30,10 @@ class ChannelInvitationDTO:
     def __init__(self, token, team_id, channel_id, user_invited_id):
         self.authentication = ChannelAuthenticationDTO(token, team_id, channel_id)
         self.user_invited_id = user_invited_id
+
+
+class ChannelRegistrationDTO:
+
+    def __init__(self, token, team_id, channel_id):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.channel_id = channel_id

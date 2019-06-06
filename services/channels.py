@@ -102,12 +102,55 @@ class ChannelService:
             else:
                 cls.logger().error(f"Failing to add user #{invitation_data.user_invited_id} to channel"
                                    f"{invitation_data.authentication.channel_id}.")
-                return UnsuccessfulChannelMessageResponse("Couldn't add channel.")
+                return UnsuccessfulChannelMessageResponse("Couldn't add user to channel.")
         else:
             return SuccessfulChannelMessageResponse("User added!", TeamResponseStatus.ADDED.value)
 
     @classmethod
     def join_channel(cls, registration_data):
+        user = Authenticator.authenticate_team(registration_data.authentication)
+
+        channel = db.session().query(ChannelTableEntry).filter(
+            ChannelTableEntry.channel_id == registration_data.channel_id
+        ).one_or_none()
+
+        if not channel:
+            cls.logger().info(
+                f"User {user.user_id} attempting to join channel #{registration_data.channel_id}, which does not exist.")
+            return BadRequestChannelMessageResponse("Channel not found.", ChannelResponseStatus.CHANNEL_NOT_FOUND.value)
+
+        if channel.team_id != user.team_id:
+            cls.logger().info(
+                f"User {user.user_id} from team {user.team_id} attempting to join channel #{channel.channel_id},"
+                f"but it's in team {channel.team_id}.")
+            return BadRequestChannelMessageResponse("Other team's channel.", ChannelResponseStatus.OTHER_TEAM.value)
+
+        if channel.visibility == ChannelVisibilities.PRIVATE.value:
+            cls.logger().info(
+                f"User {user.user_id} attempting to join channel #{channel.channel_id}, which is private.")
+            return BadRequestChannelMessageResponse("Private channel!", ChannelResponseStatus.PRIVATE_VISIBILITY.value)
+
+        user_channel = UsersByChannelsTableEntry(
+            user_id=user.user_id,
+            channel_id=channel.channel_id
+        )
+
+        try:
+            db.session.add(user_channel)
+            db.session.commit()
+            cls.logger().info(f"User {user.user_id} joined channel #{channel.channel_id}.")
+            return SuccessfulChannelResponse(channel, ChannelResponseStatus.JOINED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} failed at joining channel #{channel.channel_id}.")
+            return UnsuccessfulChannelMessageResponse("Couldn't join channel.")
+
+    @classmethod
+    def remove_member(cls, registration_data):
+        pass
+
+    @classmethod
+    def channel_members(cls, registration_data):
         pass
 
     @classmethod

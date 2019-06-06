@@ -164,3 +164,10 @@ class ClientRequest:
             channel_id=self.json_body().get("channel_id"),
             user_invited_id=self.json_body().get("user_invited_id")
         )
+
+    def channel_registration_data(self):
+        return ChannelRegistrationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=self.json_body().get("team_id"),
+            channel_id=self.json_body().get("channel_id")
+        )

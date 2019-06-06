@@ -50,6 +50,9 @@ class TeamResponseStatus(Enum):
 class ChannelResponseStatus(Enum):
     VISIBILITY_UNAVAILABLE = "VISIBILITY_UNAVAILABLE"
     CHANNEL_NOT_FOUND = "CHANNEL_NOT_FOUND"
+    PRIVATE_VISIBILITY = "PRIVATE_VISIBILITY"
+    OTHER_TEAM = "OTHER_TEAM"
+    JOINED = "JOINED"
 
 
 class UserRoles(Enum):
