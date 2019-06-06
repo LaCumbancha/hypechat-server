@@ -57,6 +57,14 @@ def team_users(team_id):
     return jsonify(users.json()), users.status_code()
 
 
+@app.route('/teams/<team_id>/channels', methods=['GET'])
+def team_channels(team_id):
+    logger.info(f"Attempting to get all channels from team {team_id}.")
+    req = ClientRequest(request)
+    channels = TeamService.team_channels(req.team_authentication(team_id))
+    return jsonify(channels.json()), channels.status_code()
+
+
 @app.route('/teams/<team_id>/users/<user_id>/profile', methods=['GET'])
 def team_user_profile(team_id, user_id):
     logger.info(f"Attempting to get user {user_id} from team {team_id} profile.")

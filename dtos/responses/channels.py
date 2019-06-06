@@ -17,6 +17,21 @@ class SuccessfulChannelResponse(SuccessfulClientResponse):
         }
 
 
+class SuccessfulChannelsListResponse(Jsonizable, Response):
+
+    def __init__(self, channels_list):
+        self.channels_list = channels_list
+
+    def json(self):
+        return {
+            "status": UserResponseStatus.LIST.value,
+            "channels": self.channels_list
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class ActiveChannelOutput(Jsonizable):
 
     def __init__(self, channel):

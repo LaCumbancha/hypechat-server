@@ -1,9 +1,11 @@
 from app import db
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.responses.channels import SuccessfulChannelsListResponse
 from models.authentication import Authenticator
 from tables.users import *
 from tables.teams import *
+from tables.channels import *
 from models.constants import TeamRoles
 from sqlalchemy import exc, and_
 
@@ -179,6 +181,33 @@ class TeamService:
             }]
 
         return users
+
+    @classmethod
+    def team_channels(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+
+        team_channels = db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.team_id == user.team_id
+        ).all()
+
+        cls.logger().info(f"User {user.username} got {len(team_channels)} users from team #{user_data.team_id}.")
+        return SuccessfulChannelsListResponse(cls._team_channels_list(team_channels))
+
+    @classmethod
+    def _team_channels_list(cls, channels_list):
+        channels = []
+
+        for channel in channels_list:
+            channels += [{
+                "id": channel.channel_id,
+                "name": channel.name,
+                "creator": channel.creator,
+                "visibility": channel.visibility,
+                "description": channel.description,
+                "welcome_message": channel.welcome_message
+            }]
+
+        return channels
 
     @classmethod
     def team_user_by_id(cls, user_data):
