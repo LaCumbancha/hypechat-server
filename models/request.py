@@ -179,3 +179,10 @@ class ClientRequest:
             channel_id=channel_id,
             delete_id=user_id
         )
+
+    def channel_authentication(self, team_id, channel_id):
+        return ChannelAuthenticationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id
+        )

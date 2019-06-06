@@ -1,9 +1,10 @@
 from app import db
 from dtos.responses.channels import *
+from dtos.responses.clients import SuccessfulUsersListResponse
 from models.authentication import Authenticator
 from tables.users import UsersByChannelsTableEntry, UsersByTeamsTableEntry, UserTableEntry
 from tables.channels import *
-from sqlalchemy import exc
+from sqlalchemy import exc, and_
 
 import logging
 
@@ -170,8 +171,44 @@ class ChannelService:
                                                     ChannelResponseStatus.USER_NOT_MEMBER.value)
 
     @classmethod
-    def channel_members(cls, registration_data):
-        pass
+    def channel_members(cls, authentication_data):
+        user = Authenticator.authenticate_channel(authentication_data)
+
+        members = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online
+        ).join(
+            UsersByChannelsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByChannelsTableEntry.user_id,
+                UsersByChannelsTableEntry.channel_id == authentication_data.channel_id
+            )
+        ).all()
+
+        cls.logger().info(f"User {user.username} got {len(members)} users from channel #{authentication_data.channel_id}.")
+        return SuccessfulUsersListResponse(cls._channel_users_list(members))
+
+    @classmethod
+    def _channel_users_list(cls, user_list):
+        users = []
+
+        for user in user_list:
+            users += [{
+                "id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic,
+                "online": user.online
+            }]
+
+        return users
 
     @classmethod
     def leave_channel(cls, user_data):

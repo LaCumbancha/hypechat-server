@@ -40,7 +40,7 @@ def remove_member(team_id, channel_id, user_id):
     return jsonify(new_member.json()), new_member.status_code()
 
 
-@app.route('/teams/<team_id>/channels/<channel_id>/users', methods=['DELETE'])
+@app.route('/teams/<team_id>/channels/<channel_id>/users', methods=['GET'])
 def channel_members(team_id, channel_id):
     logger.info(f"Attempting to get members from team #{team_id}'s channel #{channel_id}.")
     req = ClientRequest(request)
