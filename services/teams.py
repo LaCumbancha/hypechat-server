@@ -56,7 +56,7 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: TeamRoles.is_admin(user))
+        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: TeamRoles.is_team_admin(user))
 
         already_member = db.session.query(
             UserTableEntry.user_id
@@ -213,7 +213,7 @@ class TeamService:
 
     @classmethod
     def delete_users(cls, delete_data):
-        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: TeamRoles.is_admin(user))
+        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: TeamRoles.is_team_admin(user))
 
         delete_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
             UsersByTeamsTableEntry.user_id == delete_data.delete_id,
@@ -250,7 +250,7 @@ class TeamService:
     @classmethod
     def change_role(cls, change_role_data):
         team_admin = Authenticator.authenticate_team(change_role_data.authentication,
-                                                     lambda user: TeamRoles.is_creator(user))
+                                                     lambda user: TeamRoles.is_team_creator(user))
 
         if change_role_data.new_role == TeamRoles.CREATOR.value:
             cls.logger().info(
@@ -306,7 +306,7 @@ class TeamService:
 
     @classmethod
     def delete_team(cls, user_data):
-        user = Authenticator.authenticate_team(user_data, lambda user: TeamRoles.is_admin(user))
+        user = Authenticator.authenticate_team(user_data, lambda user: TeamRoles.is_team_admin(user))
 
         team_users = db.session.query(UsersByTeamsTableEntry)\
             .filter(UsersByTeamsTableEntry.team_id == user.team_id)
@@ -328,7 +328,7 @@ class TeamService:
 
     @classmethod
     def update_information(cls, update_data):
-        user = Authenticator.authenticate_team(update_data.authentication, lambda user: TeamRoles.is_admin(user))
+        user = Authenticator.authenticate_team(update_data.authentication, lambda user: TeamRoles.is_team_admin(user))
         team = db.session.query(TeamTableEntry).filter(
             TeamTableEntry.team_id == update_data.authentication.team_id
         ).one_or_none()

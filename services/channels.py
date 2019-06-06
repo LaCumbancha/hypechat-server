@@ -1,6 +1,7 @@
 from app import db
 from dtos.responses.channels import *
 from models.authentication import Authenticator
+from tables.users import UsersByChannelsTableEntry, UsersByTeamsTableEntry, UserTableEntry
 from tables.channels import *
 from sqlalchemy import exc
 
@@ -57,7 +58,53 @@ class ChannelService:
 
     @classmethod
     def add_member(cls, invitation_data):
-        pass
+        user = Authenticator.authenticate_channel(invitation_data.authentication,
+                                                  lambda user, creator: TeamRoles.is_channel_creator(user, creator))
+
+        if not db.session.query(UserTableEntry).filter(
+                UserTableEntry.user_id == invitation_data.user_invited_id
+        ).one_or_none():
+            cls.logger().info(f"Trying to add user an nonexistent user to channel"
+                              f"{invitation_data.authentication.channel_id}.")
+            return BadRequestChannelMessageResponse(
+                "Invited user not found!", UserResponseStatus.USER_NOT_FOUND.value)
+
+        if not db.session.query(UsersByTeamsTableEntry).filter(
+            UsersByTeamsTableEntry.user_id == invitation_data.user_invited_id,
+            UsersByTeamsTableEntry.team_id == invitation_data.authentication.team_id
+        ).one_or_none():
+            cls.logger().info(f"Trying to add user {invitation_data.user_invited_id} to channel"
+                              f"{invitation_data.authentication.channel_id}, but it's not part of the team #"
+                              f"{invitation_data.authentication.team_id}.")
+            return BadRequestChannelMessageResponse(
+                "User not part of the team!", TeamResponseStatus.USER_NOT_MEMBER.value)
+
+        try:
+            new_user_by_channel = UsersByChannelsTableEntry(
+                user_id=invitation_data.user_invited_id,
+                channel_id=invitation_data.authentication.channel_id
+            )
+            db.session.add(new_user_by_channel)
+            db.session.commit()
+            cls.logger().info(f"User #{invitation_data.user_invited_id} added to channel "
+                              f"#{invitation_data.authentication.channel_id} by {user.username}.")
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(UsersByChannelsTableEntry).filter(
+                    UsersByChannelsTableEntry.user_id == invitation_data.user_invited_id,
+                    UsersByChannelsTableEntry.channel_id == invitation_data.authentication.channel_id
+            ).one_or_none():
+                cls.logger().info(
+                    f"Failing to create add user #{invitation_data.user_invited_id} to channel "
+                    f"{invitation_data.authentication.channel_id}. The user is already part of the channel.")
+                return BadRequestChannelMessageResponse(f"User already registered in channel.",
+                                                        TeamResponseStatus.ALREADY_REGISTERED.value)
+            else:
+                cls.logger().error(f"Failing to add user #{invitation_data.user_invited_id} to channel"
+                                   f"{invitation_data.authentication.channel_id}.")
+                return UnsuccessfulChannelMessageResponse("Couldn't add channel.")
+        else:
+            return SuccessfulChannelMessageResponse("User added!", TeamResponseStatus.ADDED.value)
 
     @classmethod
     def join_channel(cls, registration_data):

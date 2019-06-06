@@ -3,9 +3,10 @@ import random
 import string
 import datetime
 
-from tables.users import UserTableEntry, UsersByTeamsTableEntry
+from tables.users import UserTableEntry, UsersByTeamsTableEntry, UsersByChannelsTableEntry
 from tables.teams import TeamTableEntry
-from models.constants import UserResponseStatus, TeamResponseStatus
+from tables.channels import ChannelTableEntry
+from models.constants import UserResponseStatus, TeamResponseStatus, ChannelResponseStatus, TeamRoles
 from exceptions.exceptions import *
 from sqlalchemy import and_
 
@@ -95,4 +96,49 @@ class Authenticator:
                 logger.info(
                     f"User {user.username} trying to access team #{authentication.team_id}, when it's not part of it.")
                 raise NoPermissionsError("You're not part of this team!",
+                                         TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+
+    @classmethod
+    def authenticate_channel(cls, authentication, role_verifying=lambda _1, _2: True):
+        logger = logging.getLogger(cls.__name__)
+
+        user = cls.authenticate_team(authentication)
+        channel_user = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            UsersByChannelsTableEntry.channel_id,
+            ChannelTableEntry.creator
+        ).join(
+            UsersByChannelsTableEntry,
+            and_(
+                UsersByChannelsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByChannelsTableEntry.user_id == user.user_id,
+                UsersByChannelsTableEntry.channel_id == authentication.channel_id
+            )
+        ).join(
+            ChannelTableEntry,
+            UsersByChannelsTableEntry.channel_id == ChannelTableEntry.channel_id
+        ).one_or_none()
+
+        if channel_user:
+            if role_verifying(channel_user.creator, channel_user.user_id):
+                logger.info(f"User {user.username} authenticated as channel #{authentication.channel_id} creator.")
+                return channel_user
+            else:
+                return cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_admin(user))
+        else:
+            if not db.session.query(ChannelTableEntry).filter(
+                    ChannelTableEntry.channel_id == authentication.channel_id
+            ).one_or_none():
+                logger.info(f"Chanel #{authentication.channel_id} not found.")
+                raise ChannelNotFoundError("Channel not found.", ChannelResponseStatus.CHANNEL_NOT_FOUND.value)
+            else:
+                logger.info(f"User {user.username} trying to access channel #{authentication.channel_id}, "
+                            f"when it's not part of it.")
+                raise NoPermissionsError("You're not part of this channel!",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)

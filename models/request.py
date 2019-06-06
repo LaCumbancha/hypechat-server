@@ -156,3 +156,11 @@ class ClientRequest:
         except VisibilityNotAvailableError:
             logging.getLogger(self.__class__.__name__).warning(f"Visibility {self.json_body().get('visibility')} not defined.")
             raise
+
+    def channel_invitation_data(self):
+        return ChannelInvitationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=self.json_body().get("team_id"),
+            channel_id=self.json_body().get("channel_id"),
+            user_invited_id=self.json_body().get("user_invited_id")
+        )

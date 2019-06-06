@@ -32,6 +32,22 @@ def join_channel():
     return jsonify(new_member.json()), new_member.status_code()
 
 
+@app.route('/teams/<team_id>/channels/<channel_id>/users/<user_id>', methods=['DELETE'])
+def remove_member(team_id, channel_id, user_id):
+    logger.info(f"Attempting to remove member #{user_id} from team #{team_id}'s channel #{channel_id}.")
+    req = ClientRequest(request)
+    new_member = ChannelService.remove_member(req.remove_member_data(team_id, user_id, channel_id))
+    return jsonify(new_member.json()), new_member.status_code()
+
+
+@app.route('/teams/<team_id>/channels/<channel_id>/users', methods=['DELETE'])
+def channel_members(team_id, channel_id):
+    logger.info(f"Attempting to get members from team #{team_id}'s channel #{channel_id}.")
+    req = ClientRequest(request)
+    new_member = ChannelService.get_members(req.channel_authentication(team_id, channel_id))
+    return jsonify(new_member.json()), new_member.status_code()
+
+
 @app.route('/teams/<team_id>/channels/<channel_id>/leave', methods=['DELETE'])
 def leave_channel(team_id, channel_id):
     logger.info(f"Attempting to leave channel #{channel_id}")

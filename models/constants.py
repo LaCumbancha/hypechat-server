@@ -49,6 +49,7 @@ class TeamResponseStatus(Enum):
 
 class ChannelResponseStatus(Enum):
     VISIBILITY_UNAVAILABLE = "VISIBILITY_UNAVAILABLE"
+    CHANNEL_NOT_FOUND = "CHANNEL_NOT_FOUND"
 
 
 class UserRoles(Enum):
@@ -62,11 +63,11 @@ class TeamRoles(Enum):
     MEMBER = "MEMBER"
 
     @classmethod
-    def is_admin(cls, user):
+    def is_team_admin(cls, user):
         return user.role in [TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
 
     @classmethod
-    def is_creator(cls, user):
+    def is_team_creator(cls, user):
         return user.role == TeamRoles.CREATOR.value
 
     @classmethod
@@ -77,6 +78,10 @@ class TeamRoles(Enum):
             return True
         else:
             return False
+
+    @classmethod
+    def is_channel_creator(cls, user_id, creator_id):
+        return user_id == creator_id
 
 
 class ChannelVisibilities(Enum):
