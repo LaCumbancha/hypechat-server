@@ -186,3 +186,11 @@ class ClientRequest:
             team_id=team_id,
             channel_id=channel_id
         )
+
+    def channel_update(self, team_id, channel_id):
+        return ChannelUpdateDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id,
+            updated_channel=self.json_body()
+        )

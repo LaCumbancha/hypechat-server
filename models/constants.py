@@ -49,8 +49,9 @@ class TeamResponseStatus(Enum):
 
 class ChannelResponseStatus(Enum):
     ADDED = "ADDED"
-    REMOVED = "REMOVED"
     JOINED = "JOINED"
+    UPDATED = "UPDATED"
+    REMOVED = "REMOVED"
     OTHER_TEAM = "OTHER_TEAM"
     USER_NOT_MEMBER = "USER_NOT_MEMBER"
     CHANNEL_NOT_FOUND = "CHANNEL_NOT_FOUND"

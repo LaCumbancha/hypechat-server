@@ -44,3 +44,13 @@ class DeleteUserChannelDTO:
     def __init__(self, token, team_id, channel_id, delete_id):
         self.authentication = ChannelAuthenticationDTO(token, team_id, channel_id)
         self.delete_id = delete_id
+
+
+class ChannelUpdateDTO:
+
+    def __init__(self, token, team_id, channel_id, updated_channel):
+        self.authentication = ChannelAuthenticationDTO(token, team_id, channel_id)
+        self.updated_channel = updated_channel
+        if "visibility" in updated_channel and not updated_channel["visibility"] in ChannelVisibilities.__members__:
+            raise VisibilityNotAvailableError(f"Visibility {updated_channel['visibility']} is not defined.",
+                                              ChannelResponseStatus.VISIBILITY_UNAVAILABLE.value)

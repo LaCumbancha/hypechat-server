@@ -375,7 +375,7 @@ class TeamService:
         try:
             db.session.commit()
             cls.logger().info(
-                f"Team {team.team_id} information updated by user {user.username}, who's team {user.role}-")
+                f"Team {team.team_id} information updated by user {user.username}, who's team {user.role}.")
             return SuccessfulTeamResponse(team, TeamResponseStatus.UPDATED.value)
         except exc.IntegrityError:
             db.session.rollback()

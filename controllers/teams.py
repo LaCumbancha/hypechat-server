@@ -101,5 +101,5 @@ def delete_team(team_id):
 def update_team_information(team_id):
     logger.info(f"Attempting to update team {team_id} information.")
     req = ClientRequest(request)
-    team_updated = TeamService.update_information(req.team_update(team_id))
-    return jsonify(team_updated.json()), team_updated.status_code()
+    updated_team = TeamService.update_information(req.team_update(team_id))
+    return jsonify(updated_team.json()), updated_team.status_code()

@@ -62,3 +62,11 @@ def delete_channel(team_id, channel_id):
     req = ClientRequest(request)
     old_channel = ChannelService.delete_channel(req.delete_channel_data(team_id, channel_id))
     return jsonify(old_channel.json()), old_channel.status_code()
+
+
+@app.route('/teams/<team_id>/channels/<channel_id>', methods=['PATCH'])
+def update_channel_information(team_id, channel_id):
+    logger.info(f"Attempting to update channel #{channel_id} information from team #{team_id}")
+    req = ClientRequest(request)
+    updated_channel = ChannelService.update_information(req.channel_update(team_id, channel_id))
+    return jsonify(updated_channel.json()), updated_channel.status_code()
