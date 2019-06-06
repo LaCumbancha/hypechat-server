@@ -58,8 +58,7 @@ class ChannelService:
 
     @classmethod
     def add_member(cls, invitation_data):
-        user = Authenticator.authenticate_channel(invitation_data.authentication,
-                                                  lambda user, creator: TeamRoles.is_channel_creator(user, creator))
+        user = Authenticator.authenticate_channel(invitation_data.authentication, TeamRoles.is_channel_creator)
 
         if not db.session.query(UserTableEntry).filter(
                 UserTableEntry.user_id == invitation_data.user_invited_id
@@ -104,7 +103,7 @@ class ChannelService:
                                    f"{invitation_data.authentication.channel_id}.")
                 return UnsuccessfulChannelMessageResponse("Couldn't add user to channel.")
         else:
-            return SuccessfulChannelMessageResponse("User added!", TeamResponseStatus.ADDED.value)
+            return SuccessfulChannelMessageResponse("User added!", ChannelResponseStatus.ADDED.value)
 
     @classmethod
     def join_channel(cls, registration_data):
@@ -146,8 +145,29 @@ class ChannelService:
             return UnsuccessfulChannelMessageResponse("Couldn't join channel.")
 
     @classmethod
-    def remove_member(cls, registration_data):
-        pass
+    def remove_member(cls, delete_data):
+        user = Authenticator.authenticate_channel(delete_data.authentication, TeamRoles.is_channel_creator)
+
+        delete_user = db.session.query(UsersByChannelsTableEntry).filter(
+            UsersByChannelsTableEntry.user_id == delete_data.delete_id,
+            UsersByChannelsTableEntry.channel_id == delete_data.authentication.channel_id
+        ).one_or_none()
+
+        if delete_user:
+            try:
+                db.session.delete(delete_user)
+                db.session.commit()
+                cls.logger().info(f"User #{delete_user.user_id} removed from channel #{delete_user.channel_id}.")
+                return SuccessfulChannelMessageResponse("User removed!", ChannelResponseStatus.REMOVED.value)
+            except exc.IntegrityError:
+                db.session.rollback()
+                cls.logger().error(f"Failed at removing user #{delete_user.user_id} from channel #{delete_user.channel_id}.")
+                return UnsuccessfulChannelMessageResponse("Couldn't remove user.")
+        else:
+            cls.logger().info(f"User {user.user_id} trying to delete user #{delete_data.delete_id} from channel "
+                              f"#{delete_data.authentication.channel_id}, but it's not part of it!")
+            return BadRequestChannelMessageResponse("User not part of channel!.",
+                                                    ChannelResponseStatus.USER_NOT_MEMBER.value)
 
     @classmethod
     def channel_members(cls, registration_data):

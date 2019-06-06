@@ -129,8 +129,8 @@ class ClientRequest:
             team_id=team_id
         )
 
-    def delete_user_data(self, team_id, delete_id):
-        return DeleteUserDTO(
+    def delete_user_team_data(self, team_id, delete_id):
+        return DeleteUserTeamDTO(
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id,
             delete_id=delete_id
@@ -170,4 +170,12 @@ class ClientRequest:
             token=self.headers().get("X-Auth-Token"),
             team_id=self.json_body().get("team_id"),
             channel_id=self.json_body().get("channel_id")
+        )
+
+    def delete_user_channel(self, team_id, channel_id, user_id):
+        return DeleteUserChannelDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id,
+            delete_id=user_id
         )

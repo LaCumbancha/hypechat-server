@@ -37,3 +37,10 @@ class ChannelRegistrationDTO:
     def __init__(self, token, team_id, channel_id):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.channel_id = channel_id
+
+
+class DeleteUserChannelDTO:
+
+    def __init__(self, token, team_id, channel_id, delete_id):
+        self.authentication = ChannelAuthenticationDTO(token, team_id, channel_id)
+        self.delete_id = delete_id

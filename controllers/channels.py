@@ -36,7 +36,7 @@ def join_channel():
 def remove_member(team_id, channel_id, user_id):
     logger.info(f"Attempting to remove member #{user_id} from team #{team_id}'s channel #{channel_id}.")
     req = ClientRequest(request)
-    new_member = ChannelService.remove_member(req.remove_member_data(team_id, user_id, channel_id))
+    new_member = ChannelService.remove_member(req.delete_user_channel(team_id, channel_id, user_id))
     return jsonify(new_member.json()), new_member.status_code()
 
 
