@@ -8,7 +8,7 @@ from models.constants import ChannelVisibilities
 class ChannelTableEntry(db.Model):
     __tablename__ = 'channels'
 
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='id', type_=db.Integer,
+    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='id', type_=db.Integer,
                            nullable=False, primary_key=True)
     team_id = db.Column(name='team_id', type_=db.Integer, nullable=False)
     name = db.Column(name='name', type_=db.String(), nullable=False)

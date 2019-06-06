@@ -69,7 +69,8 @@ class MessageService:
                 or_(
                     MessageTableEntry.sender_id == chats.c.user_id,
                     MessageTableEntry.receiver_id == chats.c.user_id,
-                )
+                ),
+                MessageTableEntry.team_id == chats.c.team_id
             )
         ).join(
             UserTableEntry,
@@ -112,8 +113,10 @@ class MessageService:
         user = Authenticator.authenticate_team(chat_data.authentication)
 
         chat = db.session.query(ChatTableEntry).filter(and_(
-            ChatTableEntry.user_id == user.user_id, ChatTableEntry.chat_id == chat_data.chat_id)
-        ).one_or_none()
+            ChatTableEntry.user_id == user.user_id,
+            ChatTableEntry.chat_id == chat_data.chat_id,
+            ChatTableEntry.chat_id == user.team_id
+        )).one_or_none()
 
         if not chat:
             cls.logger().error(
@@ -181,7 +184,7 @@ class MessageService:
             text_content=inbox_data.text_content
         )
 
-        chat_sender, chat_receiver = cls._increase_direct_chat_offset(user.user_id, inbox_data.chat_id)
+        chat_sender, chat_receiver = cls._increase_direct_chat_offset(user.user_id, inbox_data.chat_id, user.team_id)
 
         try:
             db.session.add(new_message)
@@ -207,11 +210,17 @@ class MessageService:
             return SuccessfulMessageSentResponse("Message sent")
 
     @classmethod
-    def _increase_direct_chat_offset(cls, sender_id, receiver_id):
-        chat_sender = db.session.query(ChatTableEntry).filter(
-            and_(ChatTableEntry.user_id == sender_id, ChatTableEntry.chat_id == receiver_id)).one_or_none()
-        chat_receiver = db.session.query(ChatTableEntry).filter(
-            and_(ChatTableEntry.user_id == receiver_id, ChatTableEntry.chat_id == sender_id)).one_or_none()
+    def _increase_direct_chat_offset(cls, sender_id, receiver_id, team_id):
+        chat_sender = db.session.query(ChatTableEntry).filter(and_(
+            ChatTableEntry.user_id == sender_id,
+            ChatTableEntry.chat_id == receiver_id,
+            ChatTableEntry.team_id == team_id
+        )).one_or_none()
+        chat_receiver = db.session.query(ChatTableEntry).filter(and_(
+            ChatTableEntry.user_id == receiver_id,
+            ChatTableEntry.chat_id == sender_id,
+            ChatTableEntry.team_id == team_id
+        )).one_or_none()
 
         if chat_sender and chat_receiver:
             chat_sender.unseen_offset = 0
@@ -220,11 +229,13 @@ class MessageService:
             chat_sender = ChatTableEntry(
                 user_id=sender_id,
                 chat_id=receiver_id,
+                team_id=team_id,
                 unseen_offset=0
             )
             chat_receiver = ChatTableEntry(
                 user_id=receiver_id,
                 chat_id=sender_id,
+                team_id=team_id,
                 unseen_offset=1
             )
 

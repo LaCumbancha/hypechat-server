@@ -13,7 +13,7 @@ class ClientTableEntry(db.Model):
 class UserTableEntry(db.Model):
     __tablename__ = 'users'
 
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='id', type_=db.Integer,
+    user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='id', type_=db.Integer,
                         nullable=False, primary_key=True)
     username = db.Column(name='username', type_=db.String(), nullable=False, unique=True)
     email = db.Column(name='email', type_=db.String(), nullable=False, unique=True)
@@ -29,9 +29,9 @@ class UserTableEntry(db.Model):
 class UsersByTeamsTableEntry(db.Model):
     __tablename__ = 'users_teams'
 
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='user_id', type_=db.Integer,
+    user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='user_id', type_=db.Integer,
                         nullable=False, primary_key=True)
-    team_id = db.Column(ForeignKey(TeamTableEntry.team_id), name='team_id', type_=db.Integer,
+    team_id = db.Column(ForeignKey(TeamTableEntry.team_id, ondelete='CASCADE'), name='team_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     role = db.Column(name='role', type_=db.String(), nullable=False, default=TeamRoles.MEMBER.value)
 
@@ -39,7 +39,7 @@ class UsersByTeamsTableEntry(db.Model):
 class UsersByChannelsTableEntry(db.Model):
     __tablename__ = 'users_channels'
 
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='user_id', type_=db.Integer,
+    user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='user_id', type_=db.Integer,
                         nullable=False, primary_key=True)
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='channel_id', type_=db.Integer,
+    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='channel_id', type_=db.Integer,
                            nullable=False, primary_key=True)

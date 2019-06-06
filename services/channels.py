@@ -234,6 +234,43 @@ class ChannelService:
             return UnsuccessfulTeamMessageResponse("Couldn't leave chanel.")
 
     @classmethod
+    def update_information(cls, update_data):
+        user = Authenticator.authenticate_channel(update_data.authentication, TeamRoles.is_channel_creator)
+        channel = db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.channel_id == update_data.authentication.channel_id
+        ).one_or_none()
+
+        channel.name = \
+            update_data.updated_channel["name"] if "name" in update_data.updated_channel else channel.name
+        channel.visibility = \
+            update_data.updated_channel["visibility"] if "visibility" in update_data.updated_channel \
+                else channel.visibility
+        channel.description = \
+            update_data.updated_channel["description"] if "description" in update_data.updated_channel \
+                else channel.description
+        channel.welcome_message = \
+            update_data.updated_channel["welcome_message"] if "welcome_message" in update_data.updated_channel \
+                else channel.welcome_message
+
+        try:
+            db.session.commit()
+            cls.logger().info(
+                f"Channel {channel.channel_id} information updated by user {user.username}.")
+            return SuccessfulChannelResponse(channel, ChannelResponseStatus.UPDATED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            if db.session.query(ChannelTableEntry).filter(
+                    ChannelTableEntry.name == update_data.updated_team.get("name")
+            ).one_or_none():
+                cls.logger().info(f"Trying to update channel {update_data.authentication.channel_id}'s name with " +
+                                  f"{update_data.updated_channel.get('name')}, that currently exists.")
+                return BadRequestChannelMessageResponse(f"Name {update_data.updated_channel.get('name')}" +
+                                                        " is already in use!", TeamResponseStatus.ALREADY_REGISTERED.value)
+            else:
+                cls.logger().error(f"Couldn't update channel {update_data.authentication.channel_id} information.")
+                return UnsuccessfulTeamMessageResponse("Couldn't update channel information!")
+
+    @classmethod
     def delete_channel(cls, user_data):
         user = Authenticator.authenticate_channel(user_data)
 
@@ -271,40 +308,3 @@ class ChannelService:
             db.session.rollback()
             cls.logger().error(f"User #{user.user_id} couldn't remove channel #{user_data.channel_id}.")
             return UnsuccessfulChannelMessageResponse("Couldn't remove channel.")
-
-    @classmethod
-    def update_information(cls, update_data):
-        user = Authenticator.authenticate_channel(update_data.authentication, TeamRoles.is_channel_creator)
-        channel = db.session.query(ChannelTableEntry).filter(
-            ChannelTableEntry.channel_id == update_data.authentication.channel_id
-        ).one_or_none()
-
-        channel.name = \
-            update_data.updated_channel["name"] if "name" in update_data.updated_channel else channel.name
-        channel.visibility = \
-            update_data.updated_channel["visibility"] if "visibility" in update_data.updated_channel \
-                else channel.visibility
-        channel.description = \
-            update_data.updated_channel["description"] if "description" in update_data.updated_channel \
-                else channel.description
-        channel.welcome_message = \
-            update_data.updated_channel["welcome_message"] if "welcome_message" in update_data.updated_channel \
-                else channel.welcome_message
-
-        try:
-            db.session.commit()
-            cls.logger().info(
-                f"Channel {channel.channel_id} information updated by user {user.username}.")
-            return SuccessfulChannelResponse(channel, ChannelResponseStatus.UPDATED.value)
-        except exc.IntegrityError:
-            db.session.rollback()
-            if db.session.query(ChannelTableEntry).filter(
-                    ChannelTableEntry.name == update_data.updated_team.get("name")
-            ).one_or_none():
-                cls.logger().info(f"Trying to update channel {update_data.authentication.channel_id}'s name with " +
-                                  f"{update_data.updated_channel.get('name')}, that currently exists.")
-                return BadRequestChannelMessageResponse(f"Name {update_data.updated_channel.get('name')}" +
-                                                        " is already in use!", TeamResponseStatus.ALREADY_REGISTERED.value)
-            else:
-                cls.logger().error(f"Couldn't update channel {update_data.authentication.channel_id} information.")
-                return UnsuccessfulTeamMessageResponse("Couldn't update channel information!")

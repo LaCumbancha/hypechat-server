@@ -333,28 +333,6 @@ class TeamService:
             return UnsuccessfulTeamMessageResponse("Couldn't leave team.")
 
     @classmethod
-    def delete_team(cls, user_data):
-        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
-
-        team_users = db.session.query(UsersByTeamsTableEntry)\
-            .filter(UsersByTeamsTableEntry.team_id == user.team_id)
-
-        team = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == user.team_id).one_or_none()
-
-        try:
-            users = team_users.delete()
-            db.session.flush()
-            db.session.delete(team)
-            db.session.commit()
-            cls.logger().info(
-                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
-            return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
-        except exc.IntegrityError:
-            db.session.rollback()
-            cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
-            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")
-
-    @classmethod
     def update_information(cls, update_data):
         user = Authenticator.authenticate_team(update_data.authentication, TeamRoles.is_team_admin)
         team = db.session.query(TeamTableEntry).filter(
@@ -424,3 +402,25 @@ class TeamService:
             }]
 
         return users
+
+    @classmethod
+    def delete_team(cls, user_data):
+        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
+
+        team_users = db.session.query(UsersByTeamsTableEntry)\
+            .filter(UsersByTeamsTableEntry.team_id == user.team_id)
+
+        team = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == user.team_id).one_or_none()
+
+        try:
+            users = team_users.delete()
+            db.session.flush()
+            db.session.delete(team)
+            db.session.commit()
+            cls.logger().info(
+                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
+            return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")
