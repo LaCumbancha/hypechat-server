@@ -28,5 +28,5 @@ def get_messages_from_direct_chat(team_id, chat_id):
 def send_direct_message():
     logger.info(f"Attempting to send message in team.")
     req = ClientRequest(request)
-    response = MessageService.send_direct_message(req.inbox_data())
+    response = MessageService.send_message(req.inbox_data())
     return jsonify(response.json()), response.status_code()

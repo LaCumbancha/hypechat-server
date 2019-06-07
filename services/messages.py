@@ -4,7 +4,9 @@ from exceptions.exceptions import *
 from models.authentication import Authenticator
 from tables.users import *
 from tables.messages import *
-from sqlalchemy import exc, func, and_, or_
+from tables.channels import *
+from sqlalchemy import exc, func, and_, or_, literal
+from sqlalchemy.orm import exc as orm
 
 import logging
 
@@ -171,11 +173,18 @@ class MessageService:
         return output_messages
 
     @classmethod
-    def send_direct_message(cls, inbox_data):
+    def send_message(cls, inbox_data):
         user = Authenticator.authenticate_team(inbox_data.authentication)
 
         if user.user_id == inbox_data.chat_id:
             raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)
+
+        receiver = cls._determinate_message_receiver(inbox_data.chat_id)
+        if not receiver or receiver.team_id != user.team_id:
+            cls.logger().info(
+                f"Trying to send a message to client #{inbox_data.chat_id} who's not part of team {user.team_id}.")
+            return BadRequestMessageSentResponse("The receiver it's not part of this team!",
+                                                 TeamResponseStatus.USER_NOT_MEMBER.value)
 
         new_message = MessageTableEntry(
             sender_id=user.user_id,
@@ -184,15 +193,17 @@ class MessageService:
             text_content=inbox_data.text_content
         )
 
-        chat_sender, chat_receiver = cls._increase_direct_chat_offset(user.user_id, inbox_data.chat_id, user.team_id)
+        chat_sender, chat_receivers = cls._increase_chats_offset(user.user_id, inbox_data.chat_id, user.team_id,
+                                                                 receiver.is_user)
 
         try:
             db.session.add(new_message)
             db.session.flush()
             db.session.add(chat_sender)
             db.session.flush()
-            db.session.add(chat_receiver)
-            db.session.flush()
+            for chat_receiver in chat_receivers:
+                db.session.add(chat_receiver)
+                db.session.flush()
             db.session.commit()
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
         except exc.IntegrityError:
@@ -204,39 +215,112 @@ class MessageService:
                 raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
             else:
                 cls.logger().error(
-                    f"Failing to send message from user #{new_message.sender_id} to client #{new_message.chat_id}.")
+                    f"Failing to send message from user #{new_message.sender_id} to client #{inbox_data.chat_id}.")
                 return UnsuccessfulMessageSentResponse("Couldn't sent message.")
+        except orm.FlushError:
+            cls.logger().error(
+                f"Failing to send message from user #{new_message.sender_id} to client #{inbox_data.chat_id} "
+                f"due to DB problems.")
+            return UnsuccessfulMessageSentResponse("Couldn't sent message.")
         else:
             return SuccessfulMessageSentResponse("Message sent")
 
     @classmethod
-    def _increase_direct_chat_offset(cls, sender_id, receiver_id, team_id):
-        chat_sender = db.session.query(ChatTableEntry).filter(and_(
+    def _determinate_message_receiver(cls, receiver_id):
+        receiver = db.session.query(
+            UserTableEntry.user_id,
+            UsersByTeamsTableEntry.team_id,
+            literal(True).label("is_user")
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByTeamsTableEntry.user_id == receiver_id
+            )
+        ).one_or_none()
+
+        if not receiver:
+            receiver = db.session.query(
+                ChannelTableEntry.team_id,
+                literal(False).label("is_user")
+            ).filter(
+                ChannelTableEntry.channel_id == receiver_id
+            ).one_or_none()
+
+        return receiver
+
+    @classmethod
+    def _increase_chats_offset(cls, sender_id, receiver_id, team_id, is_direct_message):
+        sender_chat = db.session.query(ChatTableEntry).filter(and_(
             ChatTableEntry.user_id == sender_id,
             ChatTableEntry.chat_id == receiver_id,
             ChatTableEntry.team_id == team_id
         )).one_or_none()
-        chat_receiver = db.session.query(ChatTableEntry).filter(and_(
-            ChatTableEntry.user_id == receiver_id,
-            ChatTableEntry.chat_id == sender_id,
-            ChatTableEntry.team_id == team_id
-        )).one_or_none()
 
-        if chat_sender and chat_receiver:
-            chat_sender.unseen_offset = 0
-            chat_receiver.unseen_offset += 1
+        if sender_chat:
+            cls.logger().debug("Sender chat already exist. Setting sender offset in 0.")
+            sender_chat.unseen_offset = 0
         else:
-            chat_sender = ChatTableEntry(
+            cls.logger().debug("New sender chat. Initializing sender offset in 0.")
+            sender_chat = ChatTableEntry(
                 user_id=sender_id,
                 chat_id=receiver_id,
                 team_id=team_id,
                 unseen_offset=0
             )
-            chat_receiver = ChatTableEntry(
-                user_id=receiver_id,
-                chat_id=sender_id,
-                team_id=team_id,
-                unseen_offset=1
-            )
 
-        return chat_sender, chat_receiver
+        receivers_chat = []
+
+        if is_direct_message:
+            cls.logger().debug("Defining receiver chat offset for a Direct Message.")
+
+            receiver_user = db.session.query(ChatTableEntry).filter(and_(
+                ChatTableEntry.user_id == receiver_id,
+                ChatTableEntry.chat_id == sender_id,
+                ChatTableEntry.team_id == team_id
+            )).one_or_none()
+
+            if receiver_user:
+                cls.logger().debug("Receiver chat already exist. Increasing receiver offset by 1.")
+                receiver_user.unseen_offset += 1
+                receivers_chat += [receiver_user]
+            else:
+                cls.logger().debug("New receiver chat. Initializing receiver offset in 1.")
+                receivers_chat += [ChatTableEntry(
+                    user_id=receiver_id,
+                    chat_id=sender_id,
+                    team_id=team_id,
+                    unseen_offset=1
+                )]
+
+        else:
+
+            cls.logger().debug("Defining receivers chat offset for a Channel Message.")
+            channel_members = db.session.query(UsersByChannelsTableEntry).filter(and_(
+                UsersByChannelsTableEntry.channel_id == receiver_id,
+                UsersByChannelsTableEntry.user_id != sender_id
+            )).all()
+
+            cls.logger().debug(f"Channel has {len(channel_members)} members.")
+
+            for member in channel_members:
+                receiver_user = db.session.query(ChatTableEntry).filter(and_(
+                    ChatTableEntry.user_id == member.user_id,
+                    ChatTableEntry.chat_id == receiver_id,
+                    ChatTableEntry.team_id == team_id
+                )).one_or_none()
+
+                if receiver_user:
+                    cls.logger().debug(f"Receiving channel member chat already exists. Increasing offset by 1.")
+                    receiver_user.unseen_offset += 1
+                    receivers_chat += [receiver_user]
+                else:
+                    cls.logger().debug(f"New receiving channel member. Initializing offset in 1.")
+                    receivers_chat += [ChatTableEntry(
+                        user_id=member.user_id,
+                        chat_id=receiver_id,
+                        team_id=team_id,
+                        unseen_offset=1
+                    )]
+
+        return sender_chat, receivers_chat
