@@ -23,6 +23,19 @@ class LoginDTO:
         self.password = password
 
 
+class RecoverPasswordDTO:
+
+    def __init__(self, email):
+        self.email = email
+
+
+class RegeneratePasswordDTO:
+
+    def __init__(self, email, recover_token):
+        self.email = email
+        self.recover_token = recover_token
+
+
 class UserUpdateDTO:
 
     def __init__(self, token, updated_user):
