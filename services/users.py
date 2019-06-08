@@ -1,6 +1,7 @@
 from app import db
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.model import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from services.emails import EmailService
@@ -283,17 +284,25 @@ class UserService:
         ).one_or_none()
 
         if user:
-            recovery_token = Authenticator.generate_recovery()
-            cls.logger().debug("Generating recovery token")
-            password_recovery = PasswordRecoveryTableEntry(
-                user_id=user.user_id,
-                token=recovery_token
-            )
+            old_password_recovery = db.session.query(PasswordRecoveryTableEntry).filter(
+                PasswordRecoveryTableEntry.user_id == user.user_id
+            ).one_or_none()
 
-            db.session.add(password_recovery)
-            db.session.commit()
-            EmailService.send_email(recovery_token)
-            cls.logger().info(f"Sending recovery token email for user {user.user_id}.")
+            if old_password_recovery:
+                cls.logger().debug(f"It already exists a recovery token for user {user.username}. Resending token.")
+                recovery_token = old_password_recovery.token
+
+            else:
+                recovery_token = Authenticator.generate_recovery()
+                cls.logger().debug("Generating recovery token")
+                password_recovery = PasswordRecoveryTableEntry(user_id=user.user_id, token=recovery_token)
+                db.session.add(password_recovery)
+                db.session.commit()
+
+            email_data = RecoveryPasswordEmailDTO(email='cristian.rana8@gmail.com', username=user.username, token=recovery_token)
+            EmailService.send_email(email_data)
+
+            cls.logger().info(f"Sending recovery token email for user {user.username}.")
             return SuccessfulUserMessageResponse("Recovery token sent!", UserResponseStatus.OK.value)
 
         else:
