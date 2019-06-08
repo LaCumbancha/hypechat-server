@@ -45,7 +45,7 @@ class MessageService:
                 MessageTableEntry.sender_id == user_id
             ),
             MessageTableEntry.team_id == team_id,
-            MessageTableEntry.type == MessageTypes.DIRECT.value
+            MessageTableEntry.send_type == SendMessageType.DIRECT.value
         )).group_by(
             func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
             func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
@@ -57,7 +57,8 @@ class MessageService:
             UserTableEntry.username,
             UserTableEntry.profile_pic,
             UserTableEntry.online,
-            MessageTableEntry.text_content,
+            MessageTableEntry.content,
+            MessageTableEntry.message_type,
             MessageTableEntry.timestamp,
             chats.c.unseen
         ).join(
@@ -72,7 +73,7 @@ class MessageService:
                     MessageTableEntry.receiver_id == last_messages_mixed.c.user2,
                 ),
                 MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp,
-                MessageTableEntry.type == MessageTypes.DIRECT.value
+                MessageTableEntry.send_type == SendMessageType.DIRECT.value
             )
         ).join(
             chats,
@@ -112,7 +113,7 @@ class MessageService:
             func.max(MessageTableEntry.timestamp).label("maxtimestamp")
         ).filter(and_(
             MessageTableEntry.team_id == team_id,
-            MessageTableEntry.type == MessageTypes.CHANNEL.value
+            MessageTableEntry.send_type == SendMessageType.CHANNEL.value
         )).group_by(
             MessageTableEntry.receiver_id
         ).subquery("sq2")
@@ -123,7 +124,8 @@ class MessageService:
             UserTableEntry.profile_pic.label("chat_picture"),
             MessageTableEntry.sender_id.label("sender_id"),
             UserTableEntry.username.label("sender_username"),
-            MessageTableEntry.text_content.label("message_content"),
+            MessageTableEntry.content.label("message_content"),
+            MessageTableEntry.message_type,
             MessageTableEntry.timestamp.label("message_timestamp"),
             chats.c.unseen.label("unseen_offset")
         ).join(
@@ -163,6 +165,7 @@ class MessageService:
                     "username": message.username,
                 },
                 "content": message.text_content,
+                "type": message.message_type,
                 "timestamp": message.timestamp,
                 "unseen": True if (message.unseen > 0) else False,
                 "offset": message.unseen,
@@ -185,6 +188,7 @@ class MessageService:
                     "username": message.sender_username,
                 },
                 "content": message.message_content,
+                "type": message.message_type,
                 "timestamp": message.message_timestamp,
                 "unseen": True if (message.unseen_offset > 0) else False,
                 "offset": message.unseen_offset,
@@ -233,7 +237,8 @@ class MessageService:
                 MessageTableEntry.sender_id,
                 MessageTableEntry.receiver_id,
                 MessageTableEntry.team_id,
-                MessageTableEntry.text_content,
+                MessageTableEntry.content,
+                MessageTableEntry.message_type,
                 MessageTableEntry.timestamp,
                 UserTableEntry.username,
                 UserTableEntry.profile_pic,
@@ -252,7 +257,8 @@ class MessageService:
                 MessageTableEntry.sender_id,
                 MessageTableEntry.receiver_id,
                 MessageTableEntry.team_id,
-                MessageTableEntry.text_content,
+                MessageTableEntry.content,
+                MessageTableEntry.message_type,
                 MessageTableEntry.timestamp,
                 UserTableEntry.username,
                 UserTableEntry.profile_pic,
@@ -287,6 +293,7 @@ class MessageService:
                     "online": message.online
                 },
                 "content": message.text_content,
+                "type": message.message_type,
                 "timestamp": message.timestamp,
                 "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
             }]
@@ -314,8 +321,9 @@ class MessageService:
             sender_id=user.user_id,
             receiver_id=inbox_data.chat_id,
             team_id=user.team_id,
-            text_content=inbox_data.text_content,
-            type=MessageTypes.DIRECT.value if receiver.is_user else MessageTypes.CHANNEL.value
+            content=inbox_data.content,
+            send_type=SendMessageType.DIRECT.value if receiver.is_user else SendMessageType.CHANNEL.value,
+            message_type=inbox_data.message_type
         )
 
         chat_sender, chat_receivers = cls._increase_chats_offset(user.user_id, inbox_data.chat_id, user.team_id,

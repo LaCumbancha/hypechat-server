@@ -29,6 +29,7 @@ class MessageResponseStatus(Enum):
     SENT = "SENT"
     ERROR = "ERROR"
     CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
+    MESSAGE_TYPE_UNAVAILABLE = "MESSAGE_TYPE_UNAVAILABLE"
 
 
 class TeamResponseStatus(Enum):
@@ -97,6 +98,13 @@ class ChannelVisibilities(Enum):
     PRIVATE = "PRIVATE"
 
 
-class MessageTypes(Enum):
+class SendMessageType(Enum):
     DIRECT = "DIRECT"
     CHANNEL = "CHANNEL"
+
+
+class MessageType(Enum):
+    TEXT = "TEXT"
+    IMAGE = "IMAGE"
+    FILE = "FILE"
+    SNIPPET = "SNIPPET"
