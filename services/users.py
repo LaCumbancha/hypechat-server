@@ -1,8 +1,10 @@
 from app import db
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.model import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
+from services.emails import EmailService
 from tables.users import *
 from tables.teams import *
 from passlib.apps import custom_app_context as hashing
@@ -70,6 +72,7 @@ class UserService:
 
         if user:
             if hashing.verify(user_data.password, user.password):
+                cls.logger().debug(f"Generating token for user {user.user_id}")
                 user.auth_token = Authenticator.generate(user.username, user_data.password)
                 user.online = True
                 db.session.commit()
@@ -273,3 +276,74 @@ class UserService:
             "role": user_data.role,
             "teams": teams
         }
+
+    @classmethod
+    def recover_password(cls, recover_data):
+        user = db.session.query(UserTableEntry).filter(
+            UserTableEntry.email == recover_data.email
+        ).one_or_none()
+
+        if user:
+            old_password_recovery = db.session.query(PasswordRecoveryTableEntry).filter(
+                PasswordRecoveryTableEntry.user_id == user.user_id
+            ).one_or_none()
+
+            if old_password_recovery:
+                cls.logger().debug(f"It already exists a recovery token for user {user.username}. Resending token.")
+                recovery_token = old_password_recovery.token
+
+            else:
+                recovery_token = Authenticator.generate_recovery()
+                cls.logger().debug("Generating recovery token")
+                password_recovery = PasswordRecoveryTableEntry(user_id=user.user_id, token=recovery_token)
+                db.session.add(password_recovery)
+                db.session.commit()
+
+            email_data = RecoveryPasswordEmailDTO(email='cristian.rana8@gmail.com', username=user.username, token=recovery_token)
+            EmailService.send_email(email_data)
+
+            cls.logger().info(f"Sending recovery token email for user {user.username}.")
+            return SuccessfulUserMessageResponse("Recovery token sent!", UserResponseStatus.OK.value)
+
+        else:
+            cls.logger().info(f"User {regenerate_data.email} not found.")
+            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+
+    @classmethod
+    def regenerate_token(cls, regenerate_data):
+        user = db.session.query(UserTableEntry).filter(
+            UserTableEntry.email == regenerate_data.email
+        ).one_or_none()
+
+        if user:
+            password_recovery = db.session.query(PasswordRecoveryTableEntry).filter(
+                PasswordRecoveryTableEntry.user_id == user.user_id
+            ).one_or_none()
+
+            if password_recovery:
+                try:
+                    db.session.delete(password_recovery)
+                    db.session.flush()
+                    cls.logger().debug(f"Deleting token recover entry for user {user.user_id}")
+                    user.auth_token = Authenticator.generate(user.username, None)
+                    cls.logger().debug(f"Regenerating token for user {user.user_id}")
+                    user.online = True
+                    db.session.commit()
+                    cls.logger().info(f"Logging in user {user.user_id}")
+                    headers = {
+                        "username": user.username,
+                        "auth_token": user.auth_token
+                    }
+                    return SuccessfulUserResponse(user, headers)
+                except exc.IntegrityError:
+                    cls.logger().error(f"Couldn't regenerate token for user #{user.user_id}.")
+                    raise UnsuccessfulClientResponse("Couldn't regenerate token.")
+            else:
+                cls.logger().info(
+                    f"Attempting to recover password for user #{user.user_id} with no password recovery token.")
+                return BadRequestUserMessageResponse("You haven't ask for password recovery!",
+                                                     UserResponseStatus.WRONG_CREDENTIALS.value)
+
+        else:
+            cls.logger().info(f"User {regenerate_data.email} not found.")
+            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)

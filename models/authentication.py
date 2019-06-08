@@ -19,6 +19,7 @@ import jwt
 class Authenticator:
     _secret = os.getenv('SECRET')
     _invite_token_length = os.getenv('INVITE_TOKEN_LENGTH')
+    _recovery_token_length = os.getenv('RECOVER_TOKEN_LENGTH')
 
     @classmethod
     def generate(cls, username, password):
@@ -28,6 +29,11 @@ class Authenticator:
             "timestamp": datetime.datetime.now().__str__()
         }
         return jwt.encode(payload, cls._secret, algorithm='HS256').decode("utf-8")
+
+    @classmethod
+    def generate_recovery(cls):
+        chars = string.ascii_uppercase
+        return "".join(random.choice(chars) for _ in range(int(cls._recovery_token_length)))
 
     @classmethod
     def team_invitation(cls):

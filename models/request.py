@@ -46,6 +46,17 @@ class ClientRequest:
             password=self.json_body().get("password")
         )
 
+    def recover_data(self):
+        return RecoverPasswordDTO(
+            email=self.json_body().get("email")
+        )
+
+    def regenerate_data(self):
+        return RegeneratePasswordDTO(
+            email=self.json_body().get("email"),
+            recover_token=self.json_body().get("recover_token")
+        )
+
     def user_update(self):
         return UserUpdateDTO(
             token=self.headers().get("X-Auth-Token"),

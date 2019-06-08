@@ -26,6 +26,14 @@ class UserTableEntry(db.Model):
     online = db.Column(name='online', type_=db.Boolean, nullable=False, default=True)
 
 
+class PasswordRecoveryTableEntry(db.Model):
+    __tablename__ = 'password_recoveries'
+
+    user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='user_id', type_=db.Integer,
+                        nullable=False, primary_key=True)
+    token = db.Column(name='recovery_token', type_=db.String(), nullable=False, default=None)
+
+
 class UsersByTeamsTableEntry(db.Model):
     __tablename__ = 'users_teams'
 

@@ -58,11 +58,6 @@ def set_offline():
     return jsonify(offline_user.json()), offline_user.status_code()
 
 
-def register_headers(response, header):
-    response.headers["X-Auth-Token"] = header.get("auth_token")
-    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'
-
-
 @app.route('/users/teams', methods=['GET'])
 def get_user_teams():
     logger.info(f"Attempting to get teams for user.")
@@ -85,3 +80,29 @@ def user_profile():
     req = ClientRequest(request)
     user = UserService.user_profile(req.authentication_data())
     return jsonify(user.json()), user.status_code()
+
+
+@app.route('/users/profile/password/recover', methods=['POST'])
+def recover_password():
+    logger.info("Attempting to recover password.")
+    req = ClientRequest(request)
+    user = UserService.recover_password(req.recover_data())
+    return jsonify(user.json()), user.status_code()
+
+
+@app.route('/users/profile/password/regenerate', methods=['POST'])
+def regenerate_token():
+    logger.info("Attempting to recover password.")
+    req = ClientRequest(request)
+    user = UserService.regenerate_token(req.regenerate_data())
+
+    response = jsonify(user.json())
+    if user.headers():
+        register_headers(response, user.headers())
+
+    return response, user.status_code()
+
+
+def register_headers(response, header):
+    response.headers["X-Auth-Token"] = header.get("auth_token")
+    response.headers['Access-Control-Expose-Headers'] = 'X-Auth-Token'

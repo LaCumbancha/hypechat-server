@@ -32,6 +32,14 @@ CREATE TABLE users(
 	FOREIGN KEY (id) REFERENCES clients (id)
 );
 
+DROP TABLE IF EXISTS password_recoveries CASCADE;
+CREATE TABLE password_recoveries(
+    user_id INTEGER NOT NULL UNIQUE,
+    recovery_token VARCHAR(900) UNIQUE,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES clients (id)
+);
+
 DROP TABLE IF EXISTS teams CASCADE;
 CREATE TABLE teams(
 	id SERIAL,
