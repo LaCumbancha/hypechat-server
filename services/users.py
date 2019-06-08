@@ -299,7 +299,12 @@ class UserService:
                 db.session.add(password_recovery)
                 db.session.commit()
 
-            email_data = RecoveryPasswordEmailDTO(email='cristian.rana8@gmail.com', username=user.username, token=recovery_token)
+            email_data = RecoveryPasswordEmailDTO(
+                email=user.email,
+                username=user.username,
+                token=recovery_token,
+                message_template=EmailService.recovery_token_message
+            )
             EmailService.send_email(email_data)
 
             cls.logger().info(f"Sending recovery token email for user {user.username}.")
