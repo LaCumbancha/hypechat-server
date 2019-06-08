@@ -94,3 +94,8 @@ class TeamRoles(Enum):
 class ChannelVisibilities(Enum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
+
+
+class MessageTypes(Enum):
+    DIRECT = "DIRECT"
+    CHANNEL = "CHANNEL"

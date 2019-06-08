@@ -13,6 +13,7 @@ class MessageTableEntry(db.Model):
     receiver_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='receiver_id', type_=db.Integer, nullable=False)
     team_id = db.Column(ForeignKey(TeamTableEntry.team_id, ondelete='CASCADE'), name='team_id', type_=db.Integer, nullable=False)
     text_content = db.Column(name='content', type_=db.String(), nullable=False)
+    type = db.Column(name='type', type_=db.String(), nullable=False)
     timestamp = db.Column(name='timestamp', type_=db.DateTime(timezone=True), nullable=False, server_default=func.now())
 
 

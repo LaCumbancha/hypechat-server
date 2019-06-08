@@ -28,7 +28,7 @@ class MessageService:
         total_messages = direct_messages + channel_messages
 
         cls.logger().info(f"Retrieved {len(total_messages)} chats from user #{user.user_id} ({user.username}).")
-        return ChatsListResponse(cls._generate_chats_list(total_messages))
+        return ChatsListResponse(total_messages)
 
     @classmethod
     def _get_direct_messages_previews(cls, user_id, team_id):
@@ -44,17 +44,19 @@ class MessageService:
                 MessageTableEntry.receiver_id == user_id,
                 MessageTableEntry.sender_id == user_id
             ),
-            MessageTableEntry.team_id == team_id
+            MessageTableEntry.team_id == team_id,
+            MessageTableEntry.type == MessageTypes.DIRECT.value
         )).group_by(
             func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
             func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
         ).subquery("sq2")
 
-        return db.session.query(
+        preview_messages = db.session.query(
             MessageTableEntry.sender_id,
             MessageTableEntry.receiver_id,
             UserTableEntry.username,
             UserTableEntry.profile_pic,
+            UserTableEntry.online,
             MessageTableEntry.text_content,
             MessageTableEntry.timestamp,
             chats.c.unseen
@@ -69,7 +71,8 @@ class MessageService:
                     MessageTableEntry.receiver_id == last_messages_mixed.c.user1,
                     MessageTableEntry.receiver_id == last_messages_mixed.c.user2,
                 ),
-                MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp
+                MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp,
+                MessageTableEntry.type == MessageTypes.DIRECT.value
             )
         ).join(
             chats,
@@ -81,8 +84,7 @@ class MessageService:
                 or_(
                     MessageTableEntry.sender_id == chats.c.user_id,
                     MessageTableEntry.receiver_id == chats.c.user_id,
-                ),
-                MessageTableEntry.team_id == chats.c.team_id
+                )
             )
         ).join(
             UserTableEntry,
@@ -98,25 +100,94 @@ class MessageService:
             )
         ).all()
 
-    @classmethod
-    def _get_channel_messages_previews(cls, user_id, team_id):
-        return []
+        return cls._generate_direct_chats_list(preview_messages, user_id)
 
     @classmethod
-    def _generate_chats_list(cls, last_messages):
+    def _get_channel_messages_previews(cls, user_id, team_id):
+        cls.logger().debug("Retrieving messages preview from a channel chat.")
+        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user_id).subquery("sq1")
+
+        last_messages = db.session.query(
+            MessageTableEntry.receiver_id.label("channel_id"),
+            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
+        ).filter(and_(
+            MessageTableEntry.team_id == team_id,
+            MessageTableEntry.type == MessageTypes.CHANNEL.value
+        )).group_by(
+            MessageTableEntry.receiver_id
+        ).subquery("sq2")
+
+        preview_messages = db.session.query(
+            MessageTableEntry.receiver_id.label("chat_id"),
+            ChannelTableEntry.name.label("chat_name"),
+            UserTableEntry.profile_pic.label("chat_picture"),
+            MessageTableEntry.sender_id.label("sender_id"),
+            UserTableEntry.username.label("sender_username"),
+            MessageTableEntry.text_content.label("message_content"),
+            MessageTableEntry.timestamp.label("message_timestamp"),
+            chats.c.unseen.label("unseen_offset")
+        ).join(
+            last_messages,
+            and_(
+                MessageTableEntry.receiver_id == last_messages.c.channel_id,
+                MessageTableEntry.timestamp == last_messages.c.maxtimestamp
+            )
+        ).join(
+            chats,
+            and_(
+                MessageTableEntry.team_id == chats.c.team_id,
+                MessageTableEntry.receiver_id == chats.c.chat_id
+            )
+        ).join(
+            UserTableEntry,
+            UserTableEntry.user_id == MessageTableEntry.sender_id
+        ).join(
+            ChannelTableEntry,
+            ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
+        ).all()
+
+        return cls._generate_channel_chats_list(preview_messages)
+
+    @classmethod
+    def _generate_direct_chats_list(cls, last_messages, user_id):
         chats = []
 
         last_messages.sort(key=lambda msg: msg.timestamp, reverse=True)
         for message in last_messages:
             chats += [{
-                "sender_id": message.sender_id,
-                "receiver_id": message.receiver_id,
+                "chat_id": message.sender_id if message.sender_id != user_id else message.receiver_id,
                 "chat_name": message.username,
                 "chat_picture": message.profile_pic,
+                "sender": {
+                    "id": message.sender_id,
+                    "username": message.username,
+                },
                 "content": message.text_content,
                 "timestamp": message.timestamp,
                 "unseen": True if (message.unseen > 0) else False,
-                "offset": message.unseen
+                "offset": message.unseen,
+            }]
+
+        return chats
+
+    @classmethod
+    def _generate_channel_chats_list(cls, last_messages):
+        chats = []
+
+        last_messages.sort(key=lambda msg: msg.message_timestamp, reverse=True)
+        for message in last_messages:
+            chats += [{
+                "chat_id": message.chat_id,
+                "chat_name": message.chat_name,
+                "chat_picture": message.chat_picture,
+                "sender": {
+                    "id": message.sender_id,
+                    "username": message.sender_username,
+                },
+                "content": message.message_content,
+                "timestamp": message.message_timestamp,
+                "unseen": True if (message.unseen_offset > 0) else False,
+                "offset": message.unseen_offset,
             }]
 
         return chats
@@ -217,7 +288,7 @@ class MessageService:
                 },
                 "text_content": message.text_content,
                 "timestamp": message.timestamp,
-                "seen": False if message.sender_id != user_id and unseen_offset > 0 else True
+                "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
             }]
 
             if message.sender_id != user_id:
@@ -243,7 +314,8 @@ class MessageService:
             sender_id=user.user_id,
             receiver_id=inbox_data.chat_id,
             team_id=user.team_id,
-            text_content=inbox_data.text_content
+            text_content=inbox_data.text_content,
+            type=MessageTypes.DIRECT.value if receiver.is_user else MessageTypes.CHANNEL.value
         )
 
         chat_sender, chat_receivers = cls._increase_chats_offset(user.user_id, inbox_data.chat_id, user.team_id,
