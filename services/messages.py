@@ -286,7 +286,7 @@ class MessageService:
                     "profile_pic": message.profile_pic,
                     "online": message.online
                 },
-                "text_content": message.text_content,
+                "content": message.text_content,
                 "timestamp": message.timestamp,
                 "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
             }]
