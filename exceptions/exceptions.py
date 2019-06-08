@@ -33,6 +33,16 @@ class TeamNotFoundError(UserError):
         self.payload = payload
 
 
+class ChannelNotFoundError(UserError):
+    status_code = StatusCode.NOT_FOUND.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
 class ChatNotFoundError(UserError):
     status_code = StatusCode.NOT_FOUND.value
 

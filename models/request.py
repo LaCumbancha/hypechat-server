@@ -129,8 +129,8 @@ class ClientRequest:
             team_id=team_id
         )
 
-    def delete_user_data(self, team_id, delete_id):
-        return DeleteUserDTO(
+    def delete_user_team_data(self, team_id, delete_id):
+        return DeleteUserTeamDTO(
             token=self.headers().get("X-Auth-Token"),
             team_id=team_id,
             delete_id=delete_id
@@ -156,3 +156,41 @@ class ClientRequest:
         except VisibilityNotAvailableError:
             logging.getLogger(self.__class__.__name__).warning(f"Visibility {self.json_body().get('visibility')} not defined.")
             raise
+
+    def channel_invitation_data(self):
+        return ChannelInvitationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=self.json_body().get("team_id"),
+            channel_id=self.json_body().get("channel_id"),
+            user_invited_id=self.json_body().get("user_invited_id")
+        )
+
+    def channel_registration_data(self):
+        return ChannelRegistrationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=self.json_body().get("team_id"),
+            channel_id=self.json_body().get("channel_id")
+        )
+
+    def delete_user_channel(self, team_id, channel_id, user_id):
+        return DeleteUserChannelDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id,
+            delete_id=user_id
+        )
+
+    def channel_authentication(self, team_id, channel_id):
+        return ChannelAuthenticationDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id
+        )
+
+    def channel_update(self, team_id, channel_id):
+        return ChannelUpdateDTO(
+            token=self.headers().get("X-Auth-Token"),
+            team_id=team_id,
+            channel_id=channel_id,
+            updated_channel=self.json_body()
+        )

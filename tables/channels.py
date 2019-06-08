@@ -8,7 +8,7 @@ from models.constants import ChannelVisibilities
 class ChannelTableEntry(db.Model):
     __tablename__ = 'channels'
 
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='id', type_=db.Integer,
+    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='id', type_=db.Integer,
                            nullable=False, primary_key=True)
     team_id = db.Column(name='team_id', type_=db.Integer, nullable=False)
     name = db.Column(name='name', type_=db.String(), nullable=False)
@@ -17,12 +17,3 @@ class ChannelTableEntry(db.Model):
                            server_default=ChannelVisibilities.PUBLIC.value)
     description = db.Column(name='description', type_=db.String(), nullable=True)
     welcome_message = db.Column(name='welcome_message', type_=db.String(), nullable=True)
-
-
-class UsersByChannelsTableEntry(db.Model):
-    __tablename__ = 'users_channels'
-
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='user_id', type_=db.Integer,
-                        nullable=False, primary_key=True)
-    channel_id = db.Column(ForeignKey(ClientTableEntry.client_id), name='channel_id', type_=db.Integer,
-                           nullable=False, primary_key=True)

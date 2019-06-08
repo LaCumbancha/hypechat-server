@@ -16,7 +16,7 @@ def register_channel():
     return jsonify(new_channel.json()), new_channel.status_code()
 
 
-@app.route('/teams/channels/invite', methods=['POST'])
+@app.route('/teams/channels/users', methods=['POST'])
 def add_member():
     logger.info(f"Attempting to add new member to team channel.")
     req = ClientRequest(request)
@@ -32,11 +32,27 @@ def join_channel():
     return jsonify(new_member.json()), new_member.status_code()
 
 
+@app.route('/teams/<team_id>/channels/<channel_id>/users/<user_id>', methods=['DELETE'])
+def remove_member(team_id, channel_id, user_id):
+    logger.info(f"Attempting to remove member #{user_id} from team #{team_id}'s channel #{channel_id}.")
+    req = ClientRequest(request)
+    new_member = ChannelService.remove_member(req.delete_user_channel(team_id, channel_id, user_id))
+    return jsonify(new_member.json()), new_member.status_code()
+
+
+@app.route('/teams/<team_id>/channels/<channel_id>/users', methods=['GET'])
+def channel_members(team_id, channel_id):
+    logger.info(f"Attempting to get members from team #{team_id}'s channel #{channel_id}.")
+    req = ClientRequest(request)
+    new_member = ChannelService.channel_members(req.channel_authentication(team_id, channel_id))
+    return jsonify(new_member.json()), new_member.status_code()
+
+
 @app.route('/teams/<team_id>/channels/<channel_id>/leave', methods=['DELETE'])
 def leave_channel(team_id, channel_id):
     logger.info(f"Attempting to leave channel #{channel_id}")
     req = ClientRequest(request)
-    old_member = ChannelService.leave_channel(req.leave_channel_data(team_id, channel_id))
+    old_member = ChannelService.leave_channel(req.channel_authentication(team_id, channel_id))
     return jsonify(old_member.json()), old_member.status_code()
 
 
@@ -44,5 +60,13 @@ def leave_channel(team_id, channel_id):
 def delete_channel(team_id, channel_id):
     logger.info(f"Attempting to delete channel #{channel_id} from team #{team_id}")
     req = ClientRequest(request)
-    old_channel = ChannelService.delete_channel(req.delete_channel_data(team_id, channel_id))
+    old_channel = ChannelService.delete_channel(req.channel_authentication(team_id, channel_id))
     return jsonify(old_channel.json()), old_channel.status_code()
+
+
+@app.route('/teams/<team_id>/channels/<channel_id>', methods=['PATCH'])
+def update_channel_information(team_id, channel_id):
+    logger.info(f"Attempting to update channel #{channel_id} information from team #{team_id}")
+    req = ClientRequest(request)
+    updated_channel = ChannelService.update_information(req.channel_update(team_id, channel_id))
+    return jsonify(updated_channel.json()), updated_channel.status_code()

@@ -20,7 +20,7 @@ def get_preview_messages(team_id):
 def get_messages_from_direct_chat(team_id, chat_id):
     logger.info(f"Attempting to get all messages from specific chat from user in team #{team_id}.")
     req = ClientRequest(request)
-    messages = MessageService.get_messages_from_direct_chat(req.chat_data(team_id, chat_id))
+    messages = MessageService.get_messages_from_chat(req.chat_data(team_id, chat_id))
     return jsonify(messages.json()), messages.status_code()
 
 
@@ -28,5 +28,5 @@ def get_messages_from_direct_chat(team_id, chat_id):
 def send_direct_message():
     logger.info(f"Attempting to send message in team.")
     req = ClientRequest(request)
-    response = MessageService.send_direct_message(req.inbox_data())
+    response = MessageService.send_message(req.inbox_data())
     return jsonify(response.json()), response.status_code()

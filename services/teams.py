@@ -1,9 +1,11 @@
 from app import db
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.responses.channels import SuccessfulChannelsListResponse
 from models.authentication import Authenticator
 from tables.users import *
 from tables.teams import *
+from tables.channels import *
 from models.constants import TeamRoles
 from sqlalchemy import exc, and_
 
@@ -56,7 +58,7 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_team(invite_data.authentication, lambda user: TeamRoles.is_admin(user))
+        team_admin = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_admin)
 
         already_member = db.session.query(
             UserTableEntry.user_id
@@ -181,6 +183,33 @@ class TeamService:
         return users
 
     @classmethod
+    def team_channels(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+
+        team_channels = db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.team_id == user.team_id
+        ).all()
+
+        cls.logger().info(f"User {user.username} got {len(team_channels)} users from team #{user_data.team_id}.")
+        return SuccessfulChannelsListResponse(cls._team_channels_list(team_channels))
+
+    @classmethod
+    def _team_channels_list(cls, channels_list):
+        channels = []
+
+        for channel in channels_list:
+            channels += [{
+                "id": channel.channel_id,
+                "name": channel.name,
+                "creator": channel.creator,
+                "visibility": channel.visibility,
+                "description": channel.description,
+                "welcome_message": channel.welcome_message
+            }]
+
+        return channels
+
+    @classmethod
     def team_user_by_id(cls, user_data):
         user = Authenticator.authenticate_team(user_data.authentication)
 
@@ -213,7 +242,7 @@ class TeamService:
 
     @classmethod
     def delete_users(cls, delete_data):
-        user = Authenticator.authenticate_team(delete_data.authentication, lambda user: TeamRoles.is_admin(user))
+        user = Authenticator.authenticate_team(delete_data.authentication, TeamRoles.is_team_admin)
 
         delete_user = db.session.query(UsersByTeamsTableEntry).filter(and_(
             UsersByTeamsTableEntry.user_id == delete_data.delete_id,
@@ -249,8 +278,7 @@ class TeamService:
 
     @classmethod
     def change_role(cls, change_role_data):
-        team_admin = Authenticator.authenticate_team(change_role_data.authentication,
-                                                     lambda user: TeamRoles.is_creator(user))
+        team_admin = Authenticator.authenticate_team(change_role_data.authentication, TeamRoles.is_team_creator)
 
         if change_role_data.new_role == TeamRoles.CREATOR.value:
             cls.logger().info(
@@ -305,30 +333,8 @@ class TeamService:
             return UnsuccessfulTeamMessageResponse("Couldn't leave team.")
 
     @classmethod
-    def delete_team(cls, user_data):
-        user = Authenticator.authenticate_team(user_data, lambda user: TeamRoles.is_admin(user))
-
-        team_users = db.session.query(UsersByTeamsTableEntry)\
-            .filter(UsersByTeamsTableEntry.team_id == user.team_id)
-
-        team = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == user.team_id).one_or_none()
-
-        try:
-            users = team_users.delete()
-            db.session.flush()
-            db.session.delete(team)
-            db.session.commit()
-            cls.logger().info(
-                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
-            return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
-        except exc.IntegrityError:
-            db.session.rollback()
-            cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
-            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")
-
-    @classmethod
     def update_information(cls, update_data):
-        user = Authenticator.authenticate_team(update_data.authentication, lambda user: TeamRoles.is_admin(user))
+        user = Authenticator.authenticate_team(update_data.authentication, TeamRoles.is_team_admin)
         team = db.session.query(TeamTableEntry).filter(
             TeamTableEntry.team_id == update_data.authentication.team_id
         ).one_or_none()
@@ -347,7 +353,7 @@ class TeamService:
         try:
             db.session.commit()
             cls.logger().info(
-                f"Team {team.team_id} information updated by user {user.username}, who's team {user.role}-")
+                f"Team {team.team_id} information updated by user {user.username}, who's team {user.role}.")
             return SuccessfulTeamResponse(team, TeamResponseStatus.UPDATED.value)
         except exc.IntegrityError:
             db.session.rollback()
@@ -396,3 +402,25 @@ class TeamService:
             }]
 
         return users
+
+    @classmethod
+    def delete_team(cls, user_data):
+        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
+
+        team_users = db.session.query(UsersByTeamsTableEntry)\
+            .filter(UsersByTeamsTableEntry.team_id == user.team_id)
+
+        team = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == user.team_id).one_or_none()
+
+        try:
+            users = team_users.delete()
+            db.session.flush()
+            db.session.delete(team)
+            db.session.commit()
+            cls.logger().info(
+                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
+            return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")

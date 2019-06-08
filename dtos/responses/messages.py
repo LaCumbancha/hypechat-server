@@ -33,6 +33,22 @@ class UnsuccessfulMessageSentResponse(Jsonizable, Response):
         return StatusCode.SERVER_ERROR.value
 
 
+class BadRequestMessageSentResponse(Jsonizable, Response):
+
+    def __init__(self, message, status):
+        self.message = message
+        self.status = status
+
+    def json(self):
+        return {
+            "status": self.status,
+            "message": self.message
+        }
+
+    def status_code(self):
+        return StatusCode.BAD_REQUEST.value
+
+
 class MessageListResponse(Jsonizable, Response):
 
     def __init__(self, messages_list):
