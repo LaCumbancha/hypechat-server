@@ -6,7 +6,7 @@ import datetime
 from tables.users import UserTableEntry, UsersByTeamsTableEntry, UsersByChannelsTableEntry
 from tables.teams import TeamTableEntry
 from tables.channels import ChannelTableEntry
-from models.constants import UserResponseStatus, TeamResponseStatus, ChannelResponseStatus, TeamRoles
+from models.constants import UserResponseStatus, TeamResponseStatus, ChannelResponseStatus, TeamRoles, UserRoles
 from exceptions.exceptions import *
 from sqlalchemy import and_
 
@@ -59,6 +59,11 @@ class Authenticator:
         logger = logging.getLogger(cls.__name__)
 
         user = cls.authenticate(authentication)
+
+        if user.role == UserRoles.ADMIN.value:
+            user.team_id = authentication.team_id
+            return user
+
         team_user = db.session.query(
             UserTableEntry.user_id,
             UserTableEntry.username,
