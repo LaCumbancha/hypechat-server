@@ -25,7 +25,7 @@ class EmailService:
             cls.logger().debug("Starting TLS.")
             server.login(user=cls._email_address, password=cls._email_password)
             cls.logger().debug("Loging ing to Hypechat email.")
-            message = cls._recovery_token_message(data)
+            message = data.message_template(data)
             server.sendmail(from_addr=cls._email_address, to_addrs=data.email, msg=message)
             cls.logger().info(f"Email sent.")
             server.quit()
@@ -38,7 +38,7 @@ class EmailService:
             cls.logger().error(f"Cannot send recovery token to the specified email address.")
 
     @classmethod
-    def _recovery_token_message(cls, recovery_token_data):
+    def recovery_token_message(cls, recovery_token_data):
         from_address = cls._email_address
         to_address = recovery_token_data.email
 
@@ -47,6 +47,21 @@ class EmailService:
         message['To'] = to_address
         message['Subject'] = 'Hypechat\'s Recovery Password Service'
         body = f"Hi {recovery_token_data.username}!\n\nYour recovery token is {recovery_token_data.token}"
+        message.attach(MIMEText(body, 'plain'))
+
+        return message.as_string()
+
+    @classmethod
+    def team_invitation_message(cls, invitation_data):
+        from_address = cls._email_address
+        to_address = invitation_data.email
+
+        message = MIMEMultipart()
+        message['From'] = from_address
+        message['To'] = to_address
+        message['Subject'] = 'Hypechat\'s Team Service'
+        body = f"Hi!\n\nYou've been invited to join a team by {invitation_data.inviter_name}. The access token is: " \
+            f"{invitation_data.token}."
         message.attach(MIMEText(body, 'plain'))
 
         return message.as_string()

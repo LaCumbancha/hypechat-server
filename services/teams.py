@@ -2,7 +2,9 @@ from app import db
 from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.responses.channels import SuccessfulChannelsListResponse
+from dtos.model import TeamInvitationEmailDTO
 from models.authentication import Authenticator
+from services.emails import EmailService
 from tables.users import *
 from tables.teams import *
 from tables.channels import *
@@ -82,10 +84,11 @@ class TeamService:
             return BadRequestTeamMessageResponse("This user was already invited to join the team.",
                                                  TeamResponseStatus.ALREADY_INVITED.value)
 
+        invite_token = Authenticator.team_invitation()
         new_invite = TeamsInvitesTableEntry(
             team_id=invite_data.authentication.team_id,
             email=invite_data.email,
-            invite_token=Authenticator.team_invitation()
+            invite_token=invite_token
         )
 
         try:
@@ -94,6 +97,17 @@ class TeamService:
             db.session.commit()
             cls.logger().info(
                 f"New invitation for {new_invite.email} to join team #{new_invite.team_id}, by {team_admin.username}.")
+
+            email_data = TeamInvitationEmailDTO(
+                email=invite_data.email,
+                inviter_name=team_admin.username,
+                token=invite_token,
+                message_template=EmailService.team_invitation_message
+            )
+            EmailService.send_email(email_data)
+            cls.logger().info(
+                f"Team #{new_invite.team_id} invitation email sent to {new_invite.email}.")
+
         except exc.IntegrityError:
             db.session.rollback()
             cls.logger().error(
