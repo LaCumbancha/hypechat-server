@@ -63,6 +63,16 @@ class WrongTokenError(UserError):
         self.payload = payload
 
 
+class WrongActionError(UserError):
+    status_code = StatusCode.BAD_REQUEST.value
+
+    def __init__(self, message, status, payload=None):
+        UserError()
+        self.message = message
+        self.status = status
+        self.payload = payload
+
+
 class NoPermissionsError(UserError):
     status_code = StatusCode.FORBIDDEN.value
 
@@ -103,11 +113,23 @@ class MessageTypeNotAvailableError(UserError):
         self.payload = payload
 
 
-class WrongActionError(UserError):
+class MissingRequestParameterError(UserError):
     status_code = StatusCode.BAD_REQUEST.value
+    MISSING_PARAMETER = "MISSING_PARAMETER"
 
-    def __init__(self, message, status, payload=None):
+    def __init__(self, parameter):
         UserError()
-        self.message = message
-        self.status = status
-        self.payload = payload
+        self.message = f"Parameter \"{parameter}\" is required and is missing."
+        self.status = self.MISSING_PARAMETER
+        self.payload = None
+
+
+class MissingRequestHeaderError(UserError):
+    status_code = StatusCode.BAD_REQUEST.value
+    MISSING_PARAMETER = "MISSING_PARAMETER"
+
+    def __init__(self, parameter):
+        UserError()
+        self.message = f"Header \"{parameter}\" is required and is missing."
+        self.status = self.MISSING_PARAMETER
+        self.payload = None
