@@ -204,6 +204,26 @@ class ClientRequest:
             welcome_message=self.json_body().get("welcome_message"),
         )
 
+    def add_data(self):
+        auth_token = self.headers().get("X-Auth-Token")
+        team_id = self.json_body().get("team_id")
+        add_user_id = self.json_body().get("add_user_id")
+
+        if not auth_token:
+            raise MissingRequestHeaderError("X-Auth-Token")
+
+        if not team_id:
+            raise MissingRequestParameterError("team_id")
+
+        if not add_user_id:
+            raise MissingRequestParameterError("add_user_id")
+
+        return TeamAddUserDTO(
+            token=auth_token,
+            team_id=team_id,
+            add_user_id=add_user_id
+        )
+
     def invite_data(self):
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
