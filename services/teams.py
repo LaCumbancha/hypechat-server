@@ -1,4 +1,5 @@
 from app import db
+from exceptions.exceptions import *
 from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.responses.channels import SuccessfulChannelsListResponse
@@ -57,6 +58,55 @@ class TeamService:
                 return UnsuccessfulTeamMessageResponse("Couldn't create team.")
         else:
             return SuccessfulTeamResponse(new_team, TeamResponseStatus.CREATED.value)
+
+    @classmethod
+    def add_user(cls, add_data):
+        admin = Authenticator.authenticate(add_data.authentication)
+
+        if admin.role == UserRoles.ADMIN.value:
+            user = db.session.query(UserTableEntry).filter(UserTableEntry.user_id == add_data.add_user_id).one_or_none()
+
+            if not user:
+                cls.logger().info(f"User {add_data.add_user_id} not found.")
+                raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+
+            if db.session.query(UsersByTeamsTableEntry).filter(and_(
+                UsersByTeamsTableEntry.user_id == user.user_id,
+                UsersByTeamsTableEntry.team_id == add_data.authentication.team_id
+            )).one_or_none():
+                cls.logger().info(f"User {add_data.add_user_id} already part of team #{add_data.authentication.team_id}.")
+                return BadRequestTeamMessageResponse("This user already belongs to the team.",
+                                                     TeamResponseStatus.ALREADY_REGISTERED.value)
+
+            previous_invitation = db.session.query(TeamsInvitesTableEntry).filter(
+                TeamsInvitesTableEntry.team_id == add_data.authentication.team_id,
+                TeamsInvitesTableEntry.email == admin.username
+            ).one_or_none()
+
+            if previous_invitation:
+                cls.logger().info(f"Deleting old invitation for user {add_data.add_user_id} to team "
+                                  f"#{add_data.authentication.team_id}.")
+                db.session.delete(previous_invitation)
+                db.session.commit()
+
+            added_user = UsersByTeamsTableEntry(user_id=add_data.add_user_id, team_id=add_data.authentication.team_id)
+
+            try:
+                db.session.add(added_user)
+                db.session.commit()
+                cls.logger().info(
+                    f"Added user #{added_user.user_id} to team #{added_user.team_id} by admin {admin.username}.")
+                return SuccessfulTeamMessageResponse("User added.", TeamResponseStatus.ADDED.value)
+
+            except exc.IntegrityError:
+                db.session.rollback()
+                cls.logger().error(
+                    f"Couldn't add user #{added_user.user_id} to team #{added_user.team_id}.")
+                return UnsuccessfulTeamMessageResponse("Couldn't invite user to team.")
+
+        else:
+            raise NoPermissionsError("You must be ADMIN to perform this action.",
+                                     TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
 
     @classmethod
     def invite_user(cls, invite_data):

@@ -17,6 +17,14 @@ def register_team():
     return jsonify(new_team.json()), new_team.status_code()
 
 
+@app.route('/teams/users', methods=['POST'])
+def add_user():
+    logger.info(f"Attempting to add user to team.")
+    req = ClientRequest(request)
+    user_added = TeamService.add_user(req.add_data())
+    return jsonify(user_added.json()), user_added.status_code()
+
+
 @app.route('/teams/invite', methods=['POST'])
 def invite_user():
     logger.info(f"Attempting to invite new user to team.")
