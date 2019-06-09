@@ -15,11 +15,23 @@ class ClientRequest:
         self.logging_request(self.data)
 
     @classmethod
-    def logging_request(cls, data):
-        logging.getLogger(cls.__name__).info({
-            "Headers": data.headers.to_list(),
-            "Body": data.get_json() if data.is_json else None
+    def logging_request(cls, request):
+        logger = logging.getLogger(cls.__name__)
+        if cls.has_application_json_header(request.headers.to_list()) and cls.has_empty_body(request.data):
+            logger.error("Content-Type specified as \"application/json\" but no body provided.")
+
+        logger.info({
+            "Headers": request.headers.to_list(),
+            "Body": request.get_json() if request.is_json else None
         })
+
+    @classmethod
+    def has_application_json_header(cls, headers):
+        return any(map(lambda header: header[0] == 'Content-Type', headers))
+
+    @classmethod
+    def has_empty_body(cls, body):
+        return body == b''
 
     def query_params(self):
         return self.data.args
