@@ -11,7 +11,7 @@ class ClientRequest:
 
     def __init__(self, data):
         self.data = data
-        self.logger = logging.getLogger(cls.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.logging_request(self.data)
 
     @classmethod
