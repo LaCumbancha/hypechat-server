@@ -56,6 +56,8 @@ class MessageService:
             MessageTableEntry.sender_id,
             MessageTableEntry.receiver_id,
             UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
             UserTableEntry.profile_pic,
             UserTableEntry.online,
             MessageTableEntry.content,
@@ -102,7 +104,7 @@ class MessageService:
             )
         ).all()
 
-        return cls._generate_direct_chats_list(preview_messages, user_id)
+        return cls._generate_direct_chats_list(preview_messages, user_id, team_id)
 
     @classmethod
     def _get_channel_messages_previews(cls, user_id, team_id):
@@ -125,7 +127,7 @@ class MessageService:
             UserTableEntry.profile_pic.label("chat_picture"),
             MessageTableEntry.sender_id.label("sender_id"),
             UserTableEntry.username.label("sender_username"),
-            MessageTableEntry.content.label("message_content"),
+            MessageTableEntry.content.label("content"),
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp.label("message_timestamp"),
             chats.c.unseen.label("unseen_offset")
@@ -149,10 +151,11 @@ class MessageService:
             ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
         ).all()
 
-        return cls._generate_channel_chats_list(preview_messages)
+        return cls._generate_channel_chats_list(preview_messages, team_id)
 
     @classmethod
-    def _generate_direct_chats_list(cls, last_messages, user_id):
+    def _generate_direct_chats_list(cls, last_messages, user_id, team_id):
+        word_censor = WordCensor(team_id)
         chats = []
 
         last_messages.sort(key=lambda msg: msg.timestamp, reverse=True)
@@ -164,8 +167,10 @@ class MessageService:
                 "sender": {
                     "id": message.sender_id,
                     "username": message.username,
+                    "first_name": message.first_name,
+                    "last_name": message.last_name,
                 },
-                "content": message.text_content,
+                "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
                 "unseen": True if (message.unseen > 0) else False,
@@ -175,7 +180,8 @@ class MessageService:
         return chats
 
     @classmethod
-    def _generate_channel_chats_list(cls, last_messages):
+    def _generate_channel_chats_list(cls, last_messages, team_id):
+        word_censor = WordCensor(team_id)
         chats = []
 
         last_messages.sort(key=lambda msg: msg.message_timestamp, reverse=True)
@@ -188,7 +194,7 @@ class MessageService:
                     "id": message.sender_id,
                     "username": message.sender_username,
                 },
-                "content": message.message_content,
+                "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.message_timestamp,
                 "unseen": True if (message.unseen_offset > 0) else False,
