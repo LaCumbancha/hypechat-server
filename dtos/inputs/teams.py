@@ -80,3 +80,17 @@ class SearchUserByIdDTO:
     def __init__(self, token, team_id, user_id):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.user_id = user_id
+
+
+class AddForbiddenWordDTO:
+
+    def __init__(self, token, team_id, word):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.word = word
+
+
+class DeleteForbiddenWordDTO:
+
+    def __init__(self, token, team_id, word_id):
+        self.authentication = TeamAuthenticationDTO(token, team_id)
+        self.word_id = word_id

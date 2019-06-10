@@ -20,3 +20,12 @@ class TeamsInvitesTableEntry(db.Model):
                         nullable=False, primary_key=True)
     email = db.Column(name='email', type_=db.String(), nullable=False, primary_key=True)
     invite_token = db.Column(name='invite_token', type_=db.String(), nullable=False)
+
+
+class ForbiddenWordsTableEntry(db.Model):
+    __tablename__ = 'forbidden_words'
+
+    id = db.Column(name='id', type_=db.Integer, nullable=False, primary_key=True, autoincrement=True)
+    word = db.Column(name='word', type_=db.String(), nullable=False)
+    team_id = db.Column(ForeignKey(TeamTableEntry.team_id, ondelete='CASCADE'), name='team_id', type_=db.Integer,
+                        nullable=False)

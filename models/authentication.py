@@ -102,7 +102,7 @@ class Authenticator:
                     TeamTableEntry.team_id == authentication.team_id
             ).one_or_none():
                 logger.info(f"Team #{authentication.team_id} not found.")
-                raise TeamNotFoundError("Team not found.", TeamResponseStatus.TEAM_NOT_FOUND.value)
+                raise TeamNotFoundError("Team not found.", TeamResponseStatus.NOT_FOUND.value)
             else:
                 logger.info(
                     f"User {user.username} trying to access team #{authentication.team_id}, when it's not part of it.")

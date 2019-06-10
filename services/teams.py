@@ -481,10 +481,81 @@ class TeamService:
             db.session.flush()
             db.session.delete(team)
             db.session.commit()
-            cls.logger().info(
-                f"Team #{user.team_id} deleted, and {users} users-team relations released.")
+            cls.logger().info(f"Team #{user.team_id} deleted, and {users} users-team relations released.")
             return SuccessfulTeamMessageResponse("Team removed!", TeamResponseStatus.REMOVED.value)
         except exc.IntegrityError:
             db.session.rollback()
             cls.logger().error(f"User #{user.user_id} couldn't remove team #{user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't remove team.")
+
+    @classmethod
+    def add_forbidden_word(cls, word_data):
+        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_admin)
+
+        if db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == user.team_id,
+            ForbiddenWordsTableEntry.word == word_data.word
+        ).one_or_none():
+            cls.logger().debug(f"User {user.username} attempted to add a forbidden word that already exists ({word_data.word}).")
+            return BadRequestTeamMessageResponse("Word already forbidden!", TeamResponseStatus.ALREADY_REGISTERED.value)
+
+        forbidden_word = ForbiddenWordsTableEntry(word=word_data.word, team_id=user.team_id)
+
+        try:
+            db.session.add(forbidden_word)
+            db.session.commit()
+            cls.logger().info(f"Word \"{word_data.word}\" forbidden in team #{user.team_id} by {user.username}.")
+            return SuccessfulTeamMessageResponse("Forbidden word added!", TeamResponseStatus.ADDED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} couldn't add forbidden word \"{word_data.word}\".")
+            return UnsuccessfulTeamMessageResponse("Couldn't add forbidden word.")
+
+    @classmethod
+    def forbidden_words(cls, user_data):
+        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
+
+        forbidden_words = db.session.query(ForbiddenWordsTableEntry).filter(
+                ForbiddenWordsTableEntry.team_id == user.team_id
+        ).all()
+
+        cls.logger().info(f"User {user.username} got {len(forbidden_words)} forbidden words in team #{user.team_id}.")
+        return SuccessfulForbiddenWordsList(cls._generate_forbidden_words_list(forbidden_words))
+
+    @classmethod
+    def _generate_forbidden_words_list(cls, words_list):
+        words = []
+
+        for word in words_list:
+            words += [{
+                "id": word.id,
+                "word": word.word
+            }]
+
+        return words
+
+    @classmethod
+    def delete_forbidden_word(cls, word_data):
+        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_admin)
+
+        forbidden_word = db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == user.team_id,
+            ForbiddenWordsTableEntry.id == word_data.word_id
+        ).one_or_none()
+
+        if not forbidden_word:
+            cls.logger().error(f"User {user.username} tried to delete forbidden word {word_data.word_id} from team "
+                               f"#{user.team_id}, which doesn't exist.")
+            return BadRequestTeamMessageResponse("Forbidden word not found!", TeamResponseStatus.NOT_FOUND.value)
+
+        try:
+            db.session.delete(forbidden_word)
+            db.session.commit()
+            cls.logger().info(f"User {user.username} deleted forbidden word \"{forbidden_word.word}\" from team "
+                              f"#{user.team_id}.")
+            return SuccessfulTeamMessageResponse("Forbidden word removed!", TeamResponseStatus.REMOVED.value)
+        except exc.IntegrityError:
+            db.session.rollback()
+            cls.logger().error(f"User #{user.user_id} couldn't remove forbidden word \"{forbidden_word.word}\" "
+                               f"from team #{user.team_id}.")
             return UnsuccessfulTeamMessageResponse("Couldn't remove team.")

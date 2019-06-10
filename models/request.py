@@ -499,3 +499,39 @@ class ClientRequest:
             channel_id=channel_id,
             updated_channel=self.json_body()
         )
+
+    def add_forbidden_word(self):
+        auth_token = self.headers().get("X-Auth-Token")
+        team_id = self.json_body().get("team_id")
+        word = self.json_body().get("word")
+
+        if not auth_token:
+            self.logger.error("Missing parameter in request headers: X-Auth-Token.")
+            raise MissingRequestHeaderError("X-Auth-Token")
+
+        if not word:
+            self.logger.error("Missing parameter in request body: word.")
+            raise MissingRequestParameterError("word")
+
+        if not team_id:
+            self.logger.error("Missing parameter in request body: team_id.")
+            raise MissingRequestParameterError("team_id")
+
+        return AddForbiddenWordDTO(
+            token=auth_token,
+            team_id=team_id,
+            word=word
+        )
+
+    def delete_forbidden_word(self, team_id, word_id):
+        auth_token = self.headers().get("X-Auth-Token")
+
+        if not auth_token:
+            self.logger.error("Missing parameter in request headers: X-Auth-Token.")
+            raise MissingRequestHeaderError("X-Auth-Token")
+
+        return DeleteForbiddenWordDTO(
+            token=auth_token,
+            team_id=team_id,
+            word_id=word_id
+        )
