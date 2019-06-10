@@ -5,6 +5,7 @@ from dtos.model import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from services.emails import EmailService
+from services.facebook import FacebookService
 from tables.users import *
 from tables.teams import *
 from passlib.apps import custom_app_context as hashing
@@ -21,6 +22,13 @@ class UserService:
 
     @classmethod
     def create_user(cls, user_data):
+        if not user_data.facebook_token:
+            return cls._create_app_user(user_data)
+        else:
+            return cls._create_facebook_user(user_data)
+
+    @classmethod
+    def _create_app_user(cls, user_data):
         new_client = ClientTableEntry()
 
         try:
@@ -42,6 +50,10 @@ class UserService:
             db.session.flush()
             db.session.commit()
             cls.logger().info(f"User #{new_client.client_id} created.")
+            headers = {
+                "auth_token": new_user.auth_token
+            }
+            return SuccessfulUserResponse(new_user, headers)
         except exc.IntegrityError:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == user_data.email).one_or_none():
@@ -58,12 +70,37 @@ class UserService:
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
-        else:
+
+    @classmethod
+    def _create_facebook_user(cls, user_data):
+        try:
+            facebook_user = FacebookService.get_user_from_facebook(user_data)
+            new_client = ClientTableEntry()
+
+            db.session.add(new_client)
+            db.session.flush()
+            new_user = UserTableEntry(
+                user_id=new_client.client_id,
+                facebook_id=facebook_user.facebook_id,
+                email="lala",#facebook_user.email,
+                first_name=facebook_user.first_name,
+                last_name=facebook_user.last_name,
+                profile_pic=facebook_user.profile_pic,
+                role=user_data.role or UserRoles.USER.value,
+                auth_token=Authenticator.generate(user_data.username, user_data.password),
+                online=True
+            )
+            db.session.add(new_user)
+            db.session.flush()
+            db.session.commit()
+            cls.logger().info(f"User #{new_client.client_id} created.")
             headers = {
-                "username": new_user.username,
                 "auth_token": new_user.auth_token
             }
             return SuccessfulUserResponse(new_user, headers)
+        except FacebookWrongTokenError:
+            cls.logger().info(f"Failing to create user with Facebook token #{user_data.facebook_token}.")
+            return UnsuccessfulClientResponse("Couldn't create user.")
 
     @classmethod
     def login_user(cls, user_data):
@@ -78,7 +115,6 @@ class UserService:
                 db.session.commit()
                 cls.logger().info(f"Logging in user {user.user_id}")
                 headers = {
-                    "username": user.username,
                     "auth_token": user.auth_token
                 }
                 return SuccessfulUserResponse(user, headers)
@@ -336,7 +372,6 @@ class UserService:
                     db.session.commit()
                     cls.logger().info(f"Logging in user {user.user_id}")
                     headers = {
-                        "username": user.username,
                         "auth_token": user.auth_token
                     }
                     return SuccessfulUserResponse(user, headers)

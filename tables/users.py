@@ -15,9 +15,10 @@ class UserTableEntry(db.Model):
 
     user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='id', type_=db.Integer,
                         nullable=False, primary_key=True)
-    username = db.Column(name='username', type_=db.String(), nullable=False, unique=True)
+    facebook_id = db.Column(name='facebook_id', type_=db.Integer, nullable=True, unique=True, default=None)
+    username = db.Column(name='username', type_=db.String(), nullable=True, unique=True, default=None)
     email = db.Column(name='email', type_=db.String(), nullable=False, unique=True)
-    password = db.Column(name='password', type_=db.String(), nullable=False)
+    password = db.Column(name='password', type_=db.String(), nullable=True, default=None)
     first_name = db.Column(name='first_name', type_=db.String(), nullable=True)
     last_name = db.Column(name='last_name', type_=db.String(), nullable=True)
     profile_pic = db.Column(name='profile_pic', type_=db.String(), nullable=True)
