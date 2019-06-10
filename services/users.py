@@ -5,6 +5,7 @@ from dtos.model import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from services.emails import EmailService
+from services.facebook import FacebookService
 from tables.users import *
 from tables.teams import *
 from passlib.apps import custom_app_context as hashing
@@ -35,13 +36,17 @@ class UserService:
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
                 role=user_data.role or UserRoles.USER.value,
-                auth_token=Authenticator.generate(user_data.username, user_data.password),
+                auth_token=Authenticator.generate(user_data.user_id, user_data.password),
                 online=True
             )
             db.session.add(new_user)
             db.session.flush()
             db.session.commit()
             cls.logger().info(f"User #{new_client.client_id} created.")
+            headers = {
+                "auth_token": new_user.auth_token
+            }
+            return SuccessfulUserResponse(new_user, headers)
         except exc.IntegrityError:
             db.session.rollback()
             if db.session.query(UserTableEntry).filter(UserTableEntry.email == user_data.email).one_or_none():
@@ -58,27 +63,28 @@ class UserService:
             else:
                 cls.logger().info(f"Failing to create user #{new_client.client_id}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
-        else:
-            headers = {
-                "username": new_user.username,
-                "auth_token": new_user.auth_token
-            }
-            return SuccessfulUserResponse(new_user, headers)
 
     @classmethod
     def login_user(cls, user_data):
+        if not user_data.facebook_token:
+            return cls._login_app_user(user_data)
+        else:
+            return cls._login_facebook_user(user_data)
+
+    @classmethod
+    def _login_app_user(cls, user_data):
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.email == user_data.email).one_or_none()
+            UserTableEntry.email == user_data.email
+        ).one_or_none()
 
         if user:
             if hashing.verify(user_data.password, user.password):
                 cls.logger().debug(f"Generating token for user {user.user_id}")
-                user.auth_token = Authenticator.generate(user.username, user_data.password)
+                user.auth_token = Authenticator.generate(user.user_id, user_data.password)
                 user.online = True
                 db.session.commit()
-                cls.logger().info(f"Logging in user {user.user_id}")
+                cls.logger().info(f"User #{user.user_id} logged in")
                 headers = {
-                    "username": user.username,
                     "auth_token": user.auth_token
                 }
                 return SuccessfulUserResponse(user, headers)
@@ -89,6 +95,56 @@ class UserService:
         else:
             cls.logger().info(f"User #{user_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+
+    @classmethod
+    def _login_facebook_user(cls, user_data):
+        try:
+            facebook_user = FacebookService.get_user_from_facebook(user_data)
+
+            user = db.session.query(UserTableEntry).filter(
+                UserTableEntry.facebook_id == facebook_user.facebook_id
+            ).one_or_none()
+
+            if user:
+                cls.logger().info(f"Logging in Facebook user with Facebook ID #{facebook_user.facebook_id}.")
+                cls.logger().debug(f"Generating token for user {user.user_id}")
+                user.auth_token = Authenticator.generate(user.user_id)
+                user.online = True
+                db.session.commit()
+                cls.logger().info(f"User #{user.user_id} logged in.")
+                headers = {
+                    "auth_token": user.auth_token
+                }
+                return SuccessfulUserResponse(user, headers)
+
+            else:
+                cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
+                new_client = ClientTableEntry()
+
+                db.session.add(new_client)
+                db.session.flush()
+                new_user = UserTableEntry(
+                    user_id=new_client.client_id,
+                    facebook_id=facebook_user.facebook_id,
+                    email=facebook_user.email,
+                    first_name=facebook_user.first_name,
+                    last_name=facebook_user.last_name,
+                    profile_pic=facebook_user.profile_pic,
+                    role=UserRoles.USER.value,
+                    auth_token=Authenticator.generate(new_client.client_id),
+                    online=True
+                )
+                db.session.add(new_user)
+                db.session.flush()
+                db.session.commit()
+                cls.logger().info(f"User #{new_client.client_id} logged in.")
+                headers = {
+                    "auth_token": new_user.auth_token
+                }
+                return SuccessfulUserResponse(new_user, headers)
+        except FacebookWrongTokenError:
+            cls.logger().info(f"Failing to logging in user with Facebook token #{user_data.facebook_token}.")
+            return UnsuccessfulClientResponse("Couldn't perform login.")
 
     @classmethod
     def logout_user(cls, user_data):
@@ -330,13 +386,12 @@ class UserService:
                     db.session.delete(password_recovery)
                     db.session.flush()
                     cls.logger().debug(f"Deleting token recover entry for user {user.user_id}")
-                    user.auth_token = Authenticator.generate(user.username, None)
+                    user.auth_token = Authenticator.generate(user.user_id)
                     cls.logger().debug(f"Regenerating token for user {user.user_id}")
                     user.online = True
                     db.session.commit()
                     cls.logger().info(f"Logging in user {user.user_id}")
                     headers = {
-                        "username": user.username,
                         "auth_token": user.auth_token
                     }
                     return SuccessfulUserResponse(user, headers)

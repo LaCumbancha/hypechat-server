@@ -1,7 +1,7 @@
 from models.constants import StatusCode
 
 
-class UserError(Exception):
+class HypechatError(Exception):
 
     def __init__(self):
         Exception.__init__(self)
@@ -13,123 +13,134 @@ class UserError(Exception):
         return rv
 
 
-class UserNotFoundError(UserError):
+class UserNotFoundError(HypechatError):
     status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class TeamNotFoundError(UserError):
+class TeamNotFoundError(HypechatError):
     status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class ChannelNotFoundError(UserError):
+class ChannelNotFoundError(HypechatError):
     status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class ChatNotFoundError(UserError):
+class ChatNotFoundError(HypechatError):
     status_code = StatusCode.NOT_FOUND.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class WrongTokenError(UserError):
+class WrongTokenError(HypechatError):
     status_code = StatusCode.FORBIDDEN.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class WrongActionError(UserError):
+class WrongActionError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class NoPermissionsError(UserError):
+class NoPermissionsError(HypechatError):
     status_code = StatusCode.FORBIDDEN.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class RoleNotAvailableError(UserError):
+class RoleNotAvailableError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class VisibilityNotAvailableError(UserError):
+class VisibilityNotAvailableError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class MessageTypeNotAvailableError(UserError):
+class MessageTypeNotAvailableError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
 
     def __init__(self, message, status, payload=None):
-        UserError()
+        HypechatError()
         self.message = message
         self.status = status
         self.payload = payload
 
 
-class MissingRequestParameterError(UserError):
+class MissingRequestParameterError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
     MISSING_PARAMETER = "MISSING_PARAMETER"
 
     def __init__(self, parameter):
-        UserError()
+        HypechatError()
         self.message = f"Parameter \"{parameter}\" is required and is missing."
         self.status = self.MISSING_PARAMETER
         self.payload = None
 
 
-class MissingRequestHeaderError(UserError):
+class MissingRequestHeaderError(HypechatError):
     status_code = StatusCode.BAD_REQUEST.value
     MISSING_PARAMETER = "MISSING_PARAMETER"
 
     def __init__(self, parameter):
-        UserError()
+        HypechatError()
         self.message = f"Header \"{parameter}\" is required and is missing."
         self.status = self.MISSING_PARAMETER
         self.payload = None
+
+
+class FacebookWrongTokenError(HypechatError):
+    status_code = StatusCode.BAD_REQUEST.value
+    WRONG_FACEBOOK_TOKEN = "WRONG_FACEBOOK_TOKEN"
+
+    def __init__(self, message, payload=None):
+        HypechatError()
+        self.message = message
+        self.status = self.WRONG_FACEBOOK_TOKEN
+        self.payload = payload

@@ -72,18 +72,22 @@ class ClientRequest:
     def login_data(self):
         email = self.json_body().get("email")
         password = self.json_body().get("password")
+        facebook_token = self.json_body().get("facebook_token")
 
-        if not email:
-            self.logger.error("Missing parameter in request body: email.")
-            raise MissingRequestParameterError("email")
+        if not facebook_token:
 
-        if not password:
-            self.logger.error("Missing parameter in request body: password.")
-            raise MissingRequestParameterError("password")
+            if not email:
+                self.logger.error("Missing parameter in request body: email.")
+                raise MissingRequestParameterError("email")
+
+            if not password:
+                self.logger.error("Missing parameter in request body: password.")
+                raise MissingRequestParameterError("password")
 
         return LoginDTO(
             email=email,
-            password=password
+            password=password,
+            facebook_token=facebook_token
         )
 
     def recover_data(self):

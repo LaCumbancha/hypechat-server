@@ -18,9 +18,10 @@ class NewUserDTO:
 
 class LoginDTO:
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, facebook_token):
         self.email = email
         self.password = password
+        self.facebook_token = facebook_token
 
 
 class RecoverPasswordDTO:

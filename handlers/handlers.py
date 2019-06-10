@@ -3,7 +3,7 @@ from run import app
 from flask import jsonify
 
 
-@app.errorhandler(UserError)
+@app.errorhandler(HypechatError)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
