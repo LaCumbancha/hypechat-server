@@ -46,6 +46,21 @@ class SuccessfulTeamsListResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
+class SuccessfulForbiddenWordsList(Jsonizable, Response):
+
+    def __init__(self, words_list):
+        self.words_list = words_list
+
+    def json(self):
+        return {
+            "status": TeamResponseStatus.LIST.value,
+            "forbidden_words": self.words_list
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class SuccessfulTeamMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):

@@ -54,6 +54,15 @@ CREATE TABLE teams(
 	PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS forbidden_words CASCADE;
+CREATE TABLE forbidden_words(
+    id SERIAL,
+    word VARCHAR(256) NOT NULL UNIQUE,
+    team_id INTEGER NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id)
+);
+
 DROP TABLE IF EXISTS users_teams CASCADE;
 CREATE TABLE users_teams(
 	user_id INTEGER NOT NULL,
