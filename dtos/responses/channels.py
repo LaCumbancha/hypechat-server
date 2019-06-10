@@ -47,21 +47,6 @@ class ActiveChannelOutput(Jsonizable):
         return vars(self)
 
 
-class SuccessfulChannelsListResponse(Jsonizable, Response):
-
-    def __init__(self, teams_list):
-        self.teams_list = teams_list
-
-    def json(self):
-        return {
-            "status": TeamResponseStatus.LIST.value,
-            "teams": self.teams_list
-        }
-
-    def status_code(self):
-        return StatusCode.OK.value
-
-
 class SuccessfulChannelMessageResponse(Jsonizable, Response):
 
     def __init__(self, message, status):
