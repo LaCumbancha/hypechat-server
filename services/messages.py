@@ -5,6 +5,7 @@ from models.authentication import Authenticator
 from tables.users import *
 from tables.messages import *
 from tables.channels import *
+from tables.teams import *
 from sqlalchemy import exc, func, and_, or_, literal
 from sqlalchemy.orm import exc as orm
 
@@ -226,7 +227,7 @@ class MessageService:
                 f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} " +
                 f"from user #{user.user_id} ({user.username}).")
             return MessageListResponse(
-                cls._generate_messages_list(messages, unseen_messages, user.user_id))
+                cls._generate_messages_list(messages, unseen_messages, user.user_id, user.team_id))
 
     @classmethod
     def _determinate_messages(cls, user_id, chat_id, team_id, offset):
@@ -241,6 +242,8 @@ class MessageService:
                 MessageTableEntry.message_type,
                 MessageTableEntry.timestamp,
                 UserTableEntry.username,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
                 UserTableEntry.profile_pic,
                 UserTableEntry.online
             ).join(
@@ -262,6 +265,8 @@ class MessageService:
                 MessageTableEntry.timestamp,
                 UserTableEntry.username,
                 UserTableEntry.profile_pic,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
                 UserTableEntry.online
             ).join(
                 UserTableEntry,
@@ -279,7 +284,8 @@ class MessageService:
             )).offset(offset).limit(CHAT_MESSAGE_PAGE).all()
 
     @classmethod
-    def _generate_messages_list(cls, messages, unseen_offset, user_id):
+    def _generate_messages_list(cls, messages, unseen_offset, user_id, team_id):
+        word_censor = WordCensor(team_id)
         output_messages = []
 
         messages.sort(key=lambda msg: msg.timestamp, reverse=True)
@@ -289,10 +295,12 @@ class MessageService:
                 "sender": {
                     "id": message.sender_id,
                     "username": message.username,
+                    "first_name": message.first_name,
+                    "last_name": message.last_name,
                     "profile_pic": message.profile_pic,
                     "online": message.online
                 },
-                "content": message.text_content,
+                "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
                 "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
@@ -310,7 +318,7 @@ class MessageService:
         if user.user_id == inbox_data.chat_id:
             raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)
 
-        receiver = cls._determinate_message_receiver(inbox_data.chat_id)
+        receiver = cls._determinate_message_receiver(inbox_data.chat_id, user.team_id)
         if not receiver or receiver.team_id != user.team_id:
             cls.logger().info(
                 f"Trying to send a message to client #{inbox_data.chat_id} who's not part of team {user.team_id}.")
@@ -359,7 +367,7 @@ class MessageService:
             return SuccessfulMessageSentResponse("Message sent")
 
     @classmethod
-    def _determinate_message_receiver(cls, receiver_id):
+    def _determinate_message_receiver(cls, receiver_id, team_id):
         receiver = db.session.query(
             UserTableEntry.user_id,
             UsersByTeamsTableEntry.team_id,
@@ -368,7 +376,8 @@ class MessageService:
             UsersByTeamsTableEntry,
             and_(
                 UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
-                UsersByTeamsTableEntry.user_id == receiver_id
+                UsersByTeamsTableEntry.user_id == receiver_id,
+                UsersByTeamsTableEntry.team_id == team_id
             )
         ).one_or_none()
 
@@ -458,3 +467,27 @@ class MessageService:
                     )]
 
         return sender_chat, receivers_chat
+
+
+class WordCensor:
+
+    def __init__(self, team_id):
+        self.forbidden_words = db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == team_id
+        ).all()
+
+    def remove_forbidden_words(self, message):
+        message_content = message.content
+
+        if message.message_type == MessageType.TEXT.value:
+            replaceable_words = map(lambda word: f"{word.word}", self.forbidden_words)
+
+            for replaceable_word in replaceable_words:
+                message_content = self._replace(message_content, replaceable_word)
+
+        return message_content
+
+    def _replace(self, text, replaceable_text):
+        replaceable_length = len(replaceable_text)
+        replace_text = "".join(["*" for _ in range(replaceable_length)])
+        return text.replace(replaceable_text, replace_text)
