@@ -30,7 +30,7 @@ class FacebookService:
 
             return FacebookUserDTO(
                 facebook_id=user_response_content["id"],
-                email=None,#user_response_content["email"],
+                email=user_response_content["email"],
                 first_name=user_response_content["first_name"],
                 last_name=user_response_content["last_name"],
                 profile_pic=user_response_content["picture"]["data"]["url"]

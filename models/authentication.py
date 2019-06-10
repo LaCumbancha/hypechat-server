@@ -22,9 +22,9 @@ class Authenticator:
     _recovery_token_length = os.getenv('RECOVER_TOKEN_LENGTH')
 
     @classmethod
-    def generate(cls, username, password):
+    def generate(cls, user_id, password=None):
         payload = {
-            "username": username,
+            "user_id": user_id,
             "password": password,
             "timestamp": datetime.datetime.now().__str__()
         }
@@ -46,14 +46,15 @@ class Authenticator:
         payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.username == payload["username"]).one_or_none()
+            UserTableEntry.user_id == payload["user_id"]
+        ).one_or_none()
 
         if user:
             if user.auth_token == authentication.token:
                 logger.info(f"User #{user.user_id} authenticated.")
                 return user
             else:
-                logger.info(f"Failing to authenticate user {user.username}.")
+                logger.info(f"Failing to authenticate user #{payload['user_id']}.")
                 raise WrongTokenError("You must be logged to perform this action.",
                                       UserResponseStatus.WRONG_TOKEN.value)
         else:
