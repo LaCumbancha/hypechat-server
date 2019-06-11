@@ -17,7 +17,7 @@ class UserTableEntry(db.Model):
                         nullable=False, primary_key=True)
     facebook_id = db.Column(name='facebook_id', type_=db.Integer, nullable=True, unique=True, default=None)
     username = db.Column(name='username', type_=db.String(), nullable=True, unique=True, default=None)
-    email = db.Column(name='email', type_=db.String(), nullable=False, unique=True)
+    email = db.Column(name='email', type_=db.String(), nullable=True, unique=True)
     password = db.Column(name='password', type_=db.String(), nullable=True, default=None)
     first_name = db.Column(name='first_name', type_=db.String(), nullable=True)
     last_name = db.Column(name='last_name', type_=db.String(), nullable=True)

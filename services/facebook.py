@@ -29,11 +29,12 @@ class FacebookService:
             user_response_content = json.loads(user_response.content.decode('utf8').replace("'", '"'))
 
             return FacebookUserDTO(
-                facebook_id=user_response_content["id"],
-                email=user_response_content["email"],
-                first_name=user_response_content["first_name"],
-                last_name=user_response_content["last_name"],
-                profile_pic=user_response_content["picture"]["data"]["url"]
+                facebook_id=user_response_content.get("id"),
+                email=user_response_content.get("email"),
+                first_name=user_response_content.get("first_name"),
+                last_name=user_response_content.get("last_name"),
+                profile_pic=user_response_content.get("picture").get("data").get("url") \
+                    if "picture" in user_response_content else None
             )
 
         else:
