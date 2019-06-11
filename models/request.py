@@ -196,11 +196,12 @@ class ClientRequest:
 
         try:
             return InboxDTO(
-                token=self.headers().get("X-Auth-Token"),
-                team_id=self.json_body().get("team_id"),
-                chat_id=self.json_body().get("chat_id"),
-                content=self.json_body().get("content"),
-                message_type=self.json_body().get("message_type")
+                token=auth_token,
+                team_id=team_id,
+                chat_id=chat_id,
+                content=content,
+                message_type=message_type,
+                mentions=self.json_body().get("mentions")
             )
         except MessageTypeNotAvailableError:
             logging.getLogger(self.__class__.__name__).warning(f"Message type {self.json_body().get('message_type')} not defined.")

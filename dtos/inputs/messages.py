@@ -5,10 +5,11 @@ from exceptions.exceptions import MessageTypeNotAvailableError
 
 class InboxDTO:
 
-    def __init__(self, token, team_id, chat_id, content, message_type):
+    def __init__(self, token, team_id, chat_id, content, message_type, mentions):
         self.authentication = TeamAuthenticationDTO(token, team_id)
         self.chat_id = chat_id
         self.content = content
+        self.mentions = mentions
         try:
             self.message_type = MessageType[message_type].value
         except KeyError:

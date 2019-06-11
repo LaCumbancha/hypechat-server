@@ -122,6 +122,15 @@ CREATE TABLE messages(
     FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS mentions_messages CASCADE;
+CREATE TABLE mentions_messages(
+    message_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    PRIMARY KEY (message_id, user_id),
+    FOREIGN KEY (message_id) REFERENCES messages (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
 DROP TABLE IF EXISTS chats_messages CASCADE;
 CREATE TABLE chats_messages(
 	user_id INTEGER NOT NULL,

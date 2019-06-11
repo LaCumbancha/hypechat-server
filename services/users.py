@@ -36,7 +36,7 @@ class UserService:
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
                 role=user_data.role or UserRoles.USER.value,
-                auth_token=Authenticator.generate(user_data.user_id, user_data.password),
+                auth_token=Authenticator.generate(new_client.client_id, user_data.password),
                 online=True
             )
             db.session.add(new_user)
