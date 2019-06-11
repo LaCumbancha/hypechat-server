@@ -9,3 +9,4 @@ python-dotenv==0.10.1
 PyJWT==1.4.0
 pycrypto==2.6.1
 ecdsa==0.13.2
+requests==2.22.0
