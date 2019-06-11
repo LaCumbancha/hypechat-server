@@ -46,7 +46,7 @@ class Authenticator:
         payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
         user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.user_id == payload["user_id"]
+            UserTableEntry.user_id == payload.get("user_id")
         ).one_or_none()
 
         if user:

@@ -2,6 +2,7 @@ from app import db
 from dtos.responses.messages import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
+from services.mentions import MentionService
 from tables.users import *
 from tables.messages import *
 from tables.channels import *
@@ -53,6 +54,7 @@ class MessageService:
         ).subquery("sq2")
 
         preview_messages = db.session.query(
+            MessageTableEntry.message_id,
             MessageTableEntry.sender_id,
             MessageTableEntry.receiver_id,
             UserTableEntry.username,
@@ -122,6 +124,7 @@ class MessageService:
         ).subquery("sq2")
 
         preview_messages = db.session.query(
+            MessageTableEntry.message_id,
             MessageTableEntry.receiver_id.label("chat_id"),
             ChannelTableEntry.name.label("chat_name"),
             UserTableEntry.profile_pic.label("chat_picture"),
@@ -170,6 +173,7 @@ class MessageService:
                     "first_name": message.first_name,
                     "last_name": message.last_name,
                 },
+                "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
@@ -194,6 +198,7 @@ class MessageService:
                     "id": message.sender_id,
                     "username": message.sender_username,
                 },
+                "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.message_timestamp,
@@ -307,6 +312,7 @@ class MessageService:
                     "online": message.online
                 },
                 "content": word_censor.remove_forbidden_words(message),
+                "mentions": MentionService.get_mentions(message.message_id),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
                 "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
@@ -346,6 +352,8 @@ class MessageService:
         try:
             db.session.add(new_message)
             db.session.flush()
+            if inbox_data.mentions:
+                MentionService.save_mentions(new_message, inbox_data.mentions)
             db.session.add(chat_sender)
             db.session.flush()
             for chat_receiver in chat_receivers:
