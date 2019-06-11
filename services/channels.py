@@ -2,6 +2,7 @@ from app import db
 from dtos.responses.channels import *
 from dtos.responses.clients import SuccessfulUsersListResponse
 from models.authentication import Authenticator
+from services.notifications import NotificationService
 from tables.users import UsersByChannelsTableEntry, UsersByTeamsTableEntry, UserTableEntry
 from tables.channels import *
 from tables.messages import *
@@ -88,6 +89,7 @@ class ChannelService:
             )
             db.session.add(new_user_by_channel)
             db.session.commit()
+            NotificationService.notify_channel_invitation(new_user_by_channel, user.user_id)
             cls.logger().info(f"User #{invitation_data.user_invited_id} added to channel "
                               f"#{invitation_data.authentication.channel_id} by {user.username}.")
         except exc.IntegrityError:

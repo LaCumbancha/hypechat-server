@@ -1,4 +1,5 @@
 from app import db
+from services.notifications import NotificationService
 from tables.users import UserTableEntry
 from tables.messages import MentionsByMessagesTableEntry
 from sqlalchemy import exc, and_
@@ -24,6 +25,7 @@ class MentionService:
                 )
                 db.session.add(new_mention)
                 db.session.flush()
+                NotificationService.notify_mention(message, mention)
 
             db.session.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")

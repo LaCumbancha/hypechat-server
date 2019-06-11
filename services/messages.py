@@ -3,6 +3,7 @@ from dtos.responses.messages import *
 from exceptions.exceptions import *
 from models.authentication import Authenticator
 from services.mentions import MentionService
+from services.notifications import NotificationService
 from tables.users import *
 from tables.messages import *
 from tables.channels import *
@@ -360,6 +361,7 @@ class MessageService:
                 db.session.add(chat_receiver)
                 db.session.flush()
             db.session.commit()
+            NotificationService.notify_message(new_message)
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
         except exc.IntegrityError:
             db.session.rollback()

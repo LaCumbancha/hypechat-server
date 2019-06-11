@@ -6,6 +6,7 @@ from dtos.responses.channels import SuccessfulChannelsListResponse
 from dtos.model import TeamInvitationEmailDTO
 from models.authentication import Authenticator
 from services.emails import EmailService
+from services.notifications import NotificationService
 from tables.users import *
 from tables.teams import *
 from tables.channels import *
@@ -155,6 +156,7 @@ class TeamService:
                 message_template=EmailService.team_invitation_message
             )
             EmailService.send_email(email_data)
+            NotificationService.notify_team_invitation(new_invite, team_admin.user_id)
             cls.logger().info(
                 f"Team #{new_invite.team_id} invitation email sent to {new_invite.email}.")
 
@@ -366,6 +368,7 @@ class TeamService:
         try:
             db.session.add(user_team)
             db.session.commit()
+            NotificationService.notify_change_role(user_team, team_admin.user_id)
             cls.logger().info(
                 f"User #{user_team.user_id} setted as team #{user_team.team_id} {user_team.role} " +
                 f"by {team_admin.username}.")
