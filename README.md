@@ -75,8 +75,17 @@ docker run --net host -d -p 5000:5000 hypechat-server
 ### Testing
 The test module uses Unittest framework. To run tests:
 ```
-python -m unittest -v tests
+coverage run -m unittest discover -s tests
 ```
+To get the coverage report:
+```
+coverage report -m
+```
+For a prettier presentation:
+```
+coverage html
+```
+And check ```./htmlcov/index.html```
 
 ### Deployment
 The Hypechat Server is hosted in Heroku. To deploy using Heroku CLI:
