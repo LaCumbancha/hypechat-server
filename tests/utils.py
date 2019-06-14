@@ -1,5 +1,6 @@
-EMPTY_DATA = None
+ANY = None
 EMPTY_DICTIONARY = {}
+AUTH_TOKEN_HEADERS = {"X-Auth-Token": "test"}
 
 
 class Header:
