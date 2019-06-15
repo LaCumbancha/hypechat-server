@@ -134,7 +134,7 @@ class TeamService:
             return BadRequestTeamMessageResponse("This user was already invited to join the team.",
                                                  TeamResponseStatus.ALREADY_INVITED.value)
 
-        invite_token = Authenticator.team_invitation()
+        invite_token = Authenticator.generate_team_invitation()
         new_invite = TeamsInvitesTableEntry(
             team_id=invite_data.authentication.team_id,
             email=invite_data.email,

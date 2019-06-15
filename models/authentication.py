@@ -31,12 +31,12 @@ class Authenticator:
         return jwt.encode(payload, cls._secret, algorithm='HS256').decode("utf-8")
 
     @classmethod
-    def generate_recovery(cls):
+    def generate_recovery_token(cls):
         chars = string.ascii_uppercase
         return "".join(random.choice(chars) for _ in range(int(cls._recovery_token_length)))
 
     @classmethod
-    def team_invitation(cls):
+    def generate_team_invitation(cls):
         chars = string.ascii_uppercase
         return "".join(random.choice(chars) for _ in range(int(cls._invite_token_length)))
 

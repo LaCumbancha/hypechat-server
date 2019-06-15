@@ -349,7 +349,7 @@ class UserService:
                 recovery_token = old_password_recovery.token
 
             else:
-                recovery_token = Authenticator.generate_recovery()
+                recovery_token = Authenticator.generate_recovery_token()
                 cls.logger().debug("Generating recovery token")
                 password_recovery = PasswordRecoveryTableEntry(user_id=user.user_id, token=recovery_token)
                 db.session.add(password_recovery)
