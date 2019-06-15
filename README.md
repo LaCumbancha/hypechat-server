@@ -87,6 +87,12 @@ coverage html
 ```
 And check ```./htmlcov/index.html```
 
+Also, we provide with the script ```test```, so for the full test experience just make sure to give it execution permissions and try it!
+```
+chmod +x ./test
+./test
+```
+
 ### Deployment
 The Hypechat Server is hosted in Heroku. To deploy using Heroku CLI:
 ```
