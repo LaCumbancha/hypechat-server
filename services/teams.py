@@ -170,10 +170,11 @@ class TeamService:
     def accept_invite(cls, invitation_data):
         user = Authenticator.authenticate(invitation_data)
         invite = db.session.query(TeamsInvitesTableEntry).filter(and_(
-            TeamsInvitesTableEntry.team_id == invitation_data.team_id, TeamsInvitesTableEntry.email == user.email)) \
-            .one_or_none()
+            TeamsInvitesTableEntry.invite_token == invitation_data.invite_token,
+            TeamsInvitesTableEntry.email == user.email)
+        ).one_or_none()
 
-        if not invite or invite.invite_token != invitation_data.invite_token:
+        if not invite:
             if db.session.query(UsersByTeamsTableEntry).filter(and_(
                     UsersByTeamsTableEntry.user_id == user.user_id,
                     UsersByTeamsTableEntry.team_id == invitation_data.team_id)
