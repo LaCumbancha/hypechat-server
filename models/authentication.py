@@ -13,6 +13,7 @@ from sqlalchemy import and_
 from app import db
 import logging
 
+from jwt.exceptions import DecodeError
 import jwt
 
 
@@ -43,23 +44,28 @@ class Authenticator:
     @classmethod
     def authenticate(cls, authentication):
         logger = logging.getLogger(cls.__name__)
-        payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
-        user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.user_id == payload.get("user_id")
-        ).one_or_none()
+        try:
+            payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
-        if user:
-            if user.auth_token == authentication.token:
-                logger.info(f"User #{user.user_id} authenticated.")
-                return user
+            user = db.session.query(UserTableEntry).filter(
+                UserTableEntry.user_id == payload.get("user_id")
+            ).one_or_none()
+            if user:
+                if user.auth_token == authentication.token:
+                    logger.info(f"User #{user.user_id} authenticated.")
+                    return user
+                else:
+                    logger.info(f"Failing to authenticate user #{payload['user_id']}.")
+                    raise WrongTokenError("You must be logged to perform this action.",
+                                          UserResponseStatus.WRONG_TOKEN.value)
             else:
-                logger.info(f"Failing to authenticate user #{payload['user_id']}.")
-                raise WrongTokenError("You must be logged to perform this action.",
-                                      UserResponseStatus.WRONG_TOKEN.value)
-        else:
-            logger.info(f"User not found.")
-            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+                logger.info(f"User not found.")
+                raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+
+        except DecodeError:
+            logger.info(f"Failing to authenticate user.")
+            raise WrongTokenError("You must be logged to perform this action.", UserResponseStatus.WRONG_TOKEN.value)
 
     @classmethod
     def authenticate_team(cls, authentication, role_verifying=lambda _: True):

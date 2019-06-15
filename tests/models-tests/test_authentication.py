@@ -1,12 +1,18 @@
 import unittest
 from unittest.mock import MagicMock, Mock
 from time import sleep
+from exceptions.exceptions import WrongTokenError, UserNotFoundError
 
 
 '''Mocking environment properties'''
 import sys
 sys.modules["config"] = MagicMock()
-sys.modules["config"].app_config = MagicMock()
+sys.modules["app"] = MagicMock()
+sys.modules["app"].db = MagicMock()
+sys.modules["tables.tables"] = MagicMock()
+sys.modules["tables.users"] = MagicMock()
+sys.modules["tables.channels"] = MagicMock()
+sys.modules["tables.teams"] = MagicMock()
 sys.modules["os"] = MagicMock()
 
 environment_properties = {
@@ -38,3 +44,25 @@ class AuthenticationTestCase(unittest.TestCase):
 
     def test_team_invitations_generated_are_different(self):
         self.assertNotEqual(Authenticator.generate_team_invitation(), Authenticator.generate_team_invitation())
+
+    def test_user_with_undecodable_token_throws_exception(self):
+        authentication = MagicMock()
+        authentication.token = "FAKE-TOKEN"
+        self.assertRaises(WrongTokenError, Authenticator.authenticate, authentication)
+
+    def test_user_not_found_after_token_decoding_throws_exception(self):
+        user1_id = 1
+        token = Authenticator.generate(user1_id)
+        authentication = MagicMock()
+        authentication.token = token
+        sys.modules["app"].db.session.query().filter().one_or_none = MagicMock(return_value=None)
+        self.assertRaises(UserNotFoundError, Authenticator.authenticate, authentication)
+
+    def test_user_with_different_token_in_database_not_authenticated(self):
+        user1_id = 1
+        token = Authenticator.generate(user1_id)
+        authentication = MagicMock()
+        authentication.token = token
+        sys.modules["app"].db.session.query().filter().one_or_none = MagicMock()
+        sys.modules["app"].db.session.query().filter().one_or_none().auth_token = "DIFFERENT-TOKEN"
+        self.assertRaises(WrongTokenError, Authenticator.authenticate, authentication)
