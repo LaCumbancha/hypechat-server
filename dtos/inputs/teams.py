@@ -21,7 +21,7 @@ class NewTeamDTO:
         self.welcome_message = welcome_message
 
 
-class TeamAddUserDTO:
+class AddUserTeamDTO:
 
     def __init__(self, token, team_id, add_user_id):
         self.authentication = TeamAuthenticationDTO(token, team_id)

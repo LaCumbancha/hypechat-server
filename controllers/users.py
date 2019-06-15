@@ -70,7 +70,7 @@ def get_user_teams():
 def update_user():
     logger.info("Attempting to update user information.")
     req = ClientRequest(request)
-    updated_user = UserService.update_user(req.user_update())
+    updated_user = UserService.update_user(req.user_update_data())
     return jsonify(updated_user.json()), updated_user.status_code()
 
 
@@ -86,7 +86,7 @@ def user_profile():
 def recover_password():
     logger.info("Attempting to recover password.")
     req = ClientRequest(request)
-    user = UserService.recover_password(req.recover_data())
+    user = UserService.recover_password(req.recover_password_data())
     return jsonify(user.json()), user.status_code()
 
 
@@ -94,7 +94,7 @@ def recover_password():
 def regenerate_token():
     logger.info("Attempting to recover password.")
     req = ClientRequest(request)
-    user = UserService.regenerate_token(req.regenerate_data())
+    user = UserService.regenerate_token(req.regenerate_password_data())
 
     response = jsonify(user.json())
     if user.headers():

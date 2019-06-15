@@ -47,15 +47,15 @@ class ClientRequest:
         email = self.json_body().get("email")
         password = self.json_body().get("password")
 
-        if not username:
+        if username is None:
             self.logger.error("Missing parameter in request body: username.")
             raise MissingRequestParameterError("username")
 
-        if not email:
+        if email is None:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
-        if not password:
+        if password is None:
             self.logger.error("Missing parameter in request body: password.")
             raise MissingRequestParameterError("password")
 
@@ -74,13 +74,13 @@ class ClientRequest:
         password = self.json_body().get("password")
         facebook_token = self.json_body().get("facebook_token")
 
-        if not facebook_token:
+        if facebook_token is None:
 
-            if not email:
+            if email is None:
                 self.logger.error("Missing parameter in request body: email.")
                 raise MissingRequestParameterError("email")
 
-            if not password:
+            if password is None:
                 self.logger.error("Missing parameter in request body: password.")
                 raise MissingRequestParameterError("password")
 
@@ -90,10 +90,10 @@ class ClientRequest:
             facebook_token=facebook_token
         )
 
-    def recover_data(self):
+    def recover_password_data(self):
         email = self.json_body().get("email")
 
-        if not email:
+        if email is None:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
@@ -101,15 +101,15 @@ class ClientRequest:
             email=email
         )
 
-    def regenerate_data(self):
+    def regenerate_password_data(self):
         email = self.json_body().get("email")
         recover_token = self.json_body().get("recover_token")
 
-        if not email:
+        if email is None:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
-        if not recover_token:
+        if recover_token is None:
             self.logger.error("Missing parameter in request body: recover_token.")
             raise MissingRequestParameterError("recover_token")
 
@@ -118,10 +118,10 @@ class ClientRequest:
             recover_token=recover_token
         )
 
-    def user_update(self):
+    def user_update_data(self):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -130,10 +130,10 @@ class ClientRequest:
             updated_user=self.json_body()
         )
 
-    def search_users_data(self, team_id, searched_username):
+    def search_users_by_username_data(self, team_id, searched_username):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -143,10 +143,10 @@ class ClientRequest:
             searched_username=searched_username,
         )
 
-    def search_user_by_id(self, team_id, user_id):
+    def search_user_by_id_data(self, team_id, user_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -159,7 +159,7 @@ class ClientRequest:
     def authentication_data(self):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -174,23 +174,23 @@ class ClientRequest:
         content = self.json_body().get("content")
         message_type = self.json_body().get("message_type")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not chat_id:
+        if chat_id is None:
             self.logger.error("Missing parameter in request body: chat_id.")
             raise MissingRequestParameterError("chat_id")
 
-        if not content:
+        if content is None:
             self.logger.error("Missing parameter in request body: content.")
             raise MissingRequestParameterError("content")
 
-        if not message_type:
+        if message_type is None:
             self.logger.error("Missing parameter in request body: message_type.")
             raise MissingRequestParameterError("message_type")
 
@@ -210,7 +210,7 @@ class ClientRequest:
     def chat_data(self, team_id, chat_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -225,11 +225,11 @@ class ClientRequest:
         auth_token = self.headers().get("X-Auth-Token")
         team_name = self.json_body().get("team_name")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_name:
+        if team_name is None:
             self.logger.error("Missing parameter in request body: team_name.")
             raise MissingRequestParameterError("team_name")
 
@@ -242,43 +242,43 @@ class ClientRequest:
             welcome_message=self.json_body().get("welcome_message"),
         )
 
-    def add_data(self):
+    def add_user_team_data(self):
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         add_user_id = self.json_body().get("add_user_id")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not add_user_id:
+        if add_user_id is None:
             self.logger.error("Missing parameter in request body: add_user_id.")
             raise MissingRequestParameterError("add_user_id")
 
-        return TeamAddUserDTO(
+        return AddUserTeamDTO(
             token=auth_token,
             team_id=team_id,
             add_user_id=add_user_id
         )
 
-    def invite_data(self):
+    def team_invite_data(self):
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         email = self.json_body().get("email")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not email:
+        if email is None:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
@@ -288,20 +288,20 @@ class ClientRequest:
             email=email
         )
 
-    def accept_invite(self):
+    def accept_team_invite_data(self):
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         invite_token = self.json_body().get("invite_token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not invite_token:
+        if invite_token is None:
             self.logger.error("Missing parameter in request body: invite_token.")
             raise MissingRequestParameterError("invite_token")
 
@@ -311,20 +311,20 @@ class ClientRequest:
             invite_token=invite_token
         )
 
-    def change_role(self, team_id):
+    def change_role_data(self, team_id):
         auth_token = self.headers().get("X-Auth-Token")
         user_id = self.json_body().get("user_id")
         new_role = self.json_body().get("new_role")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not user_id:
+        if user_id is None:
             self.logger.error("Missing parameter in request body: user_id.")
             raise MissingRequestParameterError("user_id")
 
-        if not new_role:
+        if new_role is None:
             self.logger.error("Missing parameter in request body: new_role.")
             raise MissingRequestParameterError("new_role")
 
@@ -339,10 +339,10 @@ class ClientRequest:
             logging.getLogger(self.__class__.__name__).warning(f"Role {self.json_body().get('new_role')} not defined.")
             raise
 
-    def team_authentication(self, team_id):
+    def team_authentication_data(self, team_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -354,7 +354,7 @@ class ClientRequest:
     def delete_user_team_data(self, team_id, delete_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -364,10 +364,10 @@ class ClientRequest:
             delete_id=delete_id
         )
 
-    def team_update(self, team_id):
+    def team_update_data(self, team_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -381,30 +381,25 @@ class ClientRequest:
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         name = self.json_body().get("name")
-        visibility = self.json_body().get("visibility")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not name:
+        if name is None:
             self.logger.error("Missing parameter in request body: name.")
             raise MissingRequestParameterError("name")
-
-        if not visibility:
-            self.logger.error("Missing parameter in request body: visibility.")
-            raise MissingRequestParameterError("visibility")
 
         try:
             return NewChannelDTO(
                 token=auth_token,
                 team_id=team_id,
                 name=name,
-                visibility=visibility,
+                visibility=self.json_body().get("visibility"),
                 description=self.json_body().get("description"),
                 welcome_message=self.json_body().get("welcome_message")
             )
@@ -418,19 +413,19 @@ class ClientRequest:
         channel_id = self.json_body().get("channel_id")
         user_invited_id = self.json_body().get("user_invited_id")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not channel_id:
+        if channel_id is None:
             self.logger.error("Missing parameter in request body: channel_id.")
             raise MissingRequestParameterError("channel_id")
 
-        if not user_invited_id:
+        if user_invited_id is None:
             self.logger.error("Missing parameter in request body: user_invited_id.")
             raise MissingRequestParameterError("user_invited_id")
 
@@ -446,15 +441,15 @@ class ClientRequest:
         team_id = self.json_body().get("team_id")
         channel_id = self.json_body().get("channel_id")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
-        if not channel_id:
+        if channel_id is None:
             self.logger.error("Missing parameter in request body: channel_id.")
             raise MissingRequestParameterError("channel_id")
 
@@ -464,10 +459,10 @@ class ClientRequest:
             channel_id=channel_id
         )
 
-    def delete_user_channel(self, team_id, channel_id, user_id):
+    def delete_user_channel_data(self, team_id, channel_id, user_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -478,10 +473,10 @@ class ClientRequest:
             delete_id=user_id
         )
 
-    def channel_authentication(self, team_id, channel_id):
+    def channel_authentication_data(self, team_id, channel_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -491,10 +486,10 @@ class ClientRequest:
             channel_id=channel_id
         )
 
-    def channel_update(self, team_id, channel_id):
+    def channel_update_data(self, team_id, channel_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
@@ -505,20 +500,20 @@ class ClientRequest:
             updated_channel=self.json_body()
         )
 
-    def add_forbidden_word(self):
+    def add_forbidden_word_data(self):
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         word = self.json_body().get("word")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 
-        if not word:
+        if word is None:
             self.logger.error("Missing parameter in request body: word.")
             raise MissingRequestParameterError("word")
 
-        if not team_id:
+        if team_id is None:
             self.logger.error("Missing parameter in request body: team_id.")
             raise MissingRequestParameterError("team_id")
 
@@ -528,10 +523,10 @@ class ClientRequest:
             word=word
         )
 
-    def delete_forbidden_word(self, team_id, word_id):
+    def delete_forbidden_word_data(self, team_id, word_id):
         auth_token = self.headers().get("X-Auth-Token")
 
-        if not auth_token:
+        if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
 

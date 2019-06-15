@@ -1,6 +1,6 @@
-ANY = None
+mock = None
 EMPTY_DICTIONARY = {}
-AUTH_TOKEN_HEADERS = {"X-Auth-Token": "test"}
+authentication_headers = {"X-Auth-Token": "test"}
 
 
 class Header:
@@ -17,13 +17,14 @@ class Header:
 
 class Request:
 
-    def __init__(self, json=None, headers=None):
-        self.json = json
-        self.is_json = json is not None
+    def __init__(self, body=None, headers=None, args=None):
+        self.body = body
+        self.is_json = body is not None
+        self.args = {} if args is None else args
         self.headers = Header(EMPTY_DICTIONARY if headers is None else headers)
 
     def get_json(self):
-        return self.json
+        return self.body
 
     def headers(self):
         return self.headers
