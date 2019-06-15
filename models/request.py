@@ -290,16 +290,11 @@ class ClientRequest:
 
     def accept_team_invite_data(self):
         auth_token = self.headers().get("X-Auth-Token")
-        team_id = self.json_body().get("team_id")
         invite_token = self.json_body().get("invite_token")
 
         if auth_token is None:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
             raise MissingRequestHeaderError("X-Auth-Token")
-
-        if team_id is None:
-            self.logger.error("Missing parameter in request body: team_id.")
-            raise MissingRequestParameterError("team_id")
 
         if invite_token is None:
             self.logger.error("Missing parameter in request body: invite_token.")
@@ -307,7 +302,6 @@ class ClientRequest:
 
         return TeamInviteAcceptDTO(
             token=auth_token,
-            team_id=team_id,
             invite_token=invite_token
         )
 

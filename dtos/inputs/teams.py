@@ -37,9 +37,8 @@ class TeamInviteDTO:
 
 class TeamInviteAcceptDTO:
 
-    def __init__(self, token, team_id, invite_token):
+    def __init__(self, token, invite_token):
         self.token = token
-        self.team_id = team_id
         self.invite_token = invite_token
 
 

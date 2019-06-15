@@ -78,7 +78,7 @@ DROP TABLE IF EXISTS teams_invites CASCADE;
 CREATE TABLE teams_invites(
 	team_id INTEGER NOT NULL,
 	email VARCHAR(256) NOT NULL,
-	invite_token VARCHAR(8) NOT NULL UNIQUE,
+	invite_token VARCHAR(10) NOT NULL UNIQUE,
 	PRIMARY KEY (team_id, email),
 	FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
 );
