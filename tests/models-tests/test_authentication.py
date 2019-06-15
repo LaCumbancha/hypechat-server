@@ -1,10 +1,20 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 from time import sleep
 
+
+'''Mocking environment properties'''
 import sys
-sys.modules["app"] = MagicMock()
-sys.modules["sqlalchemy"] = MagicMock()
+sys.modules["config"] = MagicMock()
+sys.modules["config"].app_config = MagicMock()
+sys.modules["os"] = MagicMock()
+
+environment_properties = {
+    'SECRET': "TEST",
+    'INVITE_TOKEN_LENGTH': "10",
+    'RECOVER_TOKEN_LENGTH': "8"
+}
+sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
 
 from models.authentication import Authenticator
 
