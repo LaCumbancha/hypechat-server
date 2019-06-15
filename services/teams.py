@@ -315,7 +315,7 @@ class TeamService:
 
         if delete_user:
 
-            if TeamRoles.is_higher_role(user, delete_user):
+            if TeamRoles.has_higher_role(user, delete_user):
                 try:
                     db.session.delete(delete_user)
                     db.session.commit()
