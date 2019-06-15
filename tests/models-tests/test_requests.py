@@ -235,20 +235,14 @@ class ClientRequestTestCase(unittest.TestCase):
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.team_invite_data(), TeamInviteDTO)
 
-    def test_accept_invite_data_without_team_id_throws_exception(self):
-        body_json = {"invite_token": "test"}
-        input_request = Request(body=body_json, headers=authentication_headers)
-        client_request = ClientRequest(input_request)
-        self.assertRaises(MissingRequestParameterError, client_request.accept_team_invite_data)
-
     def test_accept_invite_data_without_invite_token_throws_exception(self):
-        body_json = {"team_id": 0}
+        body_json = {}
         input_request = Request(body=body_json, headers=authentication_headers)
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestParameterError, client_request.accept_team_invite_data)
 
     def test_accept_invite_data_with_full_data_works_properly(self):
-        body_json = {"team_id": 0, "invite_token": "test"}
+        body_json = {"invite_token": "test"}
         input_request = Request(body=body_json, headers=authentication_headers)
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.accept_team_invite_data(), TeamInviteAcceptDTO)
