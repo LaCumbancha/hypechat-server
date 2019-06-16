@@ -13,14 +13,13 @@ sys.modules["tables.tables"] = MagicMock()
 sys.modules["tables.users"] = MagicMock()
 sys.modules["tables.channels"] = MagicMock()
 sys.modules["tables.teams"] = MagicMock()
-sys.modules["os"] = MagicMock()
+sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
 
 environment_properties = {
     'SECRET': "TEST",
     'INVITE_TOKEN_LENGTH': "10",
     'RECOVER_TOKEN_LENGTH': "8"
 }
-sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
 
 from models.authentication import Authenticator
 
