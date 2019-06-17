@@ -134,7 +134,7 @@ class UserService:
     def logout_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
         user.auth_token = None
-        db.session.commit()
+        DatabaseClient.commit()
         cls.logger().info(f"User #{user.user_id} logged out.")
         return SuccessfulUserMessageResponse("User logged out.", UserResponseStatus.LOGGED_OUT.value)
 
