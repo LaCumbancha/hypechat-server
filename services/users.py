@@ -1,4 +1,5 @@
 from app import db
+from daos.database import DatabaseClient
 from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.model import *
@@ -25,8 +26,7 @@ class UserService:
         new_client = ClientTableEntry()
 
         try:
-            db.session.add(new_client)
-            db.session.flush()
+            DatabaseClient.add_entry(new_client)
             new_user = UserTableEntry(
                 user_id=new_client.client_id,
                 username=user_data.username,
@@ -39,25 +39,22 @@ class UserService:
                 auth_token=Authenticator.generate(new_client.client_id, user_data.password),
                 online=True
             )
-            db.session.add(new_user)
-            db.session.flush()
-            db.session.commit()
+            DatabaseClient.add_entry(new_user)
+            DatabaseClient.commit()
             cls.logger().info(f"User #{new_client.client_id} created.")
             headers = {
                 "auth_token": new_user.auth_token
             }
             return SuccessfulUserResponse(new_user, headers)
+
         except exc.IntegrityError:
-            db.session.rollback()
-            if db.session.query(UserTableEntry).filter(UserTableEntry.email == user_data.email).one_or_none():
-                cls.logger().info(
-                    f"Failing to create user {new_client.client_id}. Email already in use for other user.")
+            DatabaseClient.rollback()
+            if DatabaseClient.get_user_by_email(user_data.email) is not None:
+                cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use.")
                 return BadRequestUserMessageResponse("Email already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
-            elif db.session.query(UserTableEntry).filter(
-                    UserTableEntry.username == user_data.username).one_or_none():
-                cls.logger().info(
-                    f"Failing to create user #{new_client.client_id}. Username already in use for other user.")
+            elif DatabaseClient.get_user_by_username(user_data.username) is not None:
+                cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use.")
                 return BadRequestUserMessageResponse("Username already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:

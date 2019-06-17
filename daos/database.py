@@ -1,5 +1,5 @@
 from app import db
-from sqlalchemy import and_
+from sqlalchemy import exc, and_, literal
 
 from tables.users import UserTableEntry, UsersByTeamsTableEntry, UsersByChannelsTableEntry
 from tables.teams import TeamTableEntry
@@ -9,8 +9,29 @@ from tables.channels import ChannelTableEntry
 class DatabaseClient:
 
     @classmethod
+    def commit(cls):
+        db.session.commit()
+
+    @classmethod
+    def rollback(cls):
+        db.session.rollback()
+
+    @classmethod
+    def add_entry(cls, entry):
+        db.session.add(entry)
+        db.session.flush()
+
+    @classmethod
     def get_user_by_id(cls, user_id):
         return db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user_id).one_or_none()
+
+    @classmethod
+    def get_user_by_email(cls, user_email):
+        return db.session.query(UserTableEntry).filter(UserTableEntry.email == user_email).one_or_none()
+
+    @classmethod
+    def get_user_by_username(cls, username):
+        return db.session.query(UserTableEntry).filter(UserTableEntry.username == username).one_or_none()
 
     @classmethod
     def get_team_by_id(cls, team_id):
