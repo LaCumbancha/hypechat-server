@@ -1,4 +1,3 @@
-from app import db
 from daos.database import DatabaseClient
 from dtos.responses.clients import *
 from dtos.responses.teams import *
