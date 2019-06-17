@@ -201,6 +201,21 @@ class DatabaseClient:
             UsersByChannelsTableEntry.channel_id == channel_id
         ).one_or_none()
 
+    @classmethod
+    def get_mentions_by_message(cls, message_id):
+        return db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name
+        ).join(
+            MentionsByMessagesTableEntry,
+            and_(
+                MentionsByMessagesTableEntry.user_id == UserTableEntry.user_id,
+                MentionsByMessagesTableEntry.message_id == message_id
+            )
+        ).all()
+
 
 class TableEntryBuilder:
 
@@ -245,3 +260,7 @@ class TableEntryBuilder:
     @classmethod
     def new_user_by_channel(cls, user_id, channel_id):
         return UsersByChannelsTableEntry(user_id=user_id, channel_id=channel_id)
+
+    @classmethod
+    def new_mention(cls, message_id, user_id):
+        return MentionsByMessagesTableEntry(message_id=message_id, user_id=user_id)
