@@ -36,7 +36,7 @@ class ChatTableEntry(db.Model):
 class MentionsByMessagesTableEntry(db.Model):
     __tablename__ = 'mentions_messages'
 
-    user_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='user_id', type_=db.Integer,
+    client_id = db.Column(ForeignKey(ClientTableEntry.client_id, ondelete='CASCADE'), name='client_id', type_=db.Integer,
                         nullable=False, primary_key=True)
     message_id = db.Column(ForeignKey(MessageTableEntry.message_id, ondelete='CASCADE'), name='message_id',
                            type_=db.Integer, nullable=False, primary_key=True)

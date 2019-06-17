@@ -1,5 +1,5 @@
 from app import db
-from sqlalchemy import and_, or_, literal
+from sqlalchemy import and_, literal
 
 from daos.builder import TableEntryBuilder, ModelBuilder
 from tables.users import *

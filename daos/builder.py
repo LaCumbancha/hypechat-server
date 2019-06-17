@@ -1,6 +1,7 @@
 from dtos.models.users import *
 from dtos.models.teams import *
 from dtos.models.channels import *
+from dtos.models.messages import *
 
 from tables.users import *
 from tables.teams import *
@@ -33,6 +34,13 @@ class TableEntryBuilder:
         return PasswordRecoveryTableEntry(
             user_id=recovery.user_id,
             token=recovery.token
+        )
+
+    @classmethod
+    def to_mention(cls, mention):
+        return MentionsByMessagesTableEntry(
+            message_id=mention.message_id,
+            client_id=mention.client_id
         )
 
 
@@ -156,3 +164,15 @@ class ModelBuilder:
             user.team_role = table_entry.team_role
             user_with_teams += [user]
         return user_with_teams
+
+    @classmethod
+    def to_mentions(cls, mentions_entries):
+        mentions = []
+        for mention_entry in mentions_entries:
+            mentions += [ClientMention(
+                user_id=mention_entry.user_id,
+                username=mention_entry.username,
+                first_name=mention_entry.first_name,
+                last_name=mention_entry.last_name
+            )]
+        return mentions
