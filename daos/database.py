@@ -38,11 +38,7 @@ class DatabaseClient:
         return db.session.query(UserTableEntry).filter(UserTableEntry.username == username).one_or_none()
 
     @classmethod
-    def get_team_by_id(cls, team_id):
-        return db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == team_id).one_or_none()
-
-    @classmethod
-    def get_teams_with_roles_by_user_id(cls, is_admin, user_id):
+    def get_user_teams_by_user_id(cls, user_id, is_admin=False):
         if is_admin:
             return db.session.query(
                 TeamTableEntry.team_id,
@@ -69,6 +65,40 @@ class DatabaseClient:
                     UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
                 )
             ).all()
+
+    @classmethod
+    def get_user_profile(cls, user):
+        if len(cls.get_user_teams_by_user_id(user.user_id)) > 0:
+            return db.session.query(
+                UserTableEntry.user_id,
+                UserTableEntry.username,
+                UserTableEntry.email,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
+                UserTableEntry.profile_pic,
+                UserTableEntry.role,
+                TeamTableEntry.team_id,
+                TeamTableEntry.team_name,
+                TeamTableEntry.picture,
+                TeamTableEntry.location,
+                TeamTableEntry.description,
+                TeamTableEntry.welcome_message,
+                UsersByTeamsTableEntry.role
+            ).join(
+                UsersByTeamsTableEntry,
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+            ).join(
+                TeamTableEntry,
+                UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+            ).filter(
+                UserTableEntry.user_id == user.user_id
+            ).all()
+        else:
+            return user
+
+    @classmethod
+    def get_team_by_id(cls, team_id):
+        return db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == team_id).one_or_none()
 
     @classmethod
     def get_channel_by_id(cls, channel_id):

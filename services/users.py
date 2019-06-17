@@ -157,7 +157,7 @@ class UserService:
     @classmethod
     def teams_for_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
-        teams = DatabaseClient.get_teams_with_roles_by_user_id(user.role == UserRoles.ADMIN.value, user.user_id)
+        teams = DatabaseClient.get_user_teams_by_user_id(user.user_id, user.role == UserRoles.ADMIN.value)
 
         return SuccessfulTeamsListResponse(cls._generate_teams_list(teams))
 
@@ -197,21 +197,16 @@ class UserService:
             update_data.updated_user["profile_pic"] if "profile_pic" in update_data.updated_user else user.profile_pic
 
         try:
-            db.session.commit()
-            cls.logger().info(
-                f"User {user.user_id} information updated.")
+            DatabaseClient.commit()
+            cls.logger().info(f"User {user.user_id} information updated.")
             return SuccessfulUserResponse(user)
         except exc.IntegrityError:
-            db.session.rollback()
-            if db.session.query(UserTableEntry).filter(
-                    UserTableEntry.username == update_data.updated_user.get("username")
-            ).one_or_none():
+            DatabaseClient.rollback()
+            if DatabaseClient.get_user_by_username(update_data.updated_user.get("username")) is not None:
                 cls.logger().info(f"Name {update_data.updated_user.get('username')} is taken for another user.")
                 return BadRequestUserMessageResponse(f"Name {update_data.updated_user.get('username')}" +
                                                      " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
-            elif db.session.query(UserTableEntry).filter(
-                    UserTableEntry.email == update_data.updated_user.get("email")
-            ).one_or_none():
+            elif DatabaseClient.get_user_by_email(update_data.updated_user.get("email")) is not None:
                 cls.logger().info(f"Email {update_data.updated_user.get('email')} is taken for another user.")
                 return BadRequestUserMessageResponse(f"Email {update_data.updated_user.get('email')}" +
                                                      " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
@@ -222,42 +217,10 @@ class UserService:
     @classmethod
     def user_profile(cls, user_data):
         user = Authenticator.authenticate(user_data)
-
-        has_teams = len(db.session.query(UsersByTeamsTableEntry).filter(
-            UsersByTeamsTableEntry.user_id == user.user_id
-        ).all()) > 0
-
-        if has_teams:
-            full_user = db.session.query(
-                UserTableEntry.user_id,
-                UserTableEntry.username,
-                UserTableEntry.email,
-                UserTableEntry.first_name,
-                UserTableEntry.last_name,
-                UserTableEntry.profile_pic,
-                UserTableEntry.role,
-                TeamTableEntry.team_id,
-                TeamTableEntry.team_name,
-                TeamTableEntry.picture,
-                TeamTableEntry.location,
-                TeamTableEntry.description,
-                TeamTableEntry.welcome_message,
-                UsersByTeamsTableEntry.role
-            ).join(
-                UsersByTeamsTableEntry,
-                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
-            ).join(
-                TeamTableEntry,
-                UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
-            ).filter(
-                UserTableEntry.user_id == user.user_id
-            ).all()
-
-            cls.logger().info(f"Retrieved user {user.username} profile.")
-            return SuccessfulFullUserResponse(cls._generate_full_user(full_user, has_teams))
-        else:
-            cls.logger().info(f"Retrieved user {user.username} profile.")
-            return SuccessfulFullUserResponse(cls._generate_full_user(user, has_teams))
+        has_teams = len(DatabaseClient.get_user_teams_by_user_id(user.user_id))
+        profile = DatabaseClient.get_user_profile(user)
+        cls.logger().info(f"Retrieved user {user.username} profile.")
+        return SuccessfulFullUserResponse(cls._generate_full_user(profile, has_teams))
 
     @classmethod
     def _generate_full_user(cls, full_user, has_teams):
