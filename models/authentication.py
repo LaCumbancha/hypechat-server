@@ -4,6 +4,7 @@ import string
 import datetime
 
 from daos.database import DatabaseClient
+from daos.users import UserDatabaseClient
 from models.constants import UserResponseStatus, TeamResponseStatus, ChannelResponseStatus, TeamRoles, UserRoles
 from exceptions.exceptions import *
 
@@ -40,16 +41,15 @@ class Authenticator:
         logger = logging.getLogger(cls.__name__)
         payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
-        user = DatabaseClient.get_user_by_id(payload.get("user_id"))
+        user = UserDatabaseClient.get_user_by_id(payload.get("user_id"))
 
         if user is not None:
-            if user.auth_token == authentication.token:
-                logger.info(f"User #{user.user_id} authenticated.")
+            if user.token == authentication.token:
+                logger.info(f"User #{user.id} authenticated.")
                 return user
             else:
                 logger.info(f"Failing to authenticate user #{payload['user_id']}.")
-                raise WrongTokenError("You must be logged to perform this action.",
-                                      UserResponseStatus.WRONG_TOKEN.value)
+                raise WrongTokenError("You must be logged to perform this action.", UserResponseStatus.WRONG_TOKEN.value)
         else:
             logger.info(f"User not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
@@ -64,7 +64,7 @@ class Authenticator:
             user.team_id = authentication.team_id
             return user
 
-        team_user = DatabaseClient.get_team_user_by_ids(user.user_id, authentication.team_id)
+        team_user = UserDatabaseClient.get_team_user_by_ids(user.user_id, authentication.team_id)
 
         if team_user is not None:
             if role_verifying(team_user):
@@ -75,13 +75,13 @@ class Authenticator:
                 raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
         else:
-            team = DatabaseClient.get_team_by_id(authentication.team_id)
+            team = TeamDatabaseClient.get_team_by_id(authentication.team_id)
 
             if team is None:
                 logger.info(f"Team #{authentication.team_id} not found.")
                 raise TeamNotFoundError("Team not found.", TeamResponseStatus.NOT_FOUND.value)
             else:
-                logger.info(f"User {user.username} trying to access team #{team.team_id}, when it's not part of it.")
+                logger.info(f"User {user.username} trying to access team #{team.id}, when it's not part of it.")
                 raise NoPermissionsError("You're not part of this team!",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
 
@@ -94,10 +94,10 @@ class Authenticator:
         except NoPermissionsError:
 
             user = cls.authenticate_team(authentication)
-            channel_user = DatabaseClient.get_channel_user_by_ids(user.user_id, authentication.channel_id)
+            channel_user = UserDatabaseClient.get_channel_user_by_ids(user.user_id, authentication.channel_id)
 
             if channel_user:
-                if role_verifying(channel_user.creator, channel_user.user_id):
+                if role_verifying(channel_user.channel_creator_id, channel_user.user_id):
                     logger.info(f"User {user.username} authenticated as channel #{authentication.channel_id} creator.")
                     return channel_user
                 else:
