@@ -1,11 +1,11 @@
 from app import db
-from sqlalchemy import and_, literal
+from sqlalchemy import and_, or_, literal
 
 from tables.users import *
 from tables.teams import *
 from tables.channels import *
 from tables.messages import *
-from models.constants import ChannelVisibilities
+from models.constants import ChannelVisibilities, SendMessageType
 
 
 class DatabaseClient:
@@ -27,6 +27,10 @@ class DatabaseClient:
     def delete(cls, entry):
         db.session.delete(entry)
         db.session.flush()
+
+    @classmethod
+    def get_client_by_id(cls, client_id):
+        return db.session.query(ClientTableEntry).filter(ClientTableEntry.client_id == client_id).one_or_none()
 
     @classmethod
     def get_user_by_id(cls, user_id):
@@ -216,6 +220,217 @@ class DatabaseClient:
             )
         ).all()
 
+    @classmethod
+    def get_direct_messages_previews(cls, user_id, team_id):
+        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user_id).subquery("sq1")
+
+        last_messages_mixed = db.session.query(
+            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user1"),
+            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user2"),
+            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
+        ).filter(and_(
+            or_(
+                MessageTableEntry.receiver_id == user_id,
+                MessageTableEntry.sender_id == user_id
+            ),
+            MessageTableEntry.team_id == team_id,
+            MessageTableEntry.send_type == SendMessageType.DIRECT.value
+        )).group_by(
+            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
+            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
+        ).subquery("sq2")
+
+        return db.session.query(
+            MessageTableEntry.message_id,
+            MessageTableEntry.sender_id,
+            MessageTableEntry.receiver_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            MessageTableEntry.content,
+            MessageTableEntry.message_type,
+            MessageTableEntry.timestamp,
+            chats.c.unseen
+        ).join(
+            last_messages_mixed,
+            and_(
+                or_(
+                    MessageTableEntry.sender_id == last_messages_mixed.c.user1,
+                    MessageTableEntry.sender_id == last_messages_mixed.c.user2,
+                ),
+                or_(
+                    MessageTableEntry.receiver_id == last_messages_mixed.c.user1,
+                    MessageTableEntry.receiver_id == last_messages_mixed.c.user2,
+                ),
+                MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp,
+                MessageTableEntry.send_type == SendMessageType.DIRECT.value
+            )
+        ).join(
+            chats,
+            and_(
+                or_(
+                    MessageTableEntry.sender_id == chats.c.chat_id,
+                    MessageTableEntry.receiver_id == chats.c.chat_id,
+                ),
+                or_(
+                    MessageTableEntry.sender_id == chats.c.user_id,
+                    MessageTableEntry.receiver_id == chats.c.user_id,
+                )
+            )
+        ).join(
+            UserTableEntry,
+            or_(
+                and_(
+                    UserTableEntry.user_id == last_messages_mixed.c.user1,
+                    UserTableEntry.user_id != user_id
+                ),
+                and_(
+                    UserTableEntry.user_id == last_messages_mixed.c.user2,
+                    UserTableEntry.user_id != user_id
+                )
+            )
+        ).all()
+
+    @classmethod
+    def get_channel_messages_previews(cls, user_id, team_id):
+        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user_id).subquery("sq1")
+
+        last_messages = db.session.query(
+            MessageTableEntry.receiver_id.label("channel_id"),
+            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
+        ).filter(and_(
+            MessageTableEntry.team_id == team_id,
+            MessageTableEntry.send_type == SendMessageType.CHANNEL.value
+        )).group_by(
+            MessageTableEntry.receiver_id
+        ).subquery("sq2")
+
+        return db.session.query(
+            MessageTableEntry.message_id,
+            MessageTableEntry.receiver_id.label("chat_id"),
+            ChannelTableEntry.name.label("chat_name"),
+            UserTableEntry.profile_pic.label("chat_picture"),
+            MessageTableEntry.sender_id.label("sender_id"),
+            UserTableEntry.username.label("sender_username"),
+            MessageTableEntry.content.label("content"),
+            MessageTableEntry.message_type,
+            MessageTableEntry.timestamp.label("message_timestamp"),
+            chats.c.unseen.label("unseen_offset")
+        ).join(
+            last_messages,
+            and_(
+                MessageTableEntry.receiver_id == last_messages.c.channel_id,
+                MessageTableEntry.timestamp == last_messages.c.maxtimestamp
+            )
+        ).join(
+            chats,
+            and_(
+                MessageTableEntry.team_id == chats.c.team_id,
+                MessageTableEntry.receiver_id == chats.c.chat_id
+            )
+        ).join(
+            UserTableEntry,
+            UserTableEntry.user_id == MessageTableEntry.sender_id
+        ).join(
+            ChannelTableEntry,
+            ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
+        ).all()
+
+    @classmethod
+    def get_chat_by_ids(cls, user_id, chat_id, team_id):
+        return db.session.query(ChatTableEntry).filter(and_(
+            ChatTableEntry.user_id == user_id,
+            ChatTableEntry.chat_id == chat_id,
+            ChatTableEntry.team_id == team_id
+        )).one_or_none()
+
+    @classmethod
+    def get_channel_chat(cls, chat_id, team_id, offset, limit):
+        return db.session.query(
+            MessageTableEntry.message_id,
+            MessageTableEntry.sender_id,
+            MessageTableEntry.receiver_id,
+            MessageTableEntry.team_id,
+            MessageTableEntry.content,
+            MessageTableEntry.message_type,
+            MessageTableEntry.timestamp,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online
+        ).join(
+            UserTableEntry,
+            MessageTableEntry.sender_id == UserTableEntry.user_id
+        ).filter(and_(
+            MessageTableEntry.team_id == team_id,
+            MessageTableEntry.receiver_id == chat_id
+        )).offset(offset).limit(limit).all()
+
+    @classmethod
+    def get_direct_chat(cls, user_id, chat_id, team_id, offset, limit):
+        return db.session.query(
+            MessageTableEntry.message_id,
+            MessageTableEntry.sender_id,
+            MessageTableEntry.receiver_id,
+            MessageTableEntry.team_id,
+            MessageTableEntry.content,
+            MessageTableEntry.message_type,
+            MessageTableEntry.timestamp,
+            UserTableEntry.username,
+            UserTableEntry.profile_pic,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.online
+        ).join(
+            UserTableEntry,
+            MessageTableEntry.sender_id == UserTableEntry.user_id
+        ).filter(and_(
+            MessageTableEntry.team_id == team_id,
+            or_(
+                and_(
+                    MessageTableEntry.sender_id == user_id,
+                    MessageTableEntry.receiver_id == chat_id),
+                and_(
+                    MessageTableEntry.sender_id == chat_id,
+                    MessageTableEntry.receiver_id == user_id)
+            ),
+        )).offset(offset).limit(limit).all()
+
+    @classmethod
+    def get_message_direct_receiver_by_ids(cls, user_id, team_id):
+        return db.session.query(
+            UserTableEntry.user_id,
+            UsersByTeamsTableEntry.team_id,
+            literal(True).label("is_user")
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByTeamsTableEntry.user_id == user_id,
+                UsersByTeamsTableEntry.team_id == team_id
+            )
+        ).one_or_none()
+
+    @classmethod
+    def get_message_channel_receiver_by_ids(cls, channel_id):
+        return db.session.query(
+            ChannelTableEntry.team_id,
+            literal(False).label("is_user")
+        ).filter(
+            ChannelTableEntry.channel_id == channel_id
+        ).one_or_none()
+
+    @classmethod
+    def get_channel_members(cls, channel_id, ignored_user_id=None):
+        return db.session.query(UsersByChannelsTableEntry).filter(and_(
+            UsersByChannelsTableEntry.channel_id == channel_id,
+            UsersByChannelsTableEntry.user_id != ignored_user_id
+        )).all()
+
+
 
 class TableEntryBuilder:
 
@@ -264,3 +479,23 @@ class TableEntryBuilder:
     @classmethod
     def new_mention(cls, message_id, user_id):
         return MentionsByMessagesTableEntry(message_id=message_id, user_id=user_id)
+
+    @classmethod
+    def new_message(cls, sender_id, receiver_id, team_id, content, send_type, message_type):
+        return MessageTableEntry(
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            team_id=team_id,
+            content=content,
+            send_type=send_type,
+            message_type=message_type
+        )
+
+    @classmethod
+    def new_chat(cls, user_id, chat_id, team_id, offset):
+        return ChatTableEntry(
+            user_id=user_id,
+            chat_id=chat_id,
+            team_id=team_id,
+            unseen_offset=offset
+        )

@@ -75,6 +75,7 @@ class ChannelService:
                 channel_id=invitation_data.authentication.channel_id
             )
             DatabaseClient.add(new_user_by_channel)
+            DatabaseClient.commit()
             cls.logger().info(f"User #{invited_user.user_id} added to channel "
                               f"#{invitation_data.authentication.channel_id} by {user.username}.")
 
