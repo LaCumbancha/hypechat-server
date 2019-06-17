@@ -105,9 +105,9 @@ class Authenticator:
                 raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
         else:
-            if not db.session.query(TeamTableEntry).filter(
+            if db.session.query(TeamTableEntry).filter(
                     TeamTableEntry.team_id == authentication.team_id
-            ).one_or_none():
+            ).one_or_none() is None:
                 logger.info(f"Team #{authentication.team_id} not found.")
                 raise TeamNotFoundError("Team not found.", TeamResponseStatus.NOT_FOUND.value)
             else:
@@ -155,9 +155,9 @@ class Authenticator:
                     raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                              TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
-                if not db.session.query(ChannelTableEntry).filter(
+                if db.session.query(ChannelTableEntry).filter(
                         ChannelTableEntry.channel_id == authentication.channel_id
-                ).one_or_none():
+                ).one_or_none() is None:
                     logger.info(f"Chanel #{authentication.channel_id} not found.")
                     raise ChannelNotFoundError("Channel not found.", ChannelResponseStatus.CHANNEL_NOT_FOUND.value)
                 else:

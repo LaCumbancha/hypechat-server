@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, Mock
 from time import sleep
-from exceptions.exceptions import WrongTokenError, UserNotFoundError
+from exceptions.exceptions import WrongTokenError, UserNotFoundError, NoPermissionsError
 
 
 '''Mocking environment properties'''
@@ -9,7 +9,6 @@ import sys
 sys.modules["config"] = MagicMock()
 sys.modules["app"] = MagicMock()
 sys.modules["app"].db = MagicMock()
-sys.modules["tables.tables"] = MagicMock()
 sys.modules["tables.users"] = MagicMock()
 sys.modules["tables.channels"] = MagicMock()
 sys.modules["tables.teams"] = MagicMock()
@@ -57,7 +56,7 @@ class AuthenticationTestCase(unittest.TestCase):
         sys.modules["app"].db.session.query().filter().one_or_none = MagicMock(return_value=None)
         self.assertRaises(UserNotFoundError, Authenticator.authenticate, authentication)
 
-    def test_user_with_different_token_in_database_not_authenticated(self):
+    def test_user_with_different_token_in_database_throws_exception(self):
         user1_id = 1
         token = Authenticator.generate(user1_id)
         authentication = MagicMock()
@@ -65,3 +64,36 @@ class AuthenticationTestCase(unittest.TestCase):
         sys.modules["app"].db.session.query().filter().one_or_none = MagicMock()
         sys.modules["app"].db.session.query().filter().one_or_none().auth_token = "DIFFERENT-TOKEN"
         self.assertRaises(WrongTokenError, Authenticator.authenticate, authentication)
+
+    def test_user_with_same_token_in_database_authenticates(self):
+        user1_id = 1
+        token = Authenticator.generate(user1_id)
+        authentication = MagicMock()
+        authentication.token = token
+        sys.modules["app"].db.session.query().filter().one_or_none = MagicMock()
+        sys.modules["app"].db.session.query().filter().one_or_none().auth_token = token
+        sys.modules["app"].db.session.query().filter().one_or_none().id = user1_id
+        authenticated_user = Authenticator.authenticate(authentication)
+        self.assertTrue(authenticated_user.id == user1_id)
+
+    def test_app_user_doesnt_belonging_to_team_throws_exception(self):
+        user1_id = 1
+        token = Authenticator.generate(user1_id)
+        authentication = MagicMock()
+        authentication.token = token
+        sys.modules["app"].db.session.query().filter().one_or_none = MagicMock()
+        sys.modules["app"].db.session.query().filter().one_or_none().auth_token = token
+        sys.modules["app"].db.session.query().filter().one_or_none().id = user1_id
+        sys.modules["app"].db.session.query().join().one_or_none = MagicMock(return_value=None)
+        self.assertRaises(NoPermissionsError, Authenticator.authenticate_team, authentication)
+
+    def test_app_user_doesnt_authenticating_to_unknown_team_throws_exception(self):
+        user1_id = 1
+        token = Authenticator.generate(user1_id)
+        authentication = MagicMock()
+        authentication.token = token
+        sys.modules["app"].db.session.query().filter().one_or_none = MagicMock()
+        sys.modules["app"].db.session.query().filter().one_or_none().auth_token = token
+        sys.modules["app"].db.session.query().filter().one_or_none().id = user1_id
+        sys.modules["app"].db.session.query().join().one_or_none = MagicMock(return_value=None)
+        self.assertRaises(NoPermissionsError, Authenticator.authenticate_team, authentication)
