@@ -1,4 +1,5 @@
 from daos.database import *
+from daos.teams import TeamDatabaseClient
 from daos.users import UserDatabaseClient
 from daos.channels import ChannelDatabaseClient
 
@@ -60,7 +61,7 @@ class ChannelService:
             cls.logger().info(f"Trying to add user an nonexistent user to channel #{user.channel_id}.")
             return BadRequestChannelMessageResponse("Invited user not found!", UserResponseStatus.USER_NOT_FOUND.value)
 
-        invited_user_in_team = DatabaseClient.get_user_in_team_by_ids(invited_user.id, user.channel_id)
+        invited_user_in_team = TeamDatabaseClient.get_user_in_team_by_ids(invited_user.id, user.team_id)
         if invited_user_in_team is None:
             cls.logger().info(f"Trying to add user {invited_user.id} to channel #{user.channel_id}, but it's not part "
                               f"of the team #{user.team_id}.")

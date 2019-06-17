@@ -3,8 +3,10 @@ from app import db
 from daos.database import DatabaseClient
 from daos.builder import TableEntryBuilder, ModelBuilder
 
+from tables.messages import *
 from tables.channels import *
 from tables.users import *
+from tables.teams import *
 
 from sqlalchemy import and_
 
@@ -65,7 +67,7 @@ class ChannelDatabaseClient:
         return ModelBuilder.to_user_in_channel(channel_user_entry)
 
     @classmethod
-    def get_all_channel_users_by_channel_id(cls, channel_id):
+    def get_all_channel_users_by_channel_id(cls, channel_id, ignored_user_id=None):
         users = db.session.query(
             UserTableEntry.user_id,
             UserTableEntry.username,
@@ -79,7 +81,8 @@ class ChannelDatabaseClient:
             UsersByChannelsTableEntry,
             and_(
                 UserTableEntry.user_id == UsersByChannelsTableEntry.user_id,
-                UsersByChannelsTableEntry.channel_id == channel_id
+                UsersByChannelsTableEntry.channel_id == channel_id,
+                UsersByChannelsTableEntry.user_id != ignored_user_id
             )
         ).all()
         return ModelBuilder.to_public_users(users)

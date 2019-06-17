@@ -4,7 +4,6 @@ from sqlalchemy import and_, literal
 from daos.builder import TableEntryBuilder, ModelBuilder
 from tables.users import *
 from tables.teams import *
-from dtos.models.teams import *
 
 
 class TeamDatabaseClient:
@@ -43,3 +42,18 @@ class TeamDatabaseClient:
                 )
             ).all()
         return ModelBuilder.to_teams(team_entry)
+
+    @classmethod
+    def get_user_in_team_by_ids(cls, user_id, team_id):
+        team_user = db.session.query(UsersByTeamsTableEntry).filter(
+            UsersByTeamsTableEntry.user_id == user_id,
+            UsersByTeamsTableEntry.team_id == team_id
+        ).one_or_none()
+        return ModelBuilder.to_user_in_team(team_user)
+
+    @classmethod
+    def get_forbidden_words_from_team(cls, team_id):
+        words = db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == team_id
+        ).all()
+        return ModelBuilder.to_forbidden_words(words)

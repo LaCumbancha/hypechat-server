@@ -11,3 +11,10 @@ class Team:
         self.description = description
         self.welcome_message = welcome_message
         self.role = role
+
+
+class TeamUser:
+
+    def __init__(self, user_id, team_id):
+        self.user_id = user_id
+        self.team_id = team_id
