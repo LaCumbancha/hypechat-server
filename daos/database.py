@@ -26,6 +26,10 @@ class DatabaseClient:
         return db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user_id).one_or_none()
 
     @classmethod
+    def get_user_by_facebook_id(cls, facebook_id):
+        return db.session.query(UserTableEntry).filter(UserTableEntry.facebook_id == facebook_id).one_or_none()
+
+    @classmethod
     def get_user_by_email(cls, user_email):
         return db.session.query(UserTableEntry).filter(UserTableEntry.email == user_email).one_or_none()
 

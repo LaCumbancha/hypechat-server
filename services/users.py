@@ -70,20 +70,16 @@ class UserService:
 
     @classmethod
     def _login_app_user(cls, user_data):
-        user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.email == user_data.email
-        ).one_or_none()
+        user = DatabaseClient.get_user_by_email(user_data.email)
 
         if user:
             if hashing.verify(user_data.password, user.password):
                 cls.logger().debug(f"Generating token for user {user.user_id}")
                 user.auth_token = Authenticator.generate(user.user_id, user_data.password)
                 user.online = True
-                db.session.commit()
+                DatabaseClient.commit()
                 cls.logger().info(f"User #{user.user_id} logged in")
-                headers = {
-                    "auth_token": user.auth_token
-                }
+                headers = {"auth_token": user.auth_token}
                 return SuccessfulUserResponse(user, headers)
             else:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
@@ -97,29 +93,23 @@ class UserService:
     def _login_facebook_user(cls, user_data):
         try:
             facebook_user = FacebookService.get_user_from_facebook(user_data)
-
-            user = db.session.query(UserTableEntry).filter(
-                UserTableEntry.facebook_id == facebook_user.facebook_id
-            ).one_or_none()
+            user = DatabaseClient.get_user_by_facebook_id(facebook_user.facebook_id)
 
             if user:
                 cls.logger().info(f"Logging in Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 cls.logger().debug(f"Generating token for user {user.user_id}")
                 user.auth_token = Authenticator.generate(user.user_id)
                 user.online = True
-                db.session.commit()
+                DatabaseClient.commit()
                 cls.logger().info(f"User #{user.user_id} logged in.")
-                headers = {
-                    "auth_token": user.auth_token
-                }
+                headers = {"auth_token": user.auth_token}
                 return SuccessfulUserResponse(user, headers)
 
             else:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 new_client = ClientTableEntry()
 
-                db.session.add(new_client)
-                db.session.flush()
+                DatabaseClient.add_entry(new_client)
                 new_user = UserTableEntry(
                     user_id=new_client.client_id,
                     facebook_id=facebook_user.facebook_id,
@@ -131,13 +121,10 @@ class UserService:
                     auth_token=Authenticator.generate(new_client.client_id),
                     online=True
                 )
-                db.session.add(new_user)
-                db.session.flush()
-                db.session.commit()
+                DatabaseClient.add_entry(new_user)
+                DatabaseClient.commit()
                 cls.logger().info(f"User #{new_client.client_id} logged in.")
-                headers = {
-                    "auth_token": new_user.auth_token
-                }
+                headers = {"auth_token": new_user.auth_token}
                 return SuccessfulUserResponse(new_user, headers)
         except FacebookWrongTokenError:
             cls.logger().info(f"Failing to logging in user with Facebook token #{user_data.facebook_token}.")
