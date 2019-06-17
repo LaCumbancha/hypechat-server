@@ -157,34 +157,7 @@ class UserService:
     @classmethod
     def teams_for_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
-
-        if user.role == UserRoles.ADMIN.value:
-            teams = db.session.query(
-                TeamTableEntry.team_id,
-                TeamTableEntry.team_name,
-                TeamTableEntry.picture,
-                TeamTableEntry.location,
-                TeamTableEntry.description,
-                TeamTableEntry.welcome_message,
-                literal(None).label("role")
-            ).all()
-
-        else:
-            teams = db.session.query(
-                TeamTableEntry.team_id,
-                TeamTableEntry.team_name,
-                TeamTableEntry.picture,
-                TeamTableEntry.location,
-                TeamTableEntry.description,
-                TeamTableEntry.welcome_message,
-                UsersByTeamsTableEntry.role
-            ).join(
-                UsersByTeamsTableEntry,
-                and_(
-                    UsersByTeamsTableEntry.user_id == user.user_id,
-                    UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
-                )
-            ).all()
+        teams = DatabaseClient.get_teams_with_roles_by_user_id(user.role == UserRoles.ADMIN.value, user.user_id)
 
         return SuccessfulTeamsListResponse(cls._generate_teams_list(teams))
 

@@ -42,6 +42,35 @@ class DatabaseClient:
         return db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == team_id).one_or_none()
 
     @classmethod
+    def get_teams_with_roles_by_user_id(cls, is_admin, user_id):
+        if is_admin:
+            return db.session.query(
+                TeamTableEntry.team_id,
+                TeamTableEntry.team_name,
+                TeamTableEntry.picture,
+                TeamTableEntry.location,
+                TeamTableEntry.description,
+                TeamTableEntry.welcome_message,
+                literal(None).label("role")
+            ).all()
+        else:
+            return db.session.query(
+                TeamTableEntry.team_id,
+                TeamTableEntry.team_name,
+                TeamTableEntry.picture,
+                TeamTableEntry.location,
+                TeamTableEntry.description,
+                TeamTableEntry.welcome_message,
+                UsersByTeamsTableEntry.role
+            ).join(
+                UsersByTeamsTableEntry,
+                and_(
+                    UsersByTeamsTableEntry.user_id == user_id,
+                    UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+                )
+            ).all()
+
+    @classmethod
     def get_channel_by_id(cls, channel_id):
         return db.session.query(ChannelTableEntry).filter(ChannelTableEntry.channel_id == channel_id).one_or_none()
 
