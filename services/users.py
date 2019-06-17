@@ -1,4 +1,4 @@
-from daos.database import DatabaseClient
+from daos.database import *
 from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.model import *
@@ -20,11 +20,11 @@ class UserService:
 
     @classmethod
     def create_user(cls, user_data):
-        new_client = ClientTableEntry()
+        new_client = TableEntryBuilder.new_client()
 
         try:
             DatabaseClient.add(new_client)
-            new_user = UserTableEntry(
+            new_user = TableEntryBuilder.new_user(
                 user_id=new_client.client_id,
                 username=user_data.username,
                 email=user_data.email,
@@ -33,15 +33,12 @@ class UserService:
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
                 role=user_data.role or UserRoles.USER.value,
-                auth_token=Authenticator.generate(new_client.client_id, user_data.password),
-                online=True
+                auth_token=Authenticator.generate(new_client.client_id, user_data.password)
             )
             DatabaseClient.add(new_user)
             DatabaseClient.commit()
             cls.logger().info(f"User #{new_client.client_id} created.")
-            headers = {
-                "auth_token": new_user.auth_token
-            }
+            headers = {"auth_token": new_user.auth_token}
             return SuccessfulUserResponse(new_user, headers)
 
         except exc.IntegrityError:
@@ -104,10 +101,10 @@ class UserService:
 
             else:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
-                new_client = ClientTableEntry()
+                new_client = TableEntryBuilder.new_client()
 
                 DatabaseClient.add(new_client)
-                new_user = UserTableEntry(
+                new_user = TableEntryBuilder.new_user(
                     user_id=new_client.client_id,
                     facebook_id=facebook_user.facebook_id,
                     email=facebook_user.email,
@@ -115,8 +112,7 @@ class UserService:
                     last_name=facebook_user.last_name,
                     profile_pic=facebook_user.profile_pic,
                     role=UserRoles.USER.value,
-                    auth_token=Authenticator.generate(new_client.client_id),
-                    online=True
+                    auth_token=Authenticator.generate(new_client.client_id)
                 )
                 DatabaseClient.add(new_user)
                 DatabaseClient.commit()
@@ -264,7 +260,7 @@ class UserService:
             else:
                 recovery_token = Authenticator.generate_recovery()
                 cls.logger().debug("Generating recovery token")
-                password_recovery = PasswordRecoveryTableEntry(user_id=user.user_id, token=recovery_token)
+                password_recovery = TableEntryBuilder.new_password_recovery(user_id=user.user_id, token=recovery_token)
                 DatabaseClient.add(password_recovery)
                 DatabaseClient.commit()
 

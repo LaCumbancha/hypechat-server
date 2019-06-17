@@ -1,10 +1,11 @@
 from app import db
-from sqlalchemy import exc, and_, literal
+from sqlalchemy import and_, literal
 
 from tables.users import *
 from tables.teams import *
 from tables.channels import *
 from tables.messages import *
+from models.constants import ChannelVisibilities
 
 
 class DatabaseClient:
@@ -111,6 +112,12 @@ class DatabaseClient:
         return db.session.query(ChannelTableEntry).filter(ChannelTableEntry.channel_id == channel_id).one_or_none()
 
     @classmethod
+    def get_channel_by_name(cls, channel_name):
+        return db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.name == channel_name
+        ).one_or_none()
+
+    @classmethod
     def get_team_user_by_ids(cls, user_id, team_id):
         return db.session.query(
             UserTableEntry.user_id,
@@ -142,6 +149,7 @@ class DatabaseClient:
             UserTableEntry.profile_pic,
             UserTableEntry.online,
             UsersByChannelsTableEntry.channel_id,
+            ChannelTableEntry.channel_id,
             ChannelTableEntry.creator
         ).join(
             UsersByChannelsTableEntry,
@@ -156,7 +164,84 @@ class DatabaseClient:
         ).one_or_none()
 
     @classmethod
+    def get_all_channel_users_by_channel_id(cls, channel_id):
+        return db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online
+        ).join(
+            UsersByChannelsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByChannelsTableEntry.user_id,
+                UsersByChannelsTableEntry.channel_id == channel_id
+            )
+        ).all()
+
+    @classmethod
     def get_password_recovery_by_id(cls, user_id):
         return db.session.query(PasswordRecoveryTableEntry).filter(
             PasswordRecoveryTableEntry.user_id == user_id
         ).one_or_none()
+
+    @classmethod
+    def get_user_in_team_by_ids(cls, user_id, team_id):
+        return db.session.query(UsersByTeamsTableEntry).filter(
+            UsersByTeamsTableEntry.user_id == user_id,
+            UsersByTeamsTableEntry.team_id == team_id
+        ).one_or_none()
+
+    @classmethod
+    def get_user_in_channel_by_ids(cls, user_id, channel_id):
+        db.session.query(UsersByChannelsTableEntry).filter(
+            UsersByChannelsTableEntry.user_id == user_id,
+            UsersByChannelsTableEntry.channel_id == channel_id
+        ).one_or_none()
+
+
+class TableEntryBuilder:
+
+    @classmethod
+    def new_client(cls):
+        return ClientTableEntry()
+
+    @classmethod
+    def new_user(cls, user_id, email, role, auth_token, first_name=None, last_name=None, profile_pic=None,
+                 username=None, password=None, facebook_id=None):
+        return UserTableEntry(
+            user_id=user_id,
+            facebook_id=facebook_id,
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            profile_pic=profile_pic,
+            role=role,
+            auth_token=auth_token,
+            online=True
+        )
+
+    @classmethod
+    def new_channel(cls, channel_id, team_id, creator_id, name, description=None, welcome_message=None,
+                    visibility=ChannelVisibilities.PUBLIC.value):
+        return ChannelTableEntry(
+            channel_id=channel_id,
+            team_id=team_id,
+            creator=creator_id,
+            name=name,
+            visibility=visibility or ChannelVisibilities.PUBLIC.value,
+            description=description,
+            welcome_message=welcome_message
+        )
+
+    @classmethod
+    def new_password_recovery(cls, user_id, token):
+        return PasswordRecoveryTableEntry(user_id=user_id, token=token)
+
+    @classmethod
+    def new_user_by_channel(cls, user_id, channel_id):
+        return UsersByChannelsTableEntry(user_id=user_id, channel_id=channel_id)
