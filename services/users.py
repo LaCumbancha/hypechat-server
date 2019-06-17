@@ -14,7 +14,7 @@ from exceptions.exceptions import *
 from models.authentication import Authenticator
 
 from passlib.apps import custom_app_context as hashing
-from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError
 
 import logging
 
@@ -47,7 +47,7 @@ class UserService:
             headers = {"auth_token": new_user.token}
             return SuccessfulUserResponse(new_user, headers)
 
-        except exc.IntegrityError:
+        except IntegrityError:
             DatabaseClient.rollback()
             if UserDatabaseClient.get_user_by_email(user_data.email) is not None:
                 cls.logger().info(f"Failing to create user {user_data.username}. Email already in use.")
@@ -204,7 +204,7 @@ class UserService:
             DatabaseClient.commit()
             cls.logger().info(f"User {user.id} information updated.")
             return SuccessfulUserResponse(user)
-        except exc.IntegrityError:
+        except IntegrityError:
             DatabaseClient.rollback()
             new_username = update_data.updated_user.get("username")
             new_email = update_data.updated_user.get("email")
@@ -312,7 +312,7 @@ class UserService:
                     cls.logger().info(f"Logging in user {user.id}")
                     headers = {"auth_token": user.token}
                     return SuccessfulUserResponse(user, headers)
-                except exc.IntegrityError:
+                except IntegrityError:
                     cls.logger().error(f"Couldn't regenerate token for user #{user.id}.")
                     raise UnsuccessfulClientResponse("Couldn't regenerate token.")
             else:

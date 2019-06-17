@@ -30,6 +30,25 @@ class TableEntryBuilder:
         )
 
     @classmethod
+    def to_channel(cls, channel):
+        return ChannelTableEntry(
+            channel_id=channel.channel_id,
+            team_id=channel.team_id,
+            creator=channel.creator_id,
+            name=channel.name,
+            visibility=channel.visibility,
+            description=channel.description,
+            welcome_message=channel.welcome_message
+        )
+
+    @classmethod
+    def to_channel_user(cls, channel_user):
+        return UsersByChannelsTableEntry(
+            user_id=channel_user.user_id,
+            channel_id=channel_user.channel_id
+        )
+
+    @classmethod
     def to_password_recovery(cls, recovery):
         return PasswordRecoveryTableEntry(
             user_id=recovery.user_id,
@@ -60,7 +79,24 @@ class ModelBuilder:
             email=user_entry.email,
             username=user_entry.username,
             facebook_id=user_entry.facebook_id
-        )
+        ) if user_entry is not None else None
+
+    @classmethod
+    def to_public_users(cls, users_entries):
+        users = []
+        for user_entry in users_entries:
+            users += [PublicUser(
+                user_id=user_entry.user_id,
+                username=user_entry.username,
+                email=user_entry.email,
+                first_name=user_entry.first_name,
+                last_name=user_entry.last_name,
+                profile_pic=user_entry.profile_pic,
+                role=user_entry.role,
+                online=user_entry.online
+            )]
+
+        return users
 
     @classmethod
     def to_team(cls, team_entry):
@@ -71,7 +107,7 @@ class ModelBuilder:
             location=team_entry.location,
             description=team_entry.description,
             welcome_message=team_entry.welcome_message
-        )
+        ) if team_entry is not None else None
 
     @classmethod
     def to_channel(cls, channel_entry):
@@ -83,7 +119,7 @@ class ModelBuilder:
             visibility=channel_entry.visibility,
             description=channel_entry.description,
             welcome_message=channel_entry.welcome_message
-        )
+        ) if channel_entry is not None else None
 
     @classmethod
     def to_teams(cls, team_entries):
@@ -106,10 +142,13 @@ class ModelBuilder:
         return PasswordRecovery(
             user_id=password_entry.user_id,
             token=password_entry.token
-        )
+        ) if password_entry is not None else None
 
     @classmethod
     def to_team_user(cls, table_entry):
+        if table_entry is None:
+            return None
+
         user = PublicUser(
             user_id=table_entry.user_id,
             username=table_entry.username,
@@ -126,6 +165,9 @@ class ModelBuilder:
 
     @classmethod
     def to_channel_user(cls, table_entry):
+        if table_entry is None:
+            return None
+
         user = PublicUser(
             user_id=table_entry.user_id,
             username=table_entry.username,
@@ -138,7 +180,7 @@ class ModelBuilder:
         )
         user.team_id = table_entry.team_id
         user.channel_id = table_entry.channel_id
-        user.is_channel_creator = channel_user_entry.creator == table_entry.user_id
+        user.is_channel_creator = table_entry.creator == table_entry.user_id
         return user
 
     @classmethod
@@ -176,3 +218,10 @@ class ModelBuilder:
                 last_name=mention_entry.last_name
             )]
         return mentions
+
+    @classmethod
+    def to_user_in_channel(cls, user_channel_entry):
+        return ChannelUser(
+            user_id=user_channel_entry.user_id,
+            channel_id=user_channel_entry.channel_id
+        ) if user_channel_entry is not None else None

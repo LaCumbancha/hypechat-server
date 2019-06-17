@@ -89,8 +89,8 @@ class TeamRoles(Enum):
             return False
 
     @classmethod
-    def is_channel_creator(cls, user_id, creator_id):
-        return user_id == creator_id
+    def is_channel_creator(cls, is_channel_creator):
+        return is_channel_creator
 
 
 class ChannelVisibilities(Enum):

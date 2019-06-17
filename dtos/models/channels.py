@@ -1,4 +1,4 @@
-from models.constants import UserRoles
+from models.constants import ChannelVisibilities
 
 
 class Channel:
@@ -8,6 +8,13 @@ class Channel:
         self.team_id = team_id
         self.name = name
         self.creator_id = creator_id
-        self.visibility = visibility
+        self.visibility = visibility or ChannelVisibilities.PUBLIC.value
         self.description = description
         self.welcome_message = welcome_message
+
+
+class ChannelUser:
+
+    def __init__(self, user_id, channel_id):
+        self.user_id = user_id
+        self.channel_id = channel_id

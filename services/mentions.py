@@ -1,7 +1,7 @@
 from daos.database import *
 from daos.messages import MessageDatabaseClient
 
-from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError
 
 import logging
 
@@ -23,7 +23,7 @@ class MentionService:
 
             DatabaseClient.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
-        except exc.IntegrityError:
+        except IntegrityError:
             DatabaseClient.rollback()
             cls.logger().error(f"Couldn't save mentions for message #{message.message_id}.")
 

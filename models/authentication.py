@@ -5,6 +5,9 @@ import datetime
 
 from daos.database import DatabaseClient
 from daos.users import UserDatabaseClient
+from daos.teams import TeamDatabaseClient
+from daos.channels import ChannelDatabaseClient
+
 from models.constants import UserResponseStatus, TeamResponseStatus, ChannelResponseStatus, TeamRoles, UserRoles
 from exceptions.exceptions import *
 
@@ -61,10 +64,12 @@ class Authenticator:
         user = cls.authenticate(authentication)
 
         if user.role == UserRoles.ADMIN.value:
+            user.user_role = user.role
             user.team_id = authentication.team_id
+            user.team_role = None
             return user
 
-        team_user = UserDatabaseClient.get_team_user_by_ids(user.user_id, authentication.team_id)
+        team_user = UserDatabaseClient.get_team_user_by_ids(user.id, authentication.team_id)
 
         if team_user is not None:
             if role_verifying(team_user):
@@ -86,18 +91,20 @@ class Authenticator:
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
 
     @classmethod
-    def authenticate_channel(cls, authentication, role_verifying=lambda _1, _2: True):
+    def authenticate_channel(cls, authentication, channel_role_verifying=lambda _: True):
         logger = logging.getLogger(cls.__name__)
 
         try:
-            return cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_admin(user))
+            user = cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_admin(user))
+            user.channel_id = authentication.channel_id
+            user.is_channel_creator = None
         except NoPermissionsError:
 
             user = cls.authenticate_team(authentication)
-            channel_user = UserDatabaseClient.get_channel_user_by_ids(user.user_id, authentication.channel_id)
+            channel_user = UserDatabaseClient.get_channel_user_by_ids(user.id, authentication.channel_id)
 
             if channel_user:
-                if role_verifying(channel_user.channel_creator_id, channel_user.user_id):
+                if channel_role_verifying(channel_user.is_channel_creator):
                     logger.info(f"User {user.username} authenticated as channel #{authentication.channel_id} creator.")
                     return channel_user
                 else:

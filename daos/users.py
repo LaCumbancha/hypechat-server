@@ -39,22 +39,22 @@ class UserDatabaseClient:
     @classmethod
     def get_user_by_id(cls, user_id):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user_id).one_or_none()
-        return ModelBuilder.to_user(user_entry) if user_entry is not None else user_entry
+        return ModelBuilder.to_user(user_entry)
 
     @classmethod
     def get_user_by_email(cls, user_email):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.email == user_email).one_or_none()
-        return ModelBuilder.to_user(user_entry) if user_entry is not None else user_entry
+        return ModelBuilder.to_user(user_entry)
 
     @classmethod
     def get_user_by_username(cls, username):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.username == username).one_or_none()
-        return ModelBuilder.to_user(user_entry) if user_entry is not None else user_entry
+        return ModelBuilder.to_user(user_entry)
 
     @classmethod
     def get_user_by_facebook_id(cls, facebook_id):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.facebook_id == facebook_id).one_or_none()
-        return ModelBuilder.to_user(user_entry) if user_entry is not None else user_entry
+        return ModelBuilder.to_user(user_entry)
 
     @classmethod
     def update_user(cls, user):
@@ -123,7 +123,7 @@ class UserDatabaseClient:
                 UsersByTeamsTableEntry.team_id == team_id
             )
         ).one_or_none()
-        return ModelBuilder.to_team_user(team_user_entry) if team_user_entry is not None else team_user_entry
+        return ModelBuilder.to_team_user(team_user_entry)
 
     @classmethod
     def get_channel_user_by_ids(cls, user_id, channel_id):
@@ -157,4 +157,4 @@ class UserDatabaseClient:
         password_entry = db.session.query(PasswordRecoveryTableEntry).filter(
             PasswordRecoveryTableEntry.user_id == user_id
         ).one_or_none()
-        return ModelBuilder.to_password_recovery(password_entry) if password_entry is not None else password_entry
+        return ModelBuilder.to_password_recovery(password_entry)
