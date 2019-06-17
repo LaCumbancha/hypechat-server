@@ -1,9 +1,10 @@
 from app import db
 from sqlalchemy import exc, and_, literal
 
-from tables.users import UserTableEntry, UsersByTeamsTableEntry, UsersByChannelsTableEntry
-from tables.teams import TeamTableEntry
-from tables.channels import ChannelTableEntry
+from tables.users import *
+from tables.teams import *
+from tables.channels import *
+from tables.messages import *
 
 
 class DatabaseClient:
@@ -17,8 +18,13 @@ class DatabaseClient:
         db.session.rollback()
 
     @classmethod
-    def add_entry(cls, entry):
+    def add(cls, entry):
         db.session.add(entry)
+        db.session.flush()
+
+    @classmethod
+    def delete(cls, entry):
+        db.session.delete(entry)
         db.session.flush()
 
     @classmethod
@@ -147,4 +153,10 @@ class DatabaseClient:
         ).join(
             ChannelTableEntry,
             UsersByChannelsTableEntry.channel_id == ChannelTableEntry.channel_id
+        ).one_or_none()
+
+    @classmethod
+    def get_password_recovery_by_id(cls, user_id):
+        return db.session.query(PasswordRecoveryTableEntry).filter(
+            PasswordRecoveryTableEntry.user_id == user_id
         ).one_or_none()

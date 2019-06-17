@@ -26,7 +26,7 @@ class UserService:
         new_client = ClientTableEntry()
 
         try:
-            DatabaseClient.add_entry(new_client)
+            DatabaseClient.add(new_client)
             new_user = UserTableEntry(
                 user_id=new_client.client_id,
                 username=user_data.username,
@@ -39,7 +39,7 @@ class UserService:
                 auth_token=Authenticator.generate(new_client.client_id, user_data.password),
                 online=True
             )
-            DatabaseClient.add_entry(new_user)
+            DatabaseClient.add(new_user)
             DatabaseClient.commit()
             cls.logger().info(f"User #{new_client.client_id} created.")
             headers = {
@@ -109,7 +109,7 @@ class UserService:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 new_client = ClientTableEntry()
 
-                DatabaseClient.add_entry(new_client)
+                DatabaseClient.add(new_client)
                 new_user = UserTableEntry(
                     user_id=new_client.client_id,
                     facebook_id=facebook_user.facebook_id,
@@ -121,7 +121,7 @@ class UserService:
                     auth_token=Authenticator.generate(new_client.client_id),
                     online=True
                 )
-                DatabaseClient.add_entry(new_user)
+                DatabaseClient.add(new_user)
                 DatabaseClient.commit()
                 cls.logger().info(f"User #{new_client.client_id} logged in.")
                 headers = {"auth_token": new_user.auth_token}
@@ -255,16 +255,12 @@ class UserService:
 
     @classmethod
     def recover_password(cls, recover_data):
-        user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.email == recover_data.email
-        ).one_or_none()
+        user = DatabaseClient.get_user_by_email(recover_data.email)
 
         if user:
-            old_password_recovery = db.session.query(PasswordRecoveryTableEntry).filter(
-                PasswordRecoveryTableEntry.user_id == user.user_id
-            ).one_or_none()
+            old_password_recovery = DatabaseClient.get_password_recovery_by_id(user.user_id)
 
-            if old_password_recovery:
+            if old_password_recovery is not None:
                 cls.logger().debug(f"It already exists a recovery token for user {user.username}. Resending token.")
                 recovery_token = old_password_recovery.token
 
@@ -272,8 +268,8 @@ class UserService:
                 recovery_token = Authenticator.generate_recovery()
                 cls.logger().debug("Generating recovery token")
                 password_recovery = PasswordRecoveryTableEntry(user_id=user.user_id, token=recovery_token)
-                db.session.add(password_recovery)
-                db.session.commit()
+                DatabaseClient.add(password_recovery)
+                DatabaseClient.commit()
 
             email_data = RecoveryPasswordEmailDTO(
                 email=user.email,
@@ -292,28 +288,21 @@ class UserService:
 
     @classmethod
     def regenerate_token(cls, regenerate_data):
-        user = db.session.query(UserTableEntry).filter(
-            UserTableEntry.email == regenerate_data.email
-        ).one_or_none()
+        user = DatabaseClient.get_user_by_email(regenerate_data.email)
 
         if user:
-            password_recovery = db.session.query(PasswordRecoveryTableEntry).filter(
-                PasswordRecoveryTableEntry.user_id == user.user_id
-            ).one_or_none()
+            password_recovery = DatabaseClient.get_password_recovery_by_id(user.user_id)
 
             if password_recovery:
                 try:
-                    db.session.delete(password_recovery)
-                    db.session.flush()
+                    DatabaseClient.delete(password_recovery)
                     cls.logger().debug(f"Deleting token recover entry for user {user.user_id}")
                     user.auth_token = Authenticator.generate(user.user_id)
                     cls.logger().debug(f"Regenerating token for user {user.user_id}")
                     user.online = True
-                    db.session.commit()
+                    DatabaseClient.commit()
                     cls.logger().info(f"Logging in user {user.user_id}")
-                    headers = {
-                        "auth_token": user.auth_token
-                    }
+                    headers = {"auth_token": user.auth_token}
                     return SuccessfulUserResponse(user, headers)
                 except exc.IntegrityError:
                     cls.logger().error(f"Couldn't regenerate token for user #{user.user_id}.")
