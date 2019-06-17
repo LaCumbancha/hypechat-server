@@ -5,7 +5,7 @@ from tables.users import *
 from tables.teams import *
 from tables.channels import *
 from tables.messages import *
-from models.constants import ChannelVisibilities, SendMessageType
+from models.constants import ChannelVisibilities, SendMessageType, TeamRoles
 
 
 class DatabaseClient:
@@ -112,6 +112,24 @@ class DatabaseClient:
         return db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == team_id).one_or_none()
 
     @classmethod
+    def get_team_by_name(cls, team_name):
+        return db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == team_name).one_or_none()
+
+    @classmethod
+    def get_team_invite(cls, team_id, email):
+        return db.session.query(TeamsInvitesTableEntry).filter(
+            TeamsInvitesTableEntry.team_id == team_id,
+            TeamsInvitesTableEntry.email == email
+        ).one_or_none()
+
+    @classmethod
+    def get_team_invite_by_token(cls, token, email):
+        return db.session.query(TeamsInvitesTableEntry).filter(
+            TeamsInvitesTableEntry.invite_token == token,
+            TeamsInvitesTableEntry.email == email
+        ).one_or_none()
+
+    @classmethod
     def get_channel_by_id(cls, channel_id):
         return db.session.query(ChannelTableEntry).filter(ChannelTableEntry.channel_id == channel_id).one_or_none()
 
@@ -141,6 +159,42 @@ class DatabaseClient:
                 UsersByTeamsTableEntry.team_id == team_id
             )
         ).one_or_none()
+
+    @classmethod
+    def get_all_team_users_by_team_id(cls, team_id):
+        return db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.online,
+            UsersByTeamsTableEntry.role
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
+                UsersByTeamsTableEntry.team_id == team_id
+            )
+        ).all()
+
+    @classmethod
+    def get_all_team_users_by_likely_name(cls, team_id, username):
+        return db.session.query(
+            UserTableEntry
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
+                UsersByTeamsTableEntry.team_id == team_id,
+                UserTableEntry.username.like(f"%{username}%")
+            )
+        ).all()
+
+    @classmethod
+    def get_all_team_channels_by_team_id(cls, team_id):
+        return db.session.query(ChannelTableEntry).filter(ChannelTableEntry.team_id == team_id).all()
 
     @classmethod
     def get_channel_user_by_ids(cls, user_id, channel_id):
@@ -196,6 +250,19 @@ class DatabaseClient:
         return db.session.query(UsersByTeamsTableEntry).filter(
             UsersByTeamsTableEntry.user_id == user_id,
             UsersByTeamsTableEntry.team_id == team_id
+        ).one_or_none()
+
+    @classmethod
+    def get_user_in_team_by_email(cls, email, team_id):
+        return db.session.query(
+            UserTableEntry.user_id
+        ).join(
+            UsersByTeamsTableEntry,
+            and_(
+                UsersByTeamsTableEntry.team_id == team_id,
+                UserTableEntry.user_id == UsersByTeamsTableEntry.user_id,
+                UserTableEntry.email == email
+            )
         ).one_or_none()
 
     @classmethod
@@ -430,6 +497,25 @@ class DatabaseClient:
             UsersByChannelsTableEntry.user_id != ignored_user_id
         )).all()
 
+    @classmethod
+    def get_forbidden_word_by_word(cls, team_id, word):
+        return db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == team_id,
+            ForbiddenWordsTableEntry.word == word
+        ).one_or_none()
+
+    @classmethod
+    def get_forbidden_word_by_id(cls, team_id, word_id):
+        return db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == team_id,
+            ForbiddenWordsTableEntry.id == word_id
+        ).one_or_none()
+
+    @classmethod
+    def get_forbidden_words_by_team_id(cls, team_id):
+        return db.session.query(ForbiddenWordsTableEntry).filter(
+            ForbiddenWordsTableEntry.team_id == team_id
+        ).all()
 
 
 class TableEntryBuilder:
@@ -456,6 +542,16 @@ class TableEntryBuilder:
         )
 
     @classmethod
+    def new_team(cls, team_name, picture=None, location=None, description=None, welcome_message=None):
+        return TeamTableEntry(
+            team_name=team_name,
+            picture=picture,
+            location=location,
+            description=description,
+            welcome_message=welcome_message
+        )
+
+    @classmethod
     def new_channel(cls, channel_id, team_id, creator_id, name, description=None, welcome_message=None,
                     visibility=ChannelVisibilities.PUBLIC.value):
         return ChannelTableEntry(
@@ -471,6 +567,10 @@ class TableEntryBuilder:
     @classmethod
     def new_password_recovery(cls, user_id, token):
         return PasswordRecoveryTableEntry(user_id=user_id, token=token)
+
+    @classmethod
+    def new_user_by_team(cls, user_id, team_id, role=TeamRoles.MEMBER.value):
+        return UsersByTeamsTableEntry(user_id=user_id, team_id=team_id, role=role)
 
     @classmethod
     def new_user_by_channel(cls, user_id, channel_id):
@@ -499,3 +599,15 @@ class TableEntryBuilder:
             team_id=team_id,
             unseen_offset=offset
         )
+
+    @classmethod
+    def new_team_invite(cls, team_id, email, invite_token):
+        return TeamsInvitesTableEntry(
+            team_id=team_id,
+            email=email,
+            invite_token=invite_token
+        )
+
+    @classmethod
+    def new_forbidden_word(cls, word, team_id):
+        return ForbiddenWordsTableEntry(word=word, team_id=team_id)
