@@ -142,7 +142,7 @@ class UserService:
     def set_user_online(cls, user_data):
         user = Authenticator.authenticate(user_data)
         user.online = True
-        db.session.commit()
+        DatabaseClient.commit()
         cls.logger().info(f"User #{user.user_id} set online.")
         return SuccessfulUserResponse(user)
 
@@ -150,7 +150,7 @@ class UserService:
     def set_user_offline(cls, user_data):
         user = Authenticator.authenticate(user_data)
         user.online = False
-        db.session.commit()
+        DatabaseClient.commit()
         cls.logger().info(f"User #{user.user_id} set offline.")
         return SuccessfulUserResponse(user)
 
