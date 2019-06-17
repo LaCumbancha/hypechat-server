@@ -1,7 +1,5 @@
-from app import db
-from tables.users import UserTableEntry
-from tables.messages import MentionsByMessagesTableEntry
-from sqlalchemy import exc, and_
+from daos.database import *
+from sqlalchemy import exc
 
 import logging
 
@@ -18,33 +16,18 @@ class MentionService:
 
         try:
             for mention in mentions:
-                new_mention = MentionsByMessagesTableEntry(
-                    message_id=message.message_id,
-                    user_id=mention
-                )
-                db.session.add(new_mention)
-                db.session.flush()
+                new_mention = TableEntryBuilder.new_mention(message_id=message.message_id, user_id=mention)
+                DatabaseClient.add(new_mention)
 
-            db.session.commit()
+            DatabaseClient.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
         except exc.IntegrityError:
-            db.session.rollback()
+            DatabaseClient.rollback()
             cls.logger().error(f"Couldn't save mentions for message #{message.message_id}.")
 
     @classmethod
     def get_mentions(cls, message_id):
-        db_mentions = db.session.query(
-            UserTableEntry.user_id,
-            UserTableEntry.username,
-            UserTableEntry.first_name,
-            UserTableEntry.last_name
-        ).join(
-            MentionsByMessagesTableEntry,
-            and_(
-                MentionsByMessagesTableEntry.user_id == UserTableEntry.user_id,
-                MentionsByMessagesTableEntry.message_id == message_id
-            )
-        ).all()
+        db_mentions = DatabaseClient.get_mentions_by_message(message_id)
 
         mentions = []
         for mention in db_mentions:

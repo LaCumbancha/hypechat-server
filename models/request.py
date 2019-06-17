@@ -375,7 +375,6 @@ class ClientRequest:
         auth_token = self.headers().get("X-Auth-Token")
         team_id = self.json_body().get("team_id")
         name = self.json_body().get("name")
-        visibility = self.json_body().get("visibility")
 
         if not auth_token:
             self.logger.error("Missing parameter in request headers: X-Auth-Token.")
@@ -389,16 +388,12 @@ class ClientRequest:
             self.logger.error("Missing parameter in request body: name.")
             raise MissingRequestParameterError("name")
 
-        if not visibility:
-            self.logger.error("Missing parameter in request body: visibility.")
-            raise MissingRequestParameterError("visibility")
-
         try:
             return NewChannelDTO(
                 token=auth_token,
                 team_id=team_id,
                 name=name,
-                visibility=visibility,
+                visibility=self.json_body().get("visibility"),
                 description=self.json_body().get("description"),
                 welcome_message=self.json_body().get("welcome_message")
             )
