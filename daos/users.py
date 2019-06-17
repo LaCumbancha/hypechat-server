@@ -4,9 +4,11 @@ from sqlalchemy import and_, or_, literal
 from daos.database import DatabaseClient
 from daos.builder import TableEntryBuilder, ModelBuilder
 from daos.teams import TeamDatabaseClient
+
 from tables.users import *
 from tables.teams import *
-from tables.users import *
+from tables.channels import *
+
 from dtos.models.users import *
 
 
