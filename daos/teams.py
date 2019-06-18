@@ -184,7 +184,23 @@ class TeamDatabaseClient:
 
     @classmethod
     def get_all_team_channels_by_team_id(cls, team_id):
-        channels = db.session.query(ChannelTableEntry).filter(ChannelTableEntry.team_id == team_id).all()
+        channels = db.session.query(
+            ChannelTableEntry.channel_id,
+            ChannelTableEntry.team_id,
+            ChannelTableEntry.name,
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            ChannelTableEntry.visibility,
+            ChannelTableEntry.description,
+            ChannelTableEntry.welcome_message
+        ).join(
+            UserTableEntry,
+            UserTableEntry.user_id == ChannelTableEntry.creator
+        ).filter(
+            ChannelTableEntry.team_id == team_id
+        ).all()
         return TeamModelMapper.to_team_channels(channels)
 
     @classmethod

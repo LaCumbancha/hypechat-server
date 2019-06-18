@@ -1,6 +1,7 @@
-from daos.database import *
-from daos.users import *
-from daos.teams import *
+from daos.database import DatabaseClient
+from daos.users import UserDatabaseClient
+from daos.teams import TeamDatabaseClient
+from daos.channels import ChannelDatabaseClient
 
 from dtos.responses.clients import *
 from dtos.responses.teams import *
@@ -180,6 +181,35 @@ class UserService:
             }]
 
         return teams
+
+    @classmethod
+    def channels_for_user(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+        channels = ChannelDatabaseClient.get_user_channels_by_user_id(user.id, user.team_id,
+                                                                      user.role == UserRoles.ADMIN.value)
+
+        return SuccessfulTeamsListResponse(cls._generate_channels_list(channels))
+
+    @classmethod
+    def _generate_channels_list(cls, channels_list):
+        channels = []
+
+        for channel in channels_list:
+            channels += [{
+                "channel_id": channel.channel_id,
+                "name": channel.name,
+                "creator": {
+                    "id": channel.creator_id,
+                    "username": channel.creator_username,
+                    "first_name": channel.creator_first_name,
+                    "last_name": channel.creator_last_name
+                },
+                "visibility": channel.visibility,
+                "description": channel.description,
+                "welcome_message": channel.welcome_message
+            }]
+
+        return channels
 
     @classmethod
     def update_user(cls, update_data):

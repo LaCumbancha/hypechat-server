@@ -66,6 +66,14 @@ def get_user_teams():
     return jsonify(teams.json()), teams.status_code()
 
 
+@app.route('/users/teams/<team_id>/channels', methods=['GET'])
+def get_user_channels(team_id):
+    logger.info(f"Attempting to get user's channels in team #{team_id}.")
+    req = ClientRequest(request)
+    channels = UserService.channels_for_user(req.team_authentication(team_id))
+    return jsonify(channels.json()), channels.status_code()
+
+
 @app.route('/users/profile', methods=['PATCH'])
 def update_user():
     logger.info("Attempting to update user information.")

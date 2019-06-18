@@ -1,7 +1,7 @@
 from tables.channels import ChannelTableEntry
 from tables.users import UsersByChannelsTableEntry
 
-from dtos.models.channels import Channel, ChannelUser
+from dtos.models.channels import Channel, ChannelUser, ChannelCreator
 from dtos.models.users import PublicUser
 
 
@@ -12,7 +12,7 @@ class ChannelDatabaseMapper:
         return ChannelTableEntry(
             channel_id=channel.channel_id,
             team_id=channel.team_id,
-            creator=channel.creator_id,
+            creator=channel.creator,
             name=channel.name,
             visibility=channel.visibility,
             description=channel.description,
@@ -35,11 +35,36 @@ class ChannelModelMapper:
             channel_id=channel_entry.channel_id,
             team_id=channel_entry.team_id,
             name=channel_entry.name,
-            creator_id=channel_entry.creator,
+            creator=ChannelCreator(
+                user_id=channel_entry.user_id,
+                username=channel_entry.username,
+                first_name=channel_entry.first_name,
+                last_name=channel_entry.last_name
+            ),
             visibility=channel_entry.visibility,
             description=channel_entry.description,
             welcome_message=channel_entry.welcome_message
         ) if channel_entry is not None else None
+
+    @classmethod
+    def to_channels(cls, channel_entries):
+        channels = []
+        for channel_entry in channel_entries:
+            channels += [Channel(
+                channel_id=channel_entry.channel_id,
+                team_id=channel_entry.team_id,
+                name=channel_entry.name,
+                creator=ChannelCreator(
+                    user_id=channel_entry.user_id,
+                    username=channel_entry.username,
+                    first_name=channel_entry.first_name,
+                    last_name=channel_entry.last_name
+                ),
+                visibility=channel_entry.visibility,
+                description=channel_entry.description,
+                welcome_message=channel_entry.welcome_message
+            )]
+        return channels
 
     @classmethod
     def to_user_in_channel(cls, user_channel_entry):
