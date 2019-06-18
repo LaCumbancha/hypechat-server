@@ -111,7 +111,7 @@ class Authenticator:
                     raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                              TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
-                channel = DatabaseClient.get_channel_by_id(authentication.channel_id)
+                channel = ChannelDatabaseClient.get_channel_by_id(authentication.channel_id)
 
                 if channel is None:
                     logger.info(f"Chanel #{authentication.channel_id} not found.")

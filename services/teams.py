@@ -106,7 +106,7 @@ class TeamService:
     @classmethod
     def invite_user(cls, invite_data):
         team_admin = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_admin)
-        already_member = DatabaseClient.get_user_in_team_by_email(invite_data.email, invite_data.authentication.team_id)
+        already_member = TeamDatabaseClient.get_user_in_team_by_email(invite_data.email, invite_data.authentication.team_id)
 
         if already_member is not None:
             return BadRequestTeamMessageResponse("This user already belongs to the team.",
