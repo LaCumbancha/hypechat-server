@@ -1,13 +1,20 @@
 from daos.database import *
+from daos.users import *
+from daos.teams import *
+
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.models.users import *
 from dtos.model import *
-from exceptions.exceptions import *
-from models.authentication import Authenticator
+
 from services.emails import EmailService
 from services.facebook import FacebookService
+
+from exceptions.exceptions import *
+from models.authentication import Authenticator
+
 from passlib.apps import custom_app_context as hashing
-from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError
 
 import logging
 
@@ -20,39 +27,38 @@ class UserService:
 
     @classmethod
     def create_user(cls, user_data):
-        new_client = TableEntryBuilder.new_client()
 
         try:
-            DatabaseClient.add(new_client)
-            new_user = TableEntryBuilder.new_user(
-                user_id=new_client.client_id,
+            new_client = UserDatabaseClient.add_client()
+            new_user = User(
+                user_id=new_client.id,
                 username=user_data.username,
                 email=user_data.email,
-                password=hashing.hash(user_data.password),
+                password=user_data.password,
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
                 role=user_data.role or UserRoles.USER.value,
-                auth_token=Authenticator.generate(new_client.client_id, user_data.password)
+                token=Authenticator.generate(new_client.id, user_data.password)
             )
-            DatabaseClient.add(new_user)
+            UserDatabaseClient.add_user(new_user)
             DatabaseClient.commit()
-            cls.logger().info(f"User #{new_client.client_id} created.")
-            headers = {"auth_token": new_user.auth_token}
+            cls.logger().info(f"User #{new_client.id} created.")
+            headers = {"auth_token": new_user.token}
             return SuccessfulUserResponse(new_user, headers)
 
-        except exc.IntegrityError:
+        except IntegrityError:
             DatabaseClient.rollback()
-            if DatabaseClient.get_user_by_email(user_data.email) is not None:
-                cls.logger().info(f"Failing to create user {new_client.client_id}. Email already in use.")
+            if UserDatabaseClient.get_user_by_email(user_data.email) is not None:
+                cls.logger().info(f"Failing to create user {user_data.username}. Email already in use.")
                 return BadRequestUserMessageResponse("Email already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
-            elif DatabaseClient.get_user_by_username(user_data.username) is not None:
-                cls.logger().info(f"Failing to create user #{new_client.client_id}. Username already in use.")
+            elif UserDatabaseClient.get_user_by_username(user_data.username) is not None:
+                cls.logger().info(f"Failing to create user #{user_data.username}. Username already in use.")
                 return BadRequestUserMessageResponse("Username already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:
-                cls.logger().info(f"Failing to create user #{new_client.client_id}.")
+                cls.logger().info(f"Failing to create user #{user_data.username}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
 
     @classmethod
@@ -64,16 +70,17 @@ class UserService:
 
     @classmethod
     def _login_app_user(cls, user_data):
-        user = DatabaseClient.get_user_by_email(user_data.email)
+        user = UserDatabaseClient.get_user_by_email(user_data.email)
 
         if user:
             if hashing.verify(user_data.password, user.password):
-                cls.logger().debug(f"Generating token for user {user.user_id}")
-                user.auth_token = Authenticator.generate(user.user_id, user_data.password)
+                cls.logger().debug(f"Generating token for user {user.id}")
+                user.token = Authenticator.generate(user.id, user_data.password)
                 user.online = True
+                UserDatabaseClient.update_user(user)
                 DatabaseClient.commit()
-                cls.logger().info(f"User #{user.user_id} logged in")
-                headers = {"auth_token": user.auth_token}
+                cls.logger().info(f"User #{user.id} logged in")
+                headers = {"auth_token": user.token}
                 return SuccessfulUserResponse(user, headers)
             else:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
@@ -87,37 +94,36 @@ class UserService:
     def _login_facebook_user(cls, user_data):
         try:
             facebook_user = FacebookService.get_user_from_facebook(user_data)
-            user = DatabaseClient.get_user_by_facebook_id(facebook_user.facebook_id)
+            user = UserDatabaseClient.get_user_by_facebook_id(facebook_user.facebook_id)
 
             if user:
                 cls.logger().info(f"Logging in Facebook user with Facebook ID #{facebook_user.facebook_id}.")
-                cls.logger().debug(f"Generating token for user {user.user_id}")
-                user.auth_token = Authenticator.generate(user.user_id)
+                cls.logger().debug(f"Generating token for user {user.id}")
+                user.token = Authenticator.generate(user.id)
                 user.online = True
+                UserDatabaseClient.update_user(user)
                 DatabaseClient.commit()
-                cls.logger().info(f"User #{user.user_id} logged in.")
-                headers = {"auth_token": user.auth_token}
+                cls.logger().info(f"User #{user.id} logged in.")
+                headers = {"auth_token": user.token}
                 return SuccessfulUserResponse(user, headers)
 
             else:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
-                new_client = TableEntryBuilder.new_client()
-
-                DatabaseClient.add(new_client)
-                new_user = TableEntryBuilder.new_user(
-                    user_id=new_client.client_id,
+                new_client = UserDatabaseClient.add_client()
+                new_user = User(
+                    user_id=new_client.id,
                     facebook_id=facebook_user.facebook_id,
                     email=facebook_user.email,
                     first_name=facebook_user.first_name,
                     last_name=facebook_user.last_name,
                     profile_pic=facebook_user.profile_pic,
                     role=UserRoles.USER.value,
-                    auth_token=Authenticator.generate(new_client.client_id)
+                    token=Authenticator.generate(new_client.id)
                 )
-                DatabaseClient.add(new_user)
+                UserDatabaseClient.add_user(new_user)
                 DatabaseClient.commit()
-                cls.logger().info(f"User #{new_client.client_id} logged in.")
-                headers = {"auth_token": new_user.auth_token}
+                cls.logger().info(f"User #{new_client.id} logged in.")
+                headers = {"auth_token": new_user.token}
                 return SuccessfulUserResponse(new_user, headers)
         except FacebookWrongTokenError:
             cls.logger().info(f"Failing to logging in user with Facebook token #{user_data.facebook_token}.")
@@ -126,31 +132,35 @@ class UserService:
     @classmethod
     def logout_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
-        user.auth_token = None
+        user.token = None
+        user.online = False
+        UserDatabaseClient.update_user(user)
         DatabaseClient.commit()
-        cls.logger().info(f"User #{user.user_id} logged out.")
+        cls.logger().info(f"User #{user.id} logged out.")
         return SuccessfulUserMessageResponse("User logged out.", UserResponseStatus.LOGGED_OUT.value)
 
     @classmethod
     def set_user_online(cls, user_data):
         user = Authenticator.authenticate(user_data)
         user.online = True
+        UserDatabaseClient.update_user(user)
         DatabaseClient.commit()
-        cls.logger().info(f"User #{user.user_id} set online.")
+        cls.logger().info(f"User #{user.id} set online.")
         return SuccessfulUserResponse(user)
 
     @classmethod
     def set_user_offline(cls, user_data):
         user = Authenticator.authenticate(user_data)
         user.online = False
+        UserDatabaseClient.update_user(user)
         DatabaseClient.commit()
-        cls.logger().info(f"User #{user.user_id} set offline.")
+        cls.logger().info(f"User #{user.id} set offline.")
         return SuccessfulUserResponse(user)
 
     @classmethod
     def teams_for_user(cls, user_data):
         user = Authenticator.authenticate(user_data)
-        teams = DatabaseClient.get_user_teams_by_user_id(user.user_id, user.role == UserRoles.ADMIN.value)
+        teams = TeamDatabaseClient.get_user_teams_by_user_id(user.id, user.role == UserRoles.ADMIN.value)
 
         return SuccessfulTeamsListResponse(cls._generate_teams_list(teams))
 
@@ -160,8 +170,8 @@ class UserService:
 
         for team in teams_list:
             teams += [{
-                "id": team.team_id,
-                "team_name": team.team_name,
+                "id": team.id,
+                "team_name": team.name,
                 "picture": team.picture,
                 "location": team.location,
                 "description": team.description,
@@ -190,28 +200,32 @@ class UserService:
             update_data.updated_user["profile_pic"] if "profile_pic" in update_data.updated_user else user.profile_pic
 
         try:
+            UserDatabaseClient.update_user(user)
             DatabaseClient.commit()
-            cls.logger().info(f"User {user.user_id} information updated.")
+            cls.logger().info(f"User {user.id} information updated.")
             return SuccessfulUserResponse(user)
-        except exc.IntegrityError:
+        except IntegrityError:
             DatabaseClient.rollback()
-            if DatabaseClient.get_user_by_username(update_data.updated_user.get("username")) is not None:
-                cls.logger().info(f"Name {update_data.updated_user.get('username')} is taken for another user.")
-                return BadRequestUserMessageResponse(f"Name {update_data.updated_user.get('username')}" +
-                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
-            elif DatabaseClient.get_user_by_email(update_data.updated_user.get("email")) is not None:
-                cls.logger().info(f"Email {update_data.updated_user.get('email')} is taken for another user.")
-                return BadRequestUserMessageResponse(f"Email {update_data.updated_user.get('email')}" +
-                                                     " is already in use!", UserResponseStatus.ALREADY_REGISTERED.value)
+            new_username = update_data.updated_user.get("username")
+            new_email = update_data.updated_user.get("email")
+
+            if UserDatabaseClient.get_user_by_username(new_username) is not None:
+                cls.logger().info(f"Name {new_email} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Name {new_username} is already in use!",
+                                                     UserResponseStatus.ALREADY_REGISTERED.value)
+            elif UserDatabaseClient.get_user_by_email(new_email) is not None:
+                cls.logger().info(f"Email {new_email} is taken for another user.")
+                return BadRequestUserMessageResponse(f"Email {new_email} is already in use!",
+                                                     UserResponseStatus.ALREADY_REGISTERED.value)
             else:
-                cls.logger().error(f"Couldn't update user {user.user_id} information.")
+                cls.logger().error(f"Couldn't update user {user.id} information.")
                 return UnsuccessfulUserMessageResponse("Couldn't update user information!")
 
     @classmethod
     def user_profile(cls, user_data):
         user = Authenticator.authenticate(user_data)
-        has_teams = len(DatabaseClient.get_user_teams_by_user_id(user.user_id))
-        profile = DatabaseClient.get_user_profile(user)
+        has_teams = len(TeamDatabaseClient.get_user_teams_by_user_id(user.id))
+        profile = UserDatabaseClient.get_user_profile(user)
         cls.logger().info(f"Retrieved user {user.username} profile.")
         return SuccessfulFullUserResponse(cls._generate_full_user(profile, has_teams))
 
@@ -226,17 +240,17 @@ class UserService:
                 teams += [{
                     "id": team.team_id,
                     "name": team.team_name,
-                    "location": team.location,
-                    "picture": team.picture,
-                    "description": team.description,
-                    "welcome_message": team.welcome_message,
-                    "role": team.role
+                    "location": team.team_location,
+                    "picture": team.team_picture,
+                    "description": team.team_description,
+                    "welcome_message": team.team_message,
+                    "role": team.team_role
                 }]
 
             user_data = full_user[0]
 
         return {
-            "id": user_data.user_id,
+            "id": user_data.id,
             "username": user_data.username,
             "email": user_data.email,
             "first_name": user_data.first_name,
@@ -248,10 +262,10 @@ class UserService:
 
     @classmethod
     def recover_password(cls, recover_data):
-        user = DatabaseClient.get_user_by_email(recover_data.email)
+        user = UserDatabaseClient.get_user_by_email(recover_data.email)
 
         if user:
-            old_password_recovery = DatabaseClient.get_password_recovery_by_id(user.user_id)
+            old_password_recovery = UserDatabaseClient.get_password_recovery_by_id(user.id)
 
             if old_password_recovery is not None:
                 cls.logger().debug(f"It already exists a recovery token for user {user.username}. Resending token.")
@@ -260,8 +274,8 @@ class UserService:
             else:
                 recovery_token = Authenticator.generate_recovery()
                 cls.logger().debug("Generating recovery token")
-                password_recovery = TableEntryBuilder.new_password_recovery(user_id=user.user_id, token=recovery_token)
-                DatabaseClient.add(password_recovery)
+                password_recovery = PasswordRecovery(user_id=user.id, token=recovery_token)
+                UserDatabaseClient.add_password_recovery(password_recovery)
                 DatabaseClient.commit()
 
             email_data = RecoveryPasswordEmailDTO(
@@ -281,28 +295,28 @@ class UserService:
 
     @classmethod
     def regenerate_token(cls, regenerate_data):
-        user = DatabaseClient.get_user_by_email(regenerate_data.email)
+        user = UserDatabaseClient.get_user_by_email(regenerate_data.email)
 
         if user:
-            password_recovery = DatabaseClient.get_password_recovery_by_id(user.user_id)
+            password_recovery = UserDatabaseClient.get_password_recovery_by_id(user.id)
 
             if password_recovery:
                 try:
-                    DatabaseClient.delete(password_recovery)
-                    cls.logger().debug(f"Deleting token recover entry for user {user.user_id}")
-                    user.auth_token = Authenticator.generate(user.user_id)
-                    cls.logger().debug(f"Regenerating token for user {user.user_id}")
+                    UserDatabaseClient.delete_password_recovery(password_recovery)
+                    cls.logger().debug(f"Deleting token recover entry for user {user.id}")
+                    user.token = Authenticator.generate(user.id)
+                    cls.logger().debug(f"Regenerating token for user {user.id}")
                     user.online = True
+                    UserDatabaseClient.update_user(user)
                     DatabaseClient.commit()
-                    cls.logger().info(f"Logging in user {user.user_id}")
-                    headers = {"auth_token": user.auth_token}
+                    cls.logger().info(f"Logging in user {user.id}")
+                    headers = {"auth_token": user.token}
                     return SuccessfulUserResponse(user, headers)
-                except exc.IntegrityError:
-                    cls.logger().error(f"Couldn't regenerate token for user #{user.user_id}.")
+                except IntegrityError:
+                    cls.logger().error(f"Couldn't regenerate token for user #{user.id}.")
                     raise UnsuccessfulClientResponse("Couldn't regenerate token.")
             else:
-                cls.logger().info(
-                    f"Attempting to recover password for user #{user.user_id} with no password recovery token.")
+                cls.logger().info(f"Attempting to recover password for user #{user.id} with no password recovery token.")
                 return BadRequestUserMessageResponse("You haven't ask for password recovery!",
                                                      UserResponseStatus.WRONG_CREDENTIALS.value)
 

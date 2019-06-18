@@ -20,8 +20,8 @@ class SuccessfulTeamResponse(SuccessfulClientResponse):
 class ActiveTeamOutput(Jsonizable):
 
     def __init__(self, team):
-        self.id = team.team_id
-        self.team_name = team.team_name
+        self.id = team.id
+        self.team_name = team.name
         self.picture = team.picture
         self.location = team.location
         self.description = team.description

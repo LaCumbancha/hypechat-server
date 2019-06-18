@@ -38,7 +38,7 @@ class ActiveChannelOutput(Jsonizable):
         self.channel_id = channel.channel_id
         self.team_id = channel.team_id
         self.name = channel.name
-        self.creator = channel.creator
+        self.creator = channel.creator_id
         self.visibility = channel.visibility
         self.description = channel.description
         self.welcome_message = channel.welcome_message
