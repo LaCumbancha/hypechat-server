@@ -13,23 +13,23 @@ class TeamDatabaseClient:
 
     @classmethod
     def add_team(cls, team):
-        team_entry = TeamDatabaseMaper.to_team(team)
+        team_entry = TeamDatabaseMapper.to_team(team)
         DatabaseClient.add(team_entry)
         return TeamModelMapper.to_team(team_entry)
 
     @classmethod
     def add_team_user(cls, team_user):
-        team_user_entry = TeamDatabaseMaper.to_team_user(team_user)
+        team_user_entry = TeamDatabaseMapper.to_team_user(team_user)
         DatabaseClient.add(team_user_entry)
 
     @classmethod
     def add_invite(cls, invite):
-        invite_entry = TeamDatabaseMaper.to_team_invite(invite)
+        invite_entry = TeamDatabaseMapper.to_team_invite(invite)
         DatabaseClient.add(invite_entry)
 
     @classmethod
     def add_forbidden_word(cls, word):
-        word_entry = TeamDatabaseMaper.to_forbidden_word(word)
+        word_entry = TeamDatabaseMapper.to_forbidden_word(word)
         DatabaseClient.add(word_entry)
 
     @classmethod
