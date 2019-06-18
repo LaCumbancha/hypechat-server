@@ -8,19 +8,19 @@ class RolesTestCase(unittest.TestCase):
 
     def test_team_member_is_not_team_admin(self):
         user_role = TeamRoles.MEMBER.value
-        self.assertFalse(TeamRoles.is_team_admin(user_role))
+        self.assertFalse(TeamRoles.is_team_moderator(user_role))
 
     def test_team_moderator_is_team_admin(self):
         user_role = TeamRoles.MODERATOR.value
-        self.assertTrue(TeamRoles.is_team_admin(user_role))
+        self.assertTrue(TeamRoles.is_team_moderator(user_role))
 
     def test_team_creator_is_team_admin(self):
         user_role = TeamRoles.CREATOR.value
-        self.assertTrue(TeamRoles.is_team_admin(user_role))
+        self.assertTrue(TeamRoles.is_team_moderator(user_role))
 
     def test_superuser_is_team_admin(self):
         user_role = UserRoles.ADMIN.value
-        self.assertTrue(TeamRoles.is_team_admin(user_role))
+        self.assertTrue(TeamRoles.is_team_moderator(user_role))
 
     def test_team_member_is_not_team_creator(self):
         user_role = TeamRoles.MEMBER.value

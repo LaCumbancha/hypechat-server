@@ -72,7 +72,7 @@ class TeamRoles(Enum):
     MEMBER = "MEMBER"
 
     @classmethod
-    def is_team_admin(cls, user_role):
+    def is_team_moderator(cls, user_role):
         return user_role in [UserRoles.ADMIN.value, TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
 
     @classmethod

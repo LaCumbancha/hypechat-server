@@ -103,9 +103,10 @@ class Authenticator:
         logger = logging.getLogger(cls.__name__)
 
         try:
-            user = cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_admin(user))
+            user = cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_moderator(user))
             user.channel_id = authentication.channel_id
-            user.is_channel_creator = None
+            user.is_channel_creator = False
+            return user
         except NoPermissionsError:
 
             user = cls.authenticate_team(authentication)
