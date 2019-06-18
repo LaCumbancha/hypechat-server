@@ -22,7 +22,7 @@ class TeamsInvitesTableEntry(db.Model):
     invite_token = db.Column(name='invite_token', type_=db.String(), nullable=False)
 
 
-class ForbiddenWordsTableEntry(db.Model):
+class ForbiddenWordTableEntry(db.Model):
     __tablename__ = 'forbidden_words'
 
     id = db.Column(name='id', type_=db.Integer, nullable=False, primary_key=True, autoincrement=True)

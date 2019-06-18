@@ -125,10 +125,10 @@ CREATE TABLE messages(
 DROP TABLE IF EXISTS mentions_messages CASCADE;
 CREATE TABLE mentions_messages(
     message_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    PRIMARY KEY (message_id, user_id),
+    client_id INTEGER NOT NULL,
+    PRIMARY KEY (message_id, client_id),
     FOREIGN KEY (message_id) REFERENCES messages (id),
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (client_id) REFERENCES clients (id)
 );
 
 DROP TABLE IF EXISTS chats_messages CASCADE;
