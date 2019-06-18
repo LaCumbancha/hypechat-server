@@ -45,4 +45,3 @@ class AuthenticationTestCase(unittest.TestCase):
         sys.modules["requests"].get.return_value = facebook_data
         sys.modules["json"].loads.return_value = facebook_json
         self.assertIsInstance(FacebookService.get_user_from_facebook(user), FacebookUserDTO)
-
