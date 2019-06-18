@@ -34,7 +34,8 @@ class ChannelDatabaseClient:
 
     @classmethod
     def update_channel(cls, channel):
-        channel_entry = db.session.query(ChannelTableEntry).filter(ChannelTableEntry.channel_id == channel.channel_id).one_or_none()
+        channel_entry = db.session.query(ChannelTableEntry).filter(
+            ChannelTableEntry.channel_id == channel.channel_id).one_or_none()
         channel_entry.name = channel.name
         channel_entry.visibility = channel.visibility
         channel_entry.description = channel.description
@@ -44,15 +45,43 @@ class ChannelDatabaseClient:
 
     @classmethod
     def get_channel_by_id(cls, channel_id):
-        channel_entry = db.session.query(ChannelTableEntry).filter(
+        channel_entry = db.session.query(
+            ChannelTableEntry.channel_id,
+            ChannelTableEntry.team_id,
+            ChannelTableEntry.name,
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            ChannelTableEntry.visibility,
+            ChannelTableEntry.description,
+            ChannelTableEntry.welcome_message
+        ).filter(
             ChannelTableEntry.channel_id == channel_id
+        ).join(
+            UserTableEntry,
+            UserTableEntry.user_id == ChannelTableEntry.creator
         ).one_or_none()
         return ChannelModelMapper.to_channel(channel_entry)
 
     @classmethod
     def get_channel_by_name(cls, channel_name):
-        channel_entry = db.session.query(ChannelTableEntry).filter(
+        channel_entry = db.session.query(
+            ChannelTableEntry.channel_id,
+            ChannelTableEntry.team_id,
+            ChannelTableEntry.name,
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            ChannelTableEntry.visibility,
+            ChannelTableEntry.description,
+            ChannelTableEntry.welcome_message
+        ).filter(
             ChannelTableEntry.name == channel_name
+        ).join(
+            UserTableEntry,
+            UserTableEntry.user_id == ChannelTableEntry.creator
         ).one_or_none()
         return ChannelModelMapper.to_channel(channel_entry)
 
@@ -84,3 +113,47 @@ class ChannelDatabaseClient:
             )
         ).all()
         return ChannelModelMapper.to_channel_members(users)
+
+    @classmethod
+    def get_user_channels_by_user_id(cls, user_id, team_id, is_admin=False):
+        if is_admin:
+            channels_entries = db.session.query(
+                ChannelTableEntry.channel_id,
+                ChannelTableEntry.team_id,
+                ChannelTableEntry.name,
+                UserTableEntry.user_id,
+                UserTableEntry.username,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
+                ChannelTableEntry.visibility,
+                ChannelTableEntry.description,
+                ChannelTableEntry.welcome_message
+            ).join(
+                UserTableEntry,
+                UserTableEntry.user_id == ChannelTableEntry.creator
+            ).filter(
+                ChannelTableEntry.team_id == team_id
+            ).all()
+        else:
+            channels_entries = db.session.query(
+                ChannelTableEntry.channel_id,
+                ChannelTableEntry.team_id,
+                ChannelTableEntry.name,
+                UserTableEntry.user_id,
+                UserTableEntry.username,
+                UserTableEntry.first_name,
+                UserTableEntry.last_name,
+                ChannelTableEntry.visibility,
+                ChannelTableEntry.description,
+                ChannelTableEntry.welcome_message
+            ).join(
+                UsersByChannelsTableEntry,
+                UsersByChannelsTableEntry.channel_id == ChannelTableEntry.channel_id
+            ).join(
+                UserTableEntry,
+                UserTableEntry.user_id == ChannelTableEntry.creator
+            ).filter(
+                ChannelTableEntry.team_id == team_id,
+                UsersByChannelsTableEntry.user_id == user_id
+            ).all()
+        return ChannelModelMapper.to_channels(channels_entries)

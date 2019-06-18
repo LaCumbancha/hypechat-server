@@ -137,6 +137,7 @@ CREATE TABLE chats_messages(
 	chat_id INTEGER NOT NULL,
 	team_id INTEGER NOT NULL,
 	unseen INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (user_id, chat_id, team_id),
 	FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
 	FOREIGN KEY (chat_id) REFERENCES clients (id) ON DELETE CASCADE,
 	FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
