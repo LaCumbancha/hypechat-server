@@ -14,7 +14,7 @@ class Message:
 
 class Chat:
 
-    def __init__(self, user_id, chat_id, team_id, offset):
+    def __init__(self, user_id, chat_id, team_id, offset=0):
         self.user_id = user_id
         self.chat_id = chat_id
         self.team_id = team_id

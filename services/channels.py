@@ -2,8 +2,10 @@ from daos.database import *
 from daos.teams import TeamDatabaseClient
 from daos.users import UserDatabaseClient
 from daos.channels import ChannelDatabaseClient
+from daos.messages import MessageDatabaseClient
 
 from dtos.models.channels import *
+from dtos.models.messages import Chat
 from dtos.responses.channels import *
 from dtos.responses.clients import SuccessfulUsersListResponse
 
@@ -28,7 +30,7 @@ class ChannelService:
             new_channel = Channel(
                 channel_id=new_client.id,
                 team_id=user.team_id,
-                creator_id=user.id,
+                creator=user.id,
                 name=creation_data.name,
                 visibility=creation_data.visibility,
                 description=creation_data.description,
@@ -37,7 +39,10 @@ class ChannelService:
             ChannelDatabaseClient.add_channel(new_channel)
             new_channel_user = ChannelUser(user_id=user.id, channel_id=new_channel.channel_id)
             ChannelDatabaseClient.add_channel_user(new_channel_user)
+            new_chat = Chat(user_id=user.id, chat_id=new_channel.channel_id, team_id=new_channel.team_id)
+            MessageDatabaseClient.add_chat(new_chat)
             DatabaseClient.commit()
+            channel = ChannelDatabaseClient.get_channel_by_id(new_channel.channel_id)
             cls.logger().info(f"Channel #{new_channel.channel_id} created in team {new_channel.team_id}.")
             cls.logger().info(f"User #{user.id} assigned as channel #{new_channel.channel_id} creator.")
         except IntegrityError:
@@ -50,7 +55,7 @@ class ChannelService:
                 cls.logger().error(f"Failing to create channel {creation_data.name}.")
                 return UnsuccessfulChannelMessageResponse("Couldn't create channel.")
         else:
-            return SuccessfulChannelResponse(new_channel, TeamResponseStatus.CREATED.value)
+            return SuccessfulChannelResponse(channel, TeamResponseStatus.CREATED.value)
 
     @classmethod
     def add_member(cls, invitation_data):
@@ -71,6 +76,8 @@ class ChannelService:
         try:
             new_channel_user = ChannelUser(user_id=invited_user.id, channel_id=user.channel_id)
             ChannelDatabaseClient.add_channel_user(new_channel_user)
+            new_chat = Chat(user_id=invited_user.id, chat_id=user.channel_id, team_id=user.team_id)
+            MessageDatabaseClient.add_chat(new_chat)
             DatabaseClient.commit()
             cls.logger().info(f"User #{invited_user.id} added to channel #{user.channel_id} by {user.username}.")
 
@@ -113,6 +120,8 @@ class ChannelService:
         try:
             new_channel_user = ChannelUser(user_id=user.id, channel_id=channel.channel_id)
             ChannelDatabaseClient.add_channel_user(new_channel_user)
+            new_chat = Chat(user_id=user.id, chat_id=channel.channel_id, team_id=user.team_id)
+            MessageDatabaseClient.add_chat(new_chat)
             DatabaseClient.commit()
             cls.logger().info(f"User {user.id} joined channel #{channel.channel_id}.")
             return SuccessfulChannelResponse(channel, ChannelResponseStatus.JOINED.value)
