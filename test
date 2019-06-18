@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Running tests..."
-coverage run --source=controllers,dtos,handlers,models,services,tables,utils,services, -m unittest discover -s tests
+coverage run --source=controllers,dtos,handlers,models,services,utils,services, -m unittest discover -s tests
 echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html

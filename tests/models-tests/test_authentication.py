@@ -7,6 +7,7 @@ from exceptions.exceptions import WrongTokenError, UserNotFoundError, NoPermissi
 
 from dtos.models.users import User, PublicUser
 from dtos.models.teams import Team
+from dtos.models.channels import Channel
 
 from models.constants import TeamRoles, UserRoles
 
@@ -67,7 +68,11 @@ class AuthenticationTestCase(unittest.TestCase):
         token = Authenticator.generate(user_id)
         authentication = MagicMock()
         authentication.token = token
-        sys.modules["daos.users"].UserDatabaseClient.get_user_by_id().token = "DIFFERENT-TOKEN"
+
+        '''Mocked outputs'''
+        user = User(user_id=user_id, token="DIFFERENT-TOKEN")
+
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user
         self.assertRaises(WrongTokenError, Authenticator.authenticate, authentication)
 
     def test_user_with_same_token_in_database_authenticates(self):
@@ -146,7 +151,7 @@ class AuthenticationTestCase(unittest.TestCase):
         user = User(user_id=user_id, token=token, role=UserRoles.ADMIN.value)
 
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user
-        authenticated_user = Authenticator.authenticate_team(authentication, verifying_function)
+        authenticated_user = Authenticator.authenticate_team(authentication)
 
         self.assertEqual(user_id, authenticated_user.id)
         self.assertEqual(team_id, authenticated_user.team_id)
@@ -201,6 +206,7 @@ class AuthenticationTestCase(unittest.TestCase):
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user
         sys.modules["daos.users"].UserDatabaseClient.get_team_user_by_ids.return_value = team_user
         sys.modules["daos.users"].UserDatabaseClient.get_channel_user_by_ids.return_value = channel_user
+        authenticated_user = Authenticator.authenticate_channel(authentication)
 
         self.assertEqual(user_id, authenticated_user.id)
         self.assertEqual(team_id, authenticated_user.team_id)
@@ -257,10 +263,12 @@ class AuthenticationTestCase(unittest.TestCase):
         team_user = PublicUser(user_id=user_id)
         team_user.team_role = TeamRoles.MEMBER.value
         team_user.team_id = team_id
+        channel = Channel(channel_id=channel_id, team_id=team_id, name="test", creator_id=1)
 
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user
         sys.modules["daos.users"].UserDatabaseClient.get_team_user_by_ids.return_value = team_user
         sys.modules["daos.users"].UserDatabaseClient.get_channel_user_by_ids.return_value = None
+        sys.modules["daos.channels"].ChannelDatabaseClient.get_channel_by_id.return_value = channel
         self.assertRaises(NoPermissionsError, Authenticator.authenticate_channel, authentication)
 
     def test_admin_user_authenticates_to_every_channel(self):

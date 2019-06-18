@@ -112,7 +112,7 @@ class Authenticator:
             user = cls.authenticate_team(authentication)
             channel_user = UserDatabaseClient.get_channel_user_by_ids(user.id, authentication.channel_id)
 
-            if channel_user:
+            if channel_user is not None:
                 if channel_role_verifying(channel_user.is_channel_creator):
                     logger.info(f"User {user.username} authenticated as channel #{authentication.channel_id} creator.")
                     return channel_user
