@@ -97,11 +97,3 @@ class MessageReceiver:
         self.user_id = user_id
         self.team_id = team_id
         self.is_user = is_user
-
-
-class ForbiddenWord:
-
-    def __init__(self, word_id, word, team_id):
-        self.id = word_id
-        self.word = word
-        self.team_id = team_id

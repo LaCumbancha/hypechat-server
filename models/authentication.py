@@ -72,11 +72,11 @@ class Authenticator:
         team_user = UserDatabaseClient.get_team_user_by_ids(user.id, authentication.team_id)
 
         if team_user is not None:
-            if role_verifying(team_user):
-                logger.info(f"User {user.username} authenticated as team #{authentication.team_id} {team_user.role}.")
+            if role_verifying(team_user.team_role):
+                logger.info(f"User #{team_user.id} authenticated as team #{team_user.team_id} {team_user.team_role}.")
                 return team_user
             else:
-                logger.info(f"User {user.username} does not have permissions to perform this action.")
+                logger.info(f"User #{user.id} does not have permissions to perform this action.")
                 raise NoPermissionsError("You don't have enough permissions to perform this action.",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
         else:

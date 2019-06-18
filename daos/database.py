@@ -499,22 +499,22 @@ class DatabaseClient:
 
     @classmethod
     def get_forbidden_word_by_word(cls, team_id, word):
-        return db.session.query(ForbiddenWordsTableEntry).filter(
-            ForbiddenWordsTableEntry.team_id == team_id,
-            ForbiddenWordsTableEntry.word == word
+        return db.session.query(ForbiddenWordTableEntry).filter(
+            ForbiddenWordTableEntry.team_id == team_id,
+            ForbiddenWordTableEntry.word == word
         ).one_or_none()
 
     @classmethod
     def get_forbidden_word_by_id(cls, team_id, word_id):
-        return db.session.query(ForbiddenWordsTableEntry).filter(
-            ForbiddenWordsTableEntry.team_id == team_id,
-            ForbiddenWordsTableEntry.id == word_id
+        return db.session.query(ForbiddenWordTableEntry).filter(
+            ForbiddenWordTableEntry.team_id == team_id,
+            ForbiddenWordTableEntry.id == word_id
         ).one_or_none()
 
     @classmethod
     def get_forbidden_words_by_team_id(cls, team_id):
-        return db.session.query(ForbiddenWordsTableEntry).filter(
-            ForbiddenWordsTableEntry.team_id == team_id
+        return db.session.query(ForbiddenWordTableEntry).filter(
+            ForbiddenWordTableEntry.team_id == team_id
         ).all()
 
 
@@ -610,4 +610,4 @@ class TableEntryBuilder:
 
     @classmethod
     def new_forbidden_word(cls, word, team_id):
-        return ForbiddenWordsTableEntry(word=word, team_id=team_id)
+        return ForbiddenWordTableEntry(word=word, team_id=team_id)

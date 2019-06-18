@@ -30,6 +30,24 @@ class TableEntryBuilder:
         )
 
     @classmethod
+    def to_team(cls, team):
+        return TeamTableEntry(
+            team_name=team.name,
+            picture=team.picture,
+            location=team.location,
+            description=team.description,
+            welcome_message=team.welcome_message
+        )
+
+    @classmethod
+    def to_team_user(cls, team_user):
+        return UsersByTeamsTableEntry(
+            user_id=team_user.user_id,
+            team_id=team_user.team_id,
+            role=team_user.role
+        )
+
+    @classmethod
     def to_channel(cls, channel):
         return ChannelTableEntry(
             channel_id=channel.channel_id,
@@ -80,6 +98,21 @@ class TableEntryBuilder:
         return MentionsByMessagesTableEntry(
             message_id=mention.message_id,
             client_id=mention.client_id
+        )
+
+    @classmethod
+    def to_team_invite(cls, invitation):
+        return TeamsInvitesTableEntry(
+            team_id=invitation.team_id,
+            email=invitation.email,
+            invite_token=invitation.token
+        )
+
+    @classmethod
+    def to_word(cls, word):
+        return ForbiddenWordTableEntry(
+            word=word.word,
+            team_id=word.team_id
         )
 
 
@@ -182,6 +215,40 @@ class ModelBuilder:
         user.team_id = table_entry.team_id
         user.team_role = table_entry.team_role
         return user
+
+    @classmethod
+    def to_team_members(cls, members_entries):
+        users = []
+        for member_entry in members_entries:
+            user = PublicUser(
+                user_id=member_entry.user_id,
+                username=member_entry.username,
+                email=member_entry.email,
+                first_name=member_entry.first_name,
+                last_name=member_entry.last_name,
+                profile_pic=member_entry.profile_pic,
+                role=member_entry.role,
+                online=member_entry.online
+            )
+            user.team_id = member_entry.team_id
+            user.team_role = member_entry.team_role
+            users += [user]
+        return users
+
+    @classmethod
+    def to_team_channels(cls, channels_entries):
+        channels = []
+        for channel_entry in channels_entries:
+            channels += [Channel(
+                channel_id=channel_entry.channel_id,
+                team_id=channel_entry.team_id,
+                name=channel_entry.name,
+                creator_id=channel_entry.creator,
+                visibility=channel_entry.visibility,
+                description=channel_entry.description,
+                welcome_message=channel_entry.welcome_message
+            )]
+        return channels
 
     @classmethod
     def to_channel_user(cls, table_entry):
@@ -338,6 +405,14 @@ class ModelBuilder:
         ) if receiver is not None else None
 
     @classmethod
+    def to_forbidden_word(cls, word):
+        return ForbiddenWord(
+            word_id=word.id,
+            word=word.word,
+            team_id=word.team_id
+        ) if word is not None else None
+
+    @classmethod
     def to_forbidden_words(cls, words_entries):
         words = []
         for word_entry in words_entries:
@@ -348,3 +423,11 @@ class ModelBuilder:
             )]
 
         return words
+
+    @classmethod
+    def to_team_invite(cls, invite):
+        return TeamInvite(
+            team_id=invite.team_id,
+            email=invite.email,
+            token=invite.invite_token
+        ) if invite is not None else None
