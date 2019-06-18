@@ -1,5 +1,5 @@
 from app import db
-from sqlalchemy import and_, or_, literal
+from sqlalchemy import and_, or_, literal, func
 
 from daos.database import DatabaseClient
 from daos.mappers.messages import MessageDatabaseMapper, MessageModelMapper
