@@ -225,8 +225,7 @@ class MessageService:
             sender_chat = Chat(
                 user_id=sender_id,
                 chat_id=receiver_id,
-                team_id=team_id,
-                offset=0
+                team_id=team_id
             )
 
         receivers_chat = []

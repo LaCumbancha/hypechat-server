@@ -98,6 +98,7 @@ class Authenticator:
             user = cls.authenticate_team(authentication, lambda user: TeamRoles.is_team_admin(user))
             user.channel_id = authentication.channel_id
             user.is_channel_creator = None
+            return user
         except NoPermissionsError:
 
             user = cls.authenticate_team(authentication)
