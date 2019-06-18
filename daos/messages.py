@@ -2,12 +2,11 @@ from app import db
 from sqlalchemy import and_, or_, literal
 
 from daos.database import DatabaseClient
-from daos.builder import TableEntryBuilder, ModelBuilder
-from daos.teams import TeamDatabaseClient
+from daos.mappers.messages import MessageDatabaseMapper, MessageModelMapper
 
-from tables.users import *
-from tables.channels import *
-from tables.messages import *
+from tables.users import UserTableEntry, UsersByTeamsTableEntry
+from tables.channels import ChannelTableEntry
+from tables.messages import MessageTableEntry, ChatTableEntry, MentionsByMessagesTableEntry
 
 from models.constants import SendMessageType
 
@@ -16,17 +15,17 @@ class MessageDatabaseClient:
 
     @classmethod
     def add_message(cls, message):
-        message_entry = TableEntryBuilder.to_message(message)
+        message_entry = MessageDatabaseMapper.to_message(message)
         DatabaseClient.add(message_entry)
 
     @classmethod
     def add_chat(cls, chat):
-        chat_entry = TableEntryBuilder.to_chat(chat)
+        chat_entry = MessageDatabaseMapper.to_chat(chat)
         DatabaseClient.add(chat_entry)
 
     @classmethod
     def add_mention(cls, mention):
-        mention_entry = TableEntryBuilder.to_mention(mention)
+        mention_entry = MessageDatabaseMapper.to_mention(mention)
         DatabaseClient.add(mention_entry)
 
     @classmethod
@@ -43,7 +42,7 @@ class MessageDatabaseClient:
                 MentionsByMessagesTableEntry.message_id == message_id
             )
         ).all()
-        return ModelBuilder.to_mentions(mentions)
+        return MessageModelMapper.to_mentions(mentions)
 
     @classmethod
     def get_direct_messages_previews(cls, user_id, team_id):
@@ -118,7 +117,7 @@ class MessageDatabaseClient:
             )
         ).all()
 
-        return ModelBuilder.to_direct_messages_previews(last_messages)
+        return MessageModelMapper.to_direct_messages_previews(last_messages)
 
     @classmethod
     def get_channel_messages_previews(cls, user_id, team_id):
@@ -166,7 +165,7 @@ class MessageDatabaseClient:
             ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
         ).all()
 
-        return ModelBuilder.to_channel_messages_previews(messages_previews)
+        return MessageModelMapper.to_channel_messages_previews(messages_previews)
 
     @classmethod
     def get_chat_by_ids(cls, user_id, chat_id, team_id):
@@ -175,7 +174,7 @@ class MessageDatabaseClient:
             ChatTableEntry.chat_id == chat_id,
             ChatTableEntry.team_id == team_id
         )).one_or_none()
-        return ModelBuilder.to_chat(chat)
+        return MessageModelMapper.to_chat(chat)
 
     @classmethod
     def get_channel_chat(cls, chat_id, team_id, offset, limit):
@@ -199,7 +198,7 @@ class MessageDatabaseClient:
             MessageTableEntry.team_id == team_id,
             MessageTableEntry.receiver_id == chat_id
         )).offset(offset).limit(limit).all()
-        return ModelBuilder.to_messages_chat(chat)
+        return MessageModelMapper.to_messages_chat(chat)
 
     @classmethod
     def get_direct_chat(cls, user_id, chat_id, team_id, offset, limit):
@@ -230,7 +229,7 @@ class MessageDatabaseClient:
                     MessageTableEntry.receiver_id == user_id)
             ),
         )).offset(offset).limit(limit).all()
-        return ModelBuilder.to_messages_chat(chat)
+        return MessageModelMapper.to_messages_chat(chat)
 
     @classmethod
     def get_message_direct_receiver_by_ids(cls, user_id, team_id):
@@ -246,7 +245,7 @@ class MessageDatabaseClient:
                 UsersByTeamsTableEntry.team_id == team_id
             )
         ).one_or_none()
-        return ModelBuilder.to_message_receiver(receiver)
+        return MessageModelMapper.to_message_receiver(receiver)
 
     @classmethod
     def get_message_channel_receiver_by_ids(cls, channel_id):
@@ -256,4 +255,4 @@ class MessageDatabaseClient:
         ).filter(
             ChannelTableEntry.channel_id == channel_id
         ).one_or_none()
-        return ModelBuilder.to_message_receiver(receiver)
+        return MessageModelMapper.to_message_receiver(receiver)

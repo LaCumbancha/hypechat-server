@@ -2,12 +2,13 @@ from app import db
 from sqlalchemy import and_
 
 from daos.database import DatabaseClient
-from daos.builder import TableEntryBuilder, ModelBuilder
 from daos.teams import TeamDatabaseClient
+from daos.mappers.users import UserDatabaseMapper, UserModelMapper
 
-from tables.users import *
-from tables.teams import *
-from tables.channels import *
+from tables.users import ClientTableEntry, UserTableEntry, PasswordRecoveryTableEntry, UsersByTeamsTableEntry, \
+    UsersByChannelsTableEntry
+from tables.teams import TeamTableEntry
+from tables.channels import ChannelTableEntry
 
 from dtos.models.users import *
 
@@ -22,12 +23,12 @@ class UserDatabaseClient:
 
     @classmethod
     def add_user(cls, user):
-        user_entry = TableEntryBuilder.to_user(user)
+        user_entry = UserDatabaseMapper.to_user(user)
         DatabaseClient.add(user_entry)
 
     @classmethod
     def add_password_recovery(cls, password_recovery):
-        recovery_entry = TableEntryBuilder.to_password_recovery(password_recovery)
+        recovery_entry = UserDatabaseMapper.to_password_recovery(password_recovery)
         DatabaseClient.add(recovery_entry)
 
     @classmethod
@@ -39,22 +40,22 @@ class UserDatabaseClient:
     @classmethod
     def get_user_by_id(cls, user_id):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user_id).one_or_none()
-        return ModelBuilder.to_user(user_entry)
+        return UserModelMapper.to_user(user_entry)
 
     @classmethod
     def get_user_by_email(cls, user_email):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.email == user_email).one_or_none()
-        return ModelBuilder.to_user(user_entry)
+        return UserModelMapper.to_user(user_entry)
 
     @classmethod
     def get_user_by_username(cls, username):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.username == username).one_or_none()
-        return ModelBuilder.to_user(user_entry)
+        return UserModelMapper.to_user(user_entry)
 
     @classmethod
     def get_user_by_facebook_id(cls, facebook_id):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.facebook_id == facebook_id).one_or_none()
-        return ModelBuilder.to_user(user_entry)
+        return UserModelMapper.to_user(user_entry)
 
     @classmethod
     def update_user(cls, user):
@@ -98,7 +99,7 @@ class UserDatabaseClient:
             ).filter(
                 UserTableEntry.user_id == user.id
             ).all()
-            return ModelBuilder.to_user_with_teams(user_with_teams)
+            return UserModelMapper.to_user_with_teams(user_with_teams)
         else:
             return user
 
@@ -123,7 +124,7 @@ class UserDatabaseClient:
                 UsersByTeamsTableEntry.team_id == team_id
             )
         ).one_or_none()
-        return ModelBuilder.to_team_user(team_user_entry)
+        return UserModelMapper.to_team_user(team_user_entry)
 
     @classmethod
     def get_channel_user_by_ids(cls, user_id, channel_id):
@@ -150,11 +151,11 @@ class UserDatabaseClient:
             ChannelTableEntry,
             UsersByChannelsTableEntry.channel_id == ChannelTableEntry.channel_id
         ).one_or_none()
-        return ModelBuilder.to_channel_user(channel_user)
+        return UserModelMapper.to_channel_user(channel_user)
 
     @classmethod
     def get_password_recovery_by_id(cls, user_id):
         password_entry = db.session.query(PasswordRecoveryTableEntry).filter(
             PasswordRecoveryTableEntry.user_id == user_id
         ).one_or_none()
-        return ModelBuilder.to_password_recovery(password_entry)
+        return UserModelMapper.to_password_recovery(password_entry)

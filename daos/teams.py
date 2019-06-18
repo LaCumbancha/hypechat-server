@@ -2,34 +2,34 @@ from app import db
 from sqlalchemy import and_, literal
 
 from daos.database import DatabaseClient
-from daos.builder import TableEntryBuilder, ModelBuilder
+from daos.mappers.teams import TeamDatabaseMapper, TeamModelMapper
 
-from tables.users import *
-from tables.teams import *
-from tables.channels import *
+from tables.users import UserTableEntry, UsersByTeamsTableEntry
+from tables.teams import TeamTableEntry, TeamsInvitesTableEntry, ForbiddenWordTableEntry
+from tables.channels import ChannelTableEntry
 
 
 class TeamDatabaseClient:
 
     @classmethod
     def add_team(cls, team):
-        team_entry = TableEntryBuilder.to_team(team)
+        team_entry = TeamDatabaseMaper.to_team(team)
         DatabaseClient.add(team_entry)
-        return ModelBuilder.to_team(team_entry)
+        return TeamModelMapper.to_team(team_entry)
 
     @classmethod
     def add_team_user(cls, team_user):
-        team_user_entry = TableEntryBuilder.to_team_user(team_user)
+        team_user_entry = TeamDatabaseMaper.to_team_user(team_user)
         DatabaseClient.add(team_user_entry)
 
     @classmethod
     def add_invite(cls, invite):
-        invite_entry = TableEntryBuilder.to_team_invite(invite)
+        invite_entry = TeamDatabaseMaper.to_team_invite(invite)
         DatabaseClient.add(invite_entry)
 
     @classmethod
     def add_forbidden_word(cls, word):
-        word_entry = TableEntryBuilder.to_word(word)
+        word_entry = TeamDatabaseMaper.to_forbidden_word(word)
         DatabaseClient.add(word_entry)
 
     @classmethod
@@ -66,7 +66,7 @@ class TeamDatabaseClient:
         team_entry.description = team.description
         team_entry.welcome_message = team.welcome_message
         DatabaseClient.add(team_entry)
-        return ModelBuilder.to_team(team_entry)
+        return TeamModelMapper.to_team(team_entry)
 
     @classmethod
     def update_team_user(cls, team_user):
@@ -80,12 +80,12 @@ class TeamDatabaseClient:
     @classmethod
     def get_team_by_id(cls, team_id):
         team_entry = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_id == team_id).one_or_none()
-        return ModelBuilder.to_team(team_entry)
+        return TeamModelMapper.to_team(team_entry)
 
     @classmethod
     def get_team_by_name(cls, team_name):
         team_entry = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == team_name).one_or_none()
-        return ModelBuilder.to_team(team_entry)
+        return TeamModelMapper.to_team(team_entry)
 
     @classmethod
     def get_user_teams_by_user_id(cls, user_id, is_admin=False):
@@ -115,7 +115,7 @@ class TeamDatabaseClient:
                     UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
                 )
             ).all()
-        return ModelBuilder.to_teams(team_entry)
+        return TeamModelMapper.to_teams(team_entry)
 
     @classmethod
     def get_user_in_team_by_ids(cls, user_id, team_id):
@@ -123,7 +123,7 @@ class TeamDatabaseClient:
             UsersByTeamsTableEntry.user_id == user_id,
             UsersByTeamsTableEntry.team_id == team_id
         ).one_or_none()
-        return ModelBuilder.to_user_in_team(team_user)
+        return TeamModelMapper.to_user_in_team(team_user)
 
     @classmethod
     def get_user_in_team_by_email(cls, email, team_id):
@@ -135,7 +135,7 @@ class TeamDatabaseClient:
                 UserTableEntry.email == email
             )
         ).one_or_none()
-        return ModelBuilder.to_user_in_team(team_user)
+        return TeamModelMapper.to_user_in_team(team_user)
 
     @classmethod
     def get_all_team_users_by_team_id(cls, team_id):
@@ -157,7 +157,7 @@ class TeamDatabaseClient:
                 UsersByTeamsTableEntry.team_id == team_id
             )
         ).all()
-        return ModelBuilder.to_team_members(users)
+        return TeamModelMapper.to_team_members(users)
 
     @classmethod
     def get_all_team_users_by_likely_name(cls, team_id, username):
@@ -180,12 +180,12 @@ class TeamDatabaseClient:
                 UserTableEntry.username.like(f"%{username}%")
             )
         ).all()
-        return ModelBuilder.to_team_members(users)
+        return TeamModelMapper.to_team_members(users)
 
     @classmethod
     def get_all_team_channels_by_team_id(cls, team_id):
         channels = db.session.query(ChannelTableEntry).filter(ChannelTableEntry.team_id == team_id).all()
-        return ModelBuilder.to_team_channels(channels)
+        return TeamModelMapper.to_team_channels(channels)
 
     @classmethod
     def get_team_invite(cls, team_id, email):
@@ -193,7 +193,7 @@ class TeamDatabaseClient:
             TeamsInvitesTableEntry.team_id == team_id,
             TeamsInvitesTableEntry.email == email
         ).one_or_none()
-        return ModelBuilder.to_team_invite(invite)
+        return TeamModelMapper.to_team_invite(invite)
 
     @classmethod
     def get_team_invite_by_token(cls, token, email):
@@ -201,7 +201,7 @@ class TeamDatabaseClient:
             TeamsInvitesTableEntry.invite_token == token,
             TeamsInvitesTableEntry.email == email
         ).one_or_none()
-        return ModelBuilder.to_team_invite(invite)
+        return TeamModelMapper.to_team_invite(invite)
 
     @classmethod
     def get_forbidden_word_by_word(cls, team_id, word):
@@ -209,7 +209,7 @@ class TeamDatabaseClient:
             ForbiddenWordTableEntry.team_id == team_id,
             ForbiddenWordTableEntry.word == word
         ).one_or_none()
-        return ModelBuilder.to_forbidden_word(word)
+        return TeamModelMapper.to_forbidden_word(word)
 
     @classmethod
     def get_forbidden_word_by_id(cls, team_id, word_id):
@@ -217,11 +217,11 @@ class TeamDatabaseClient:
             ForbiddenWordTableEntry.team_id == team_id,
             ForbiddenWordTableEntry.id == word_id
         ).one_or_none()
-        return ModelBuilder.to_forbidden_word(word)
+        return TeamModelMapper.to_forbidden_word(word)
 
     @classmethod
     def get_forbidden_words_from_team(cls, team_id):
         words = db.session.query(ForbiddenWordTableEntry).filter(
             ForbiddenWordTableEntry.team_id == team_id
         ).all()
-        return ModelBuilder.to_forbidden_words(words)
+        return TeamModelMapper.to_forbidden_words(words)
