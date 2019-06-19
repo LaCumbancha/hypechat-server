@@ -24,7 +24,6 @@ class AuthenticationTestCase(unittest.TestCase):
             AuthenticationTestCase.saved_mentions += [mention]
 
         sys.modules["daos.messages"].MessageDatabaseClient.add_mention = MagicMock(side_effect=save_mentions)
-        sys.modules["daos.database"].DatabaseClient = MagicMock()
 
         MentionService.save_mentions(message, mentions)
         self.assertEquals(len(mentions), len(self.saved_mentions))
