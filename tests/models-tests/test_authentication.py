@@ -263,7 +263,7 @@ class AuthenticationTestCase(unittest.TestCase):
         team_user = PublicUser(user_id=user_id)
         team_user.team_role = TeamRoles.MEMBER.value
         team_user.team_id = team_id
-        channel = Channel(channel_id=channel_id, team_id=team_id, name="test", creator_id=1)
+        channel = Channel(channel_id=channel_id, team_id=team_id, name="test", creator=None)
 
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user
         sys.modules["daos.users"].UserDatabaseClient.get_team_user_by_ids.return_value = team_user
