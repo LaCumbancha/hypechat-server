@@ -3,7 +3,7 @@ from tables.users import UsersByTeamsTableEntry
 
 from dtos.models.teams import Team, TeamUser, TeamInvite, ForbiddenWord
 from dtos.models.users import PublicUser
-from dtos.models.channels import Channel
+from dtos.models.channels import Channel, ChannelCreator
 
 
 class TeamDatabaseMapper:
@@ -105,7 +105,12 @@ class TeamModelMapper:
                 channel_id=channel_entry.channel_id,
                 team_id=channel_entry.team_id,
                 name=channel_entry.name,
-                creator_id=channel_entry.creator,
+                creator=ChannelCreator(
+                    user_id=channel_entry.user_id,
+                    username=channel_entry.username,
+                    first_name=channel_entry.first_name,
+                    last_name=channel_entry.last_name
+                ),
                 visibility=channel_entry.visibility,
                 description=channel_entry.description,
                 welcome_message=channel_entry.welcome_message
