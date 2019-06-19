@@ -212,7 +212,12 @@ class TeamService:
             channels += [{
                 "id": channel.channel_id,
                 "name": channel.name,
-                "creator": channel.creator_id,
+                "creator": {
+                    "id": channel.creator.id,
+                    "username": channel.creator.username,
+                    "first_name": channel.creator.first_name,
+                    "last_name": channel.creator.last_name
+                },
                 "visibility": channel.visibility,
                 "description": channel.description,
                 "welcome_message": channel.welcome_message
