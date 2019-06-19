@@ -20,7 +20,7 @@ class AuthenticationTestCase(unittest.TestCase):
         mentions = [0, 1, 2, 3, 4, 5]
 
         def save_mentions(mention):
-            from tests.servicestests import test_facebook
+            from tests.services import test_facebook
             AuthenticationTestCase.saved_mentions += [mention]
 
         sys.modules["daos.messages"].MessageDatabaseClient.add_mention = MagicMock(side_effect=save_mentions)
