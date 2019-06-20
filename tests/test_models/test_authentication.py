@@ -13,7 +13,6 @@ from models.constants import TeamRoles, UserRoles
 
 '''Mocking environment properties'''
 import sys
-
 sys.modules["config"] = MagicMock()
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.users"] = MagicMock()

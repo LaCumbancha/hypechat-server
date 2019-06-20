@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 '''Mocking environment properties'''
 import sys
-
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.messages"] = MagicMock()
 
