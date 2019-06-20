@@ -1,7 +1,11 @@
 import unittest
+from unittest.mock import MagicMock
 
 from models.constants import TeamRoles
 from models.constants import UserRoles
+
+import sys
+sys.modules["logging"].getLogger = MagicMock()
 
 
 class RolesTestCase(unittest.TestCase):

@@ -19,6 +19,7 @@ sys.modules["daos.users"] = MagicMock()
 sys.modules["daos.teams"] = MagicMock()
 sys.modules["daos.channels"] = MagicMock()
 sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
+sys.modules["logging"].getLogger = MagicMock()
 
 environment_properties = {
     'SECRET': "TEST",

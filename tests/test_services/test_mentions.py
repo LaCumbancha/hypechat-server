@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import sys
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.messages"] = MagicMock()
+sys.modules["logging"].getLogger = MagicMock()
 
 from dtos.models.messages import UserMention, ChannelMention
 from services.mentions import MentionService

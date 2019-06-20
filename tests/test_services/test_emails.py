@@ -6,6 +6,7 @@ from smtplib import SMTPHeloError, SMTPAuthenticationError, SMTPRecipientsRefuse
 '''Mocking environment properties'''
 import sys
 sys.modules["smtplib"].SMTP = MagicMock()
+sys.modules["logging"].getLogger = MagicMock()
 
 from services.emails import EmailService
 

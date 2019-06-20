@@ -20,6 +20,7 @@ sys.modules["daos.teams"] = MagicMock()
 sys.modules["daos.channels"] = MagicMock()
 sys.modules["models.authentication"] = MagicMock()
 sys.modules["passlib.apps"] = MagicMock()
+sys.modules["logging"].getLogger = MagicMock()
 
 from services.users import UserService
 mock = MagicMock()

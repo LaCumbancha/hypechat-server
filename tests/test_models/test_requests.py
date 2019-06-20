@@ -8,6 +8,8 @@ from dtos.inputs.messages import *
 from models.request import ClientRequest
 from exceptions.exceptions import *
 
+import sys
+sys.modules["logging"].getLogger = MagicMock()
 
 mock = None
 EMPTY_DICTIONARY = {}

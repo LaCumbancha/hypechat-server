@@ -6,6 +6,9 @@ from dtos.responses.clients import *
 from dtos.responses.messages import *
 from dtos.responses.teams import *
 
+import sys
+sys.modules["logging"].getLogger = MagicMock()
+
 from models.constants import UserResponseStatus
 
 
