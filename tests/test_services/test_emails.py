@@ -16,7 +16,7 @@ class MockedEmailServer:
     email_sent = False
 
 
-class AuthenticationTestCase(unittest.TestCase):
+class EmailTestCase(unittest.TestCase):
 
     @classmethod
     def mocked_ehlo(cls):

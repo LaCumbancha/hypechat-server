@@ -19,9 +19,13 @@ class MockedMentionsDatabase:
     saved_mentions = []
 
 
-class AuthenticationTestCase(unittest.TestCase):
+class MentionServiceTestCase(unittest.TestCase):
 
-    def setUp(self) -> None:
+    def setUp(self):
+        MockedMentionsDatabase.batch_mentions = []
+        MockedMentionsDatabase.saved_mentions = []
+
+    def tearDown(self):
         MockedMentionsDatabase.batch_mentions = []
         MockedMentionsDatabase.saved_mentions = []
 
@@ -31,11 +35,11 @@ class AuthenticationTestCase(unittest.TestCase):
         mentions = [0, 1, 2, 3, 4, 5]
 
         def add_mention(mention):
-            from tests.test_services import test_facebook
+            from tests.test_services import test_mentions
             MockedMentionsDatabase.batch_mentions += [mention]
 
         def commit():
-            from tests.test_services import test_facebook
+            from tests.test_services import test_mentions
             MockedMentionsDatabase.saved_mentions = MockedMentionsDatabase.batch_mentions
             MockedMentionsDatabase.batch_mentions = []
 
@@ -52,18 +56,18 @@ class AuthenticationTestCase(unittest.TestCase):
         mentions = [0, 1, 2, 3, 4, 5]
 
         def add_mention(mention):
-            from tests.test_services import test_facebook
+            from tests.test_services import test_mentions
             MockedMentionsDatabase.batch_mentions += [mention]
 
-        def commit():
+        def fail():
             raise IntegrityError(mock, mock, mock)
 
         def rollback():
-            from tests.test_services import test_facebook
+            from tests.test_services import test_mentions
             MockedMentionsDatabase.batch_mentions = []
 
         sys.modules["daos.messages"].MessageDatabaseClient.add_mention = MagicMock(side_effect=add_mention)
-        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=fail)
         sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
 
         MentionService.save_mentions(message, mentions)

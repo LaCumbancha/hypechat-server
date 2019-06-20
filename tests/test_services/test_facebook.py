@@ -18,7 +18,7 @@ environment_properties = {
 from services.facebook import FacebookService
 
 
-class AuthenticationTestCase(unittest.TestCase):
+class FacebookServiceTestCase(unittest.TestCase):
 
     def test_invalid_facebook_token_throws_exception(self):
         user = MagicMock()
