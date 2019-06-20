@@ -253,7 +253,7 @@ class UserService:
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().error(f"Couldn't update user {user.id} information.")
-                return UnsuccessfulUserMessageResponse("Couldn't update user information!")
+                return UnsuccessfulClientResponse("Couldn't update user information!")
 
     @classmethod
     def user_profile(cls, user_data):
@@ -298,7 +298,7 @@ class UserService:
     def recover_password(cls, recover_data):
         user = UserDatabaseClient.get_user_by_email(recover_data.email)
 
-        if user:
+        if user is not None:
             old_password_recovery = UserDatabaseClient.get_password_recovery_by_id(user.id)
 
             if old_password_recovery is not None:
@@ -324,7 +324,7 @@ class UserService:
             return SuccessfulUserMessageResponse("Recovery token sent!", UserResponseStatus.OK.value)
 
         else:
-            cls.logger().info(f"User {regenerate_data.email} not found.")
+            cls.logger().info(f"User {recover_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
@@ -347,13 +347,13 @@ class UserService:
                     headers = {"auth_token": user.token}
                     return SuccessfulUserResponse(user, headers)
                 except IntegrityError:
+                    DatabaseClient.rollback()
                     cls.logger().error(f"Couldn't regenerate token for user #{user.id}.")
-                    raise UnsuccessfulClientResponse("Couldn't regenerate token.")
+                    return UnsuccessfulClientResponse("Couldn't regenerate token.")
             else:
                 cls.logger().info(f"Attempting to recover password for user #{user.id} with no password recovery token.")
                 return BadRequestUserMessageResponse("You haven't ask for password recovery!",
                                                      UserResponseStatus.WRONG_CREDENTIALS.value)
-
         else:
             cls.logger().info(f"User {regenerate_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
