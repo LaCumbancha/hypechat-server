@@ -24,6 +24,21 @@ class MessageDatabaseClient:
         DatabaseClient.add(chat_entry)
 
     @classmethod
+    def add_or_update_chat(cls, chat):
+        chat_entry = db.session.query(ChatTableEntry).filter(
+            ChatTableEntry.user_id == chat.user_id,
+            ChatTableEntry.chat_id == chat.chat_id,
+            ChatTableEntry.team_id == chat.team_id
+        ).one_or_none()
+
+        if chat_entry is not None:
+            chat_entry.unseen_offset = chat.offset
+        else:
+            chat_entry = MessageDatabaseMapper.to_chat(chat)
+
+        DatabaseClient.add(chat_entry)
+
+    @classmethod
     def add_mention(cls, mention):
         mention_entry = MessageDatabaseMapper.to_mention(mention)
         DatabaseClient.add(mention_entry)

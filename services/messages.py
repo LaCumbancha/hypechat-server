@@ -1,4 +1,5 @@
 from daos.database import *
+from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
 from daos.channels import ChannelDatabaseClient
 from daos.messages import MessageDatabaseClient
@@ -104,7 +105,7 @@ class MessageService:
             messages = cls._determinate_messages(user.id, chat_data.chat_id, user.team_id, chat_data.offset)
             unseen_messages = chat.offset
             try:
-                chat.unseen_offset = 0
+                chat.offset = 0
                 DatabaseClient.commit()
                 cls.logger().error(f"{unseen_messages} messages set as seen for user {user.id} in chat {chat.chat_id}.")
             except IntegrityError:
@@ -181,9 +182,9 @@ class MessageService:
             MessageDatabaseClient.add_message(new_message)
             if inbox_data.mentions:
                 MentionService.save_mentions(new_message, inbox_data.mentions)
-            MessageDatabaseClient.add_chat(chat_sender)
+            MessageDatabaseClient.add_or_update_chat(chat_sender)
             for chat_receiver in chat_receivers:
-                MessageDatabaseClient.add_chat(chat_receiver)
+                MessageDatabaseClient.add_or_update_chat(chat_receiver)
             DatabaseClient.commit()
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
         except IntegrityError:
@@ -219,7 +220,7 @@ class MessageService:
 
         if sender_chat is not None:
             cls.logger().debug("Sender chat already exist. Setting sender offset in 0.")
-            sender_chat.unseen_offset = 0
+            sender_chat.offset = 0
         else:
             cls.logger().debug("New sender chat. Initializing sender offset in 0.")
             sender_chat = Chat(
@@ -236,7 +237,7 @@ class MessageService:
 
             if receiver_user is not None:
                 cls.logger().debug("Receiver chat already exist. Increasing receiver offset by 1.")
-                receiver_user.unseen_offset += 1
+                receiver_user.offset += 1
                 receivers_chat += [receiver_user]
             else:
                 cls.logger().debug("New receiver chat. Initializing receiver offset in 1.")
@@ -259,7 +260,7 @@ class MessageService:
 
                 if receiver_user:
                     cls.logger().debug(f"Receiving channel member chat already exists. Increasing offset by 1.")
-                    receiver_user.unseen_offset += 1
+                    receiver_user.offset += 1
                     receivers_chat += [receiver_user]
                 else:
                     cls.logger().debug(f"New receiving channel member. Initializing offset in 1.")

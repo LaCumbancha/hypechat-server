@@ -38,6 +38,13 @@ class UserDatabaseClient:
         ).delete()
 
     @classmethod
+    def get_client_by_id(cls, client_id):
+        client = db.session.query(ClientTableEntry).filter(
+            ClientTableEntry.client_id == client_id
+        ).one_or_none()
+        return UserModelMapper.to_client(client)
+
+    @classmethod
     def get_user_by_id(cls, user_id):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user_id).one_or_none()
         return UserModelMapper.to_user(user_entry)
