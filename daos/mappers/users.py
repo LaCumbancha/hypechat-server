@@ -1,5 +1,5 @@
 from tables.users import UserTableEntry, PasswordRecoveryTableEntry
-from dtos.models.users import User, PublicUser, PasswordRecovery
+from dtos.models.users import User, PublicUser, PasswordRecovery, RegularClient
 
 
 class UserDatabaseMapper:
@@ -29,6 +29,12 @@ class UserDatabaseMapper:
 
 
 class UserModelMapper:
+
+    @classmethod
+    def to_client(cls, client_entry):
+        return RegularClient(
+            client_id=client_entry.client_id
+        ) if client_entry is not None else None
 
     @classmethod
     def to_user(cls, user_entry):
