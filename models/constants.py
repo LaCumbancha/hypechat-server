@@ -65,6 +65,10 @@ class UserRoles(Enum):
     ADMIN = "ADMIN"
     USER = "USER"
 
+    @classmethod
+    def is_admin(cls, user_role):
+        return user_role == UserRoles.ADMIN.value
+
 
 class TeamRoles(Enum):
     CREATOR = "CREATOR"

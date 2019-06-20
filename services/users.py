@@ -353,3 +353,10 @@ class UserService:
         else:
             cls.logger().info(f"User {regenerate_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+
+    @classmethod
+    def get_all_users(cls, user_data):
+        admin = Authenticator.authenticate(user_data, UserRoles.is_admin)
+        users = UserDatabaseClient.get_all_users()
+        cls.logger().info(f"Admin {admin.id} retrieved {len(users)} users.")
+        return SuccessfulUsersListResponse(list(map(lambda user: user.__dict__, users)))
