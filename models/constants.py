@@ -28,6 +28,7 @@ class MessageResponseStatus(Enum):
     LIST = "LIST"
     SENT = "SENT"
     ERROR = "ERROR"
+    STATS = "STATS"
     CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
     MESSAGE_TYPE_UNAVAILABLE = "MESSAGE_TYPE_UNAVAILABLE"
 
@@ -64,6 +65,10 @@ class ChannelResponseStatus(Enum):
 class UserRoles(Enum):
     ADMIN = "ADMIN"
     USER = "USER"
+
+    @classmethod
+    def is_admin(cls, user_role):
+        return user_role == UserRoles.ADMIN.value
 
 
 class TeamRoles(Enum):

@@ -40,19 +40,25 @@ class Authenticator:
         return "".join(random.choice(chars) for _ in range(int(cls._invite_token_length)))
 
     @classmethod
-    def authenticate(cls, authentication):
+    def authenticate(cls, authentication, role_verifying=lambda _: True):
         logger = logging.getLogger(cls.__name__)
         payload = jwt.decode(authentication.token.encode(), cls._secret, algorithms='HS256')
 
         user = UserDatabaseClient.get_user_by_id(payload.get("user_id"))
 
         if user is not None:
-            if user.token == authentication.token:
-                logger.info(f"User #{user.id} authenticated.")
-                return user
+            if role_verifying(user.role):
+                if user.token == authentication.token:
+                    logger.info(f"User #{user.id} authenticated.")
+                    return user
+                else:
+                    logger.info(f"Failing to authenticate user #{payload['user_id']}.")
+                    raise WrongTokenError("You must be logged to perform this action.",
+                                          UserResponseStatus.WRONG_TOKEN.value)
             else:
-                logger.info(f"Failing to authenticate user #{payload['user_id']}.")
-                raise WrongTokenError("You must be logged to perform this action.", UserResponseStatus.WRONG_TOKEN.value)
+                logger.info(f"User #{user.id} does not have permissions to perform this action.")
+                raise NoPermissionsError("You don't have enough permissions to perform this action.",
+                                         TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
         else:
             logger.info(f"User not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
