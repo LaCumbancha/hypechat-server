@@ -4,6 +4,7 @@ import logging
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from smtplib import SMTPHeloError, SMTPAuthenticationError, SMTPRecipientsRefused
 
 
 class EmailService:
@@ -30,11 +31,11 @@ class EmailService:
             cls.logger().info(f"Email sent.")
             server.quit()
             cls.logger().debug(f"Quiting Gmail server.")
-        except smtplib.SMTPHeloError:
+        except SMTPHeloError:
             cls.logger().error(f"Couldn't sent recovery token due to an Helo error.")
-        except smtplib.SMTPAuthenticationError:
+        except SMTPAuthenticationError:
             cls.logger().error(f"Couldn't loging to app email.")
-        except smtplib.SMTPRecipientsRefused:
+        except SMTPRecipientsRefused:
             cls.logger().error(f"Cannot send recovery token to the specified email address.")
 
     @classmethod

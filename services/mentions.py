@@ -1,5 +1,8 @@
-from daos.database import *
+from daos.database import DatabaseClient
 from daos.messages import MessageDatabaseClient
+
+from models.constants import SendMessageType
+from dtos.models.messages import Mention
 
 from sqlalchemy.exc import IntegrityError
 
@@ -18,7 +21,7 @@ class MentionService:
 
         try:
             for mention in mentions:
-                new_mention = Mention(message_id=message.message_id, user_id=mention)
+                new_mention = Mention(message_id=message.message_id, client_id=mention)
                 MessageDatabaseClient.add_mention(new_mention)
 
             DatabaseClient.commit()
@@ -33,11 +36,19 @@ class MentionService:
 
         mentions = []
         for mention in db_mentions:
-            mentions += [{
-                "user_id": mention.id,
-                "username": mention.username,
-                "first_name": mention.first_name,
-                "last_name": mention.last_name
-            }]
+            if mention.type == SendMessageType.DIRECT:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "USER",
+                    "username": mention.username,
+                    "first_name": mention.first_name,
+                    "last_name": mention.last_name
+                }]
+            else:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "CHANNEL",
+                    "name": mention.name
+                }]
 
         return mentions

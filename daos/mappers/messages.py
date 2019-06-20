@@ -49,12 +49,18 @@ class MessageModelMapper:
     def to_mentions(cls, mentions_entries):
         mentions = []
         for mention_entry in mentions_entries:
-            mentions += [ClientMention(
-                user_id=mention_entry.user_id,
-                username=mention_entry.username,
-                first_name=mention_entry.first_name,
-                last_name=mention_entry.last_name
-            )]
+            if mention_entry.is_user is not None:
+                mentions += [UserMention(
+                    user_id=mention_entry.client_id,
+                    username=mention_entry.username,
+                    first_name=mention_entry.first_name,
+                    last_name=mention_entry.last_name
+                )]
+            else:
+                mentions += [ChannelMention(
+                    channel_id=mention_entry.client_id,
+                    channel_name=mention_entry.channel_name
+                )]
         return mentions
 
     @classmethod

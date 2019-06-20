@@ -3,7 +3,8 @@ from models.constants import ChannelVisibilities
 
 class Channel:
 
-    def __init__(self, channel_id, team_id, name, creator, visibility, description, welcome_message):
+    def __init__(self, channel_id, team_id, name, creator, visibility=ChannelVisibilities.PUBLIC.value,
+                 description=None, welcome_message=None):
         self.channel_id = channel_id
         self.team_id = team_id
         self.name = name

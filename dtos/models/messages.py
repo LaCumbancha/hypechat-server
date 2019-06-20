@@ -1,4 +1,4 @@
-from models.constants import UserRoles
+from models.constants import UserRoles, SendMessageType
 
 
 class Message:
@@ -46,13 +46,22 @@ class Mention:
         self.client_id = client_id
 
 
-class ClientMention:
+class UserMention:
 
     def __init__(self, user_id, username, first_name, last_name):
         self.id = user_id
-        self.username = username,
+        self.type = SendMessageType.DIRECT
+        self.username = username
         self.first_name = first_name
         self.last_name = last_name
+
+
+class ChannelMention:
+
+    def __init__(self, channel_id, channel_name):
+        self.id = channel_id
+        self.type = SendMessageType.CHANNEL
+        self.name = channel_name
 
 
 class PreviewDirectMessage:

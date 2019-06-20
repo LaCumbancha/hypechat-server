@@ -36,7 +36,7 @@ def join_channel():
 def remove_member(team_id, channel_id, user_id):
     logger.info(f"Attempting to remove member #{user_id} from team #{team_id}'s channel #{channel_id}.")
     req = ClientRequest(request)
-    new_member = ChannelService.remove_member(req.delete_user_channel(team_id, channel_id, user_id))
+    new_member = ChannelService.remove_member(req.delete_user_channel_data(team_id, channel_id, user_id))
     return jsonify(new_member.json()), new_member.status_code()
 
 
@@ -44,7 +44,7 @@ def remove_member(team_id, channel_id, user_id):
 def channel_members(team_id, channel_id):
     logger.info(f"Attempting to get members from team #{team_id}'s channel #{channel_id}.")
     req = ClientRequest(request)
-    new_member = ChannelService.channel_members(req.channel_authentication(team_id, channel_id))
+    new_member = ChannelService.channel_members(req.channel_authentication_data(team_id, channel_id))
     return jsonify(new_member.json()), new_member.status_code()
 
 
@@ -52,7 +52,7 @@ def channel_members(team_id, channel_id):
 def leave_channel(team_id, channel_id):
     logger.info(f"Attempting to leave channel #{channel_id}")
     req = ClientRequest(request)
-    old_member = ChannelService.leave_channel(req.channel_authentication(team_id, channel_id))
+    old_member = ChannelService.leave_channel(req.channel_authentication_data(team_id, channel_id))
     return jsonify(old_member.json()), old_member.status_code()
 
 
@@ -60,7 +60,7 @@ def leave_channel(team_id, channel_id):
 def delete_channel(team_id, channel_id):
     logger.info(f"Attempting to delete channel #{channel_id} from team #{team_id}")
     req = ClientRequest(request)
-    old_channel = ChannelService.delete_channel(req.channel_authentication(team_id, channel_id))
+    old_channel = ChannelService.delete_channel(req.channel_authentication_data(team_id, channel_id))
     return jsonify(old_channel.json()), old_channel.status_code()
 
 
@@ -68,5 +68,5 @@ def delete_channel(team_id, channel_id):
 def update_channel_information(team_id, channel_id):
     logger.info(f"Attempting to update channel #{channel_id} information from team #{team_id}")
     req = ClientRequest(request)
-    updated_channel = ChannelService.update_information(req.channel_update(team_id, channel_id))
+    updated_channel = ChannelService.update_information(req.channel_update_data(team_id, channel_id))
     return jsonify(updated_channel.json()), updated_channel.status_code()

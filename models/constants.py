@@ -77,21 +77,23 @@ class TeamRoles(Enum):
     MEMBER = "MEMBER"
 
     @classmethod
-    def is_team_admin(cls, user_role):
-        return user_role in [TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
+    def is_team_moderator(cls, user_role):
+        return user_role in [UserRoles.ADMIN.value, TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
 
     @classmethod
     def is_team_creator(cls, user_role):
         return user_role == TeamRoles.CREATOR.value
 
     @classmethod
-    def is_higher_role(cls, user1_role, user2_role):
-        if user1_role == TeamRoles.CREATOR.value:
-            return True
-        elif user2_role == TeamRoles.MODERATOR.value and user2.role == TeamRoles.MEMBER.value:
-            return True
-        else:
-            return False
+    def has_higher_role(cls, user1_role, user2_role):
+        role_rank = {
+            TeamRoles.MEMBER.value: 1,
+            TeamRoles.MODERATOR.value: 2,
+            TeamRoles.CREATOR.value: 3,
+            UserRoles.ADMIN.value: 4
+        }
+
+        return role_rank.get(user1_role) > role_rank.get(user2_role)
 
     @classmethod
     def is_channel_creator(cls, is_channel_creator):

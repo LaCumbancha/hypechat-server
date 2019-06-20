@@ -105,7 +105,7 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_admin)
+        team_admin = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_moderator)
         already_member = TeamDatabaseClient.get_user_in_team_by_email(invite_data.email, invite_data.authentication.team_id)
 
         if already_member is not None:
@@ -116,7 +116,7 @@ class TeamService:
             return BadRequestTeamMessageResponse("This user was already invited to join the team.",
                                                  TeamResponseStatus.ALREADY_INVITED.value)
 
-        invite_token = Authenticator.team_invitation()
+        invite_token = Authenticator.generate_team_invitation()
         new_invite = TeamInvite(
             team_id=team_admin.team_id,
             email=invite_data.email,
@@ -240,12 +240,12 @@ class TeamService:
 
     @classmethod
     def delete_users(cls, delete_data):
-        user = Authenticator.authenticate_team(delete_data.authentication, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(delete_data.authentication, TeamRoles.is_team_moderator)
         delete_user = TeamDatabaseClient.get_user_in_team_by_ids(delete_data.delete_id, user.team_id)
 
         if delete_user is not None:
 
-            if TeamRoles.is_higher_role(user.team_role, delete_user.role):
+            if TeamRoles.has_higher_role(user.team_role, delete_user.role):
                 try:
                     TeamDatabaseClient.delete_team_user(delete_user)
                     DatabaseClient.commit()
@@ -312,7 +312,7 @@ class TeamService:
 
     @classmethod
     def update_information(cls, update_data):
-        user = Authenticator.authenticate_team(update_data.authentication, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(update_data.authentication, TeamRoles.is_team_moderator)
         team = TeamDatabaseClient.get_team_by_id(update_data.authentication.team_id)
 
         team.name = \
@@ -352,7 +352,7 @@ class TeamService:
 
     @classmethod
     def delete_team(cls, user_data):
-        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_moderator)
         team = TeamDatabaseClient.get_team_by_id(user.team_id)
 
         try:
@@ -367,7 +367,7 @@ class TeamService:
 
     @classmethod
     def add_forbidden_word(cls, word_data):
-        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_moderator)
 
         if TeamDatabaseClient.get_forbidden_word_by_word(user.team_id, word_data.word) is not None:
             cls.logger().debug(f"User #{user.id} attempted to add a forbidden word that already exists ({word_data.word}).")
@@ -390,7 +390,7 @@ class TeamService:
 
     @classmethod
     def forbidden_words(cls, user_data):
-        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(user_data, TeamRoles.is_team_moderator)
         forbidden_words = TeamDatabaseClient.get_forbidden_words_from_team(user.team_id)
         cls.logger().info(f"User #{user.id} got {len(forbidden_words)} forbidden words in team #{user.team_id}.")
         return SuccessfulForbiddenWordsList(cls._generate_forbidden_words_list(forbidden_words))
@@ -409,7 +409,7 @@ class TeamService:
 
     @classmethod
     def delete_forbidden_word(cls, word_data):
-        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_admin)
+        user = Authenticator.authenticate_team(word_data.authentication, TeamRoles.is_team_moderator)
         forbidden_word = TeamDatabaseClient.get_forbidden_word_by_id(user.team_id, word_data.word_id)
 
         if forbidden_word is None:

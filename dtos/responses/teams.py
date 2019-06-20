@@ -34,12 +34,12 @@ class ActiveTeamOutput(Jsonizable):
 class SuccessfulTeamsListResponse(Jsonizable, Response):
 
     def __init__(self, teams_list):
-        self.teams_list = teams_list
+        self.teams = teams_list
 
     def json(self):
         return {
             "status": TeamResponseStatus.LIST.value,
-            "teams": self.teams_list
+            "teams": self.teams
         }
 
     def status_code(self):

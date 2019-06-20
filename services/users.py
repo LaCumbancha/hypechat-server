@@ -5,6 +5,7 @@ from daos.channels import ChannelDatabaseClient
 
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.responses.channels import *
 from dtos.models.users import *
 from dtos.model import *
 
@@ -48,23 +49,27 @@ class UserService:
             headers = {"auth_token": new_user.token}
             return SuccessfulUserResponse(new_user, headers)
 
-        except IntegrityError:
+        except IntegrityError as exc:
             DatabaseClient.rollback()
             if UserDatabaseClient.get_user_by_email(user_data.email) is not None:
-                cls.logger().info(f"Failing to create user {user_data.username}. Email already in use.")
+                cls.logger().info(f"Failing to create user {user_data.username}. Email already in use.", exc)
                 return BadRequestUserMessageResponse("Email already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             elif UserDatabaseClient.get_user_by_username(user_data.username) is not None:
-                cls.logger().info(f"Failing to create user #{user_data.username}. Username already in use.")
+                cls.logger().info(f"Failing to create user #{user_data.username}. Username already in use.", exc)
                 return BadRequestUserMessageResponse("Username already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().info(f"Failing to create user #{user_data.username}.")
                 return UnsuccessfulClientResponse("Couldn't create user.")
+        except:
+            DatabaseClient.rollback()
+            cls.logger().info(f"Failing to create user #{user_data.username}.")
+            return UnsuccessfulClientResponse("Couldn't create user.")
 
     @classmethod
     def login_user(cls, user_data):
-        if not user_data.facebook_token:
+        if user_data.facebook_token is None:
             return cls._login_app_user(user_data)
         else:
             return cls._login_facebook_user(user_data)
@@ -97,7 +102,7 @@ class UserService:
             facebook_user = FacebookService.get_user_from_facebook(user_data)
             user = UserDatabaseClient.get_user_by_facebook_id(facebook_user.facebook_id)
 
-            if user:
+            if user is not None:
                 cls.logger().info(f"Logging in Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 cls.logger().debug(f"Generating token for user {user.id}")
                 user.token = Authenticator.generate(user.id)
@@ -107,7 +112,6 @@ class UserService:
                 cls.logger().info(f"User #{user.id} logged in.")
                 headers = {"auth_token": user.token}
                 return SuccessfulUserResponse(user, headers)
-
             else:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 new_client = UserDatabaseClient.add_client()
@@ -188,7 +192,7 @@ class UserService:
         channels = ChannelDatabaseClient.get_user_channels_by_user_id(user.id, user.team_id,
                                                                       user.role == UserRoles.ADMIN.value)
 
-        return SuccessfulTeamsListResponse(cls._generate_channels_list(channels))
+        return SuccessfulChannelsListResponse(cls._generate_channels_list(channels))
 
     @classmethod
     def _generate_channels_list(cls, channels_list):
@@ -249,7 +253,7 @@ class UserService:
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().error(f"Couldn't update user {user.id} information.")
-                return UnsuccessfulUserMessageResponse("Couldn't update user information!")
+                return UnsuccessfulClientResponse("Couldn't update user information!")
 
     @classmethod
     def user_profile(cls, user_data):
@@ -294,7 +298,7 @@ class UserService:
     def recover_password(cls, recover_data):
         user = UserDatabaseClient.get_user_by_email(recover_data.email)
 
-        if user:
+        if user is not None:
             old_password_recovery = UserDatabaseClient.get_password_recovery_by_id(user.id)
 
             if old_password_recovery is not None:
@@ -302,7 +306,7 @@ class UserService:
                 recovery_token = old_password_recovery.token
 
             else:
-                recovery_token = Authenticator.generate_recovery()
+                recovery_token = Authenticator.generate_recovery_token()
                 cls.logger().debug("Generating recovery token")
                 password_recovery = PasswordRecovery(user_id=user.id, token=recovery_token)
                 UserDatabaseClient.add_password_recovery(password_recovery)
@@ -320,7 +324,7 @@ class UserService:
             return SuccessfulUserMessageResponse("Recovery token sent!", UserResponseStatus.OK.value)
 
         else:
-            cls.logger().info(f"User {regenerate_data.email} not found.")
+            cls.logger().info(f"User {recover_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
     @classmethod
@@ -343,13 +347,13 @@ class UserService:
                     headers = {"auth_token": user.token}
                     return SuccessfulUserResponse(user, headers)
                 except IntegrityError:
+                    DatabaseClient.rollback()
                     cls.logger().error(f"Couldn't regenerate token for user #{user.id}.")
-                    raise UnsuccessfulClientResponse("Couldn't regenerate token.")
+                    return UnsuccessfulClientResponse("Couldn't regenerate token.")
             else:
                 cls.logger().info(f"Attempting to recover password for user #{user.id} with no password recovery token.")
                 return BadRequestUserMessageResponse("You haven't ask for password recovery!",
                                                      UserResponseStatus.WRONG_CREDENTIALS.value)
-
         else:
             cls.logger().info(f"User {regenerate_data.email} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)

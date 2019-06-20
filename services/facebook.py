@@ -20,10 +20,10 @@ class FacebookService:
     def get_user_from_facebook(cls, user_data):
         cls.logger().debug("Getting Facebook's user ID.")
         main_response = requests.get(cls.GET_USER_URL.format(user_data.facebook_token, cls.FACEBOOK_APP_SECRET))
-        main_response_content = json.loads(main_response.content.decode('utf8').replace("'", '"'))["data"]
+        main_response_content = json.loads(main_response.content.decode('utf8').replace("'", '"')).get("data")
 
-        if main_response_content["is_valid"]:
-            facebook_user_id = main_response_content["user_id"]
+        if main_response_content.get("is_valid"):
+            facebook_user_id = main_response_content.get("user_id")
 
             user_response = requests.get(cls.GET_USER_DATA_URL.format(facebook_user_id, cls.FACEBOOK_APP_SECRET))
             user_response_content = json.loads(user_response.content.decode('utf8').replace("'", '"'))
@@ -38,7 +38,8 @@ class FacebookService:
             )
 
         else:
-            facebook_error_code = main_response_content["data"]["error"]["code"]
+            facebook_error_code = main_response_content.get("data").get("error").get("code") \
+                if "data" in main_response_content and "error" in main_response_content.get("data") else None
 
             if facebook_error_code == 190:
                 cls.logger().error("Couldn't get Facebook data due to an invalid OAuth access token.")
