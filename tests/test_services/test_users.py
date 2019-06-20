@@ -8,10 +8,6 @@ from sqlalchemy.exc import IntegrityError
 
 '''Mocking environment properties'''
 import sys
-sys.modules["daos.database"] = MagicMock()
-sys.modules["daos.users"] = MagicMock()
-sys.modules["daos.teams"] = MagicMock()
-sys.modules["daos.channels"] = MagicMock()
 sys.modules["models.authentication"] = MagicMock()
 
 from services.users import UserService
@@ -65,8 +61,7 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(0, len(MockedUserDatabase.stored_users))
         self.assertEqual(0, len(MockedUserDatabase.batch_clients))
         self.assertEqual(0, len(MockedUserDatabase.batch_users))
-        self.assertIsInstance(response, BadRequestUserMessageResponse)
-        self.assertEqual(response.status, UserResponseStatus.ALREADY_REGISTERED.value)
+        self.assertIsInstance(response, UnsuccessfulClientResponse)
 
     def test_create_user_with_email_in_use_returns_bad_request(self):
         data = MagicMock()
@@ -135,8 +130,7 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(0, len(MockedUserDatabase.stored_users))
         self.assertEqual(0, len(MockedUserDatabase.batch_clients))
         self.assertEqual(0, len(MockedUserDatabase.batch_users))
-        self.assertIsInstance(response, BadRequestUserMessageResponse)
-        self.assertEqual(response.status, UserResponseStatus.ALREADY_REGISTERED.value)
+        self.assertIsInstance(response, UnsuccessfulClientResponse)
 
     def test_create_user_with_correct_data_works_properly(self):
         data = MagicMock()

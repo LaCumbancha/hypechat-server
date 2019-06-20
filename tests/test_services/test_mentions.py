@@ -35,11 +35,11 @@ class MentionServiceTestCase(unittest.TestCase):
         mentions = [0, 1, 2, 3, 4, 5]
 
         def add_mention(mention):
-            from tests.test_services import test_mentions
+            from tests.test_services import test_facebook
             MockedMentionsDatabase.batch_mentions += [mention]
 
         def commit():
-            from tests.test_services import test_mentions
+            from tests.test_services import test_facebook
             MockedMentionsDatabase.saved_mentions = MockedMentionsDatabase.batch_mentions
             MockedMentionsDatabase.batch_mentions = []
 
@@ -56,14 +56,14 @@ class MentionServiceTestCase(unittest.TestCase):
         mentions = [0, 1, 2, 3, 4, 5]
 
         def add_mention(mention):
-            from tests.test_services import test_mentions
+            from tests.test_services import test_facebook
             MockedMentionsDatabase.batch_mentions += [mention]
 
         def fail():
             raise IntegrityError(mock, mock, mock)
 
         def rollback():
-            from tests.test_services import test_mentions
+            from tests.test_services import test_facebook
             MockedMentionsDatabase.batch_mentions = []
 
         sys.modules["daos.messages"].MessageDatabaseClient.add_mention = MagicMock(side_effect=add_mention)
