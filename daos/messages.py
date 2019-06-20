@@ -31,16 +31,20 @@ class MessageDatabaseClient:
     @classmethod
     def get_mentions_by_message(cls, message_id):
         mentions = db.session.query(
-            UserTableEntry.user_id,
+            MentionsByMessagesTableEntry.client_id,
             UserTableEntry.username,
             UserTableEntry.first_name,
-            UserTableEntry.last_name
-        ).join(
-            MentionsByMessagesTableEntry,
-            and_(
-                MentionsByMessagesTableEntry.client_id == UserTableEntry.user_id,
-                MentionsByMessagesTableEntry.message_id == message_id
-            )
+            UserTableEntry.last_name,
+            ChannelTableEntry.name.label("channel_name"),
+            UserTableEntry.user_id.label("is_user")
+        ).outerjoin(
+            UserTableEntry,
+            UserTableEntry.user_id == MentionsByMessagesTableEntry.client_id
+        ).outerjoin(
+            ChannelTableEntry,
+            ChannelTableEntry.channel_id == MentionsByMessagesTableEntry.client_id
+        ).filter(
+            MentionsByMessagesTableEntry.message_id == message_id
         ).all()
         return MessageModelMapper.to_mentions(mentions)
 
