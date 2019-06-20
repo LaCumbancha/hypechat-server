@@ -5,6 +5,7 @@ from daos.channels import ChannelDatabaseClient
 
 from dtos.responses.clients import *
 from dtos.responses.teams import *
+from dtos.responses.channels import *
 from dtos.models.users import *
 from dtos.model import *
 
@@ -68,7 +69,7 @@ class UserService:
 
     @classmethod
     def login_user(cls, user_data):
-        if not user_data.facebook_token:
+        if user_data.facebook_token is None:
             return cls._login_app_user(user_data)
         else:
             return cls._login_facebook_user(user_data)
@@ -101,7 +102,7 @@ class UserService:
             facebook_user = FacebookService.get_user_from_facebook(user_data)
             user = UserDatabaseClient.get_user_by_facebook_id(facebook_user.facebook_id)
 
-            if user:
+            if user is not None:
                 cls.logger().info(f"Logging in Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 cls.logger().debug(f"Generating token for user {user.id}")
                 user.token = Authenticator.generate(user.id)
@@ -111,7 +112,6 @@ class UserService:
                 cls.logger().info(f"User #{user.id} logged in.")
                 headers = {"auth_token": user.token}
                 return SuccessfulUserResponse(user, headers)
-
             else:
                 cls.logger().info(f"Creating new Facebook user with Facebook ID #{facebook_user.facebook_id}.")
                 new_client = UserDatabaseClient.add_client()
@@ -192,7 +192,7 @@ class UserService:
         channels = ChannelDatabaseClient.get_user_channels_by_user_id(user.id, user.team_id,
                                                                       user.role == UserRoles.ADMIN.value)
 
-        return SuccessfulTeamsListResponse(cls._generate_channels_list(channels))
+        return SuccessfulChannelsListResponse(cls._generate_channels_list(channels))
 
     @classmethod
     def _generate_channels_list(cls, channels_list):

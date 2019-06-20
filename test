@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
 
 echo "Running tests..."
-coverage run --source=controllers,dtos,handlers,models,services,utils,services, -m unittest discover -s tests
+echo "TESTING RESPONSES:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_dtos/test_responses.py
+echo "TESTING ROLES:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_constants.py
+echo "TESTING REQUESTS:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_requests.py
+echo "TESTING AUTHENTICATION:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_authentication.py
+echo "TESTING EMAIL SERVICE:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_emails.py
+echo "TESTING FACEBOOK SERVICE:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_facebook.py
+echo "TESTING MENTIONS SERVICE:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_mentions.py
+echo "TESTING USERS SERVICE:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_users.py
 echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html
