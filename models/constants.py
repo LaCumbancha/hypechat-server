@@ -28,6 +28,7 @@ class MessageResponseStatus(Enum):
     LIST = "LIST"
     SENT = "SENT"
     ERROR = "ERROR"
+    STATS = "STATS"
     CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
     MESSAGE_TYPE_UNAVAILABLE = "MESSAGE_TYPE_UNAVAILABLE"
 

@@ -97,3 +97,10 @@ class MessageReceiver:
         self.user_id = user_id
         self.team_id = team_id
         self.is_user = is_user
+
+
+class MessageStats:
+
+    def __init__(self, direct, channel):
+        self.direct = direct
+        self.channel = channel
