@@ -30,3 +30,11 @@ def send_direct_message():
     req = ClientRequest(request)
     response = MessageService.send_message(req.inbox_data())
     return jsonify(response.json()), response.status_code()
+
+
+@app.route('/teams/<team_id>/messages/stats', methods=['GET'])
+def team_messages(team_id):
+    logger.info(f"Attempting to get team #{team_id}'s' messages stats.")
+    req = ClientRequest(request)
+    stats = MessageService.team_messages(req.team_authentication(team_id))
+    return jsonify(stats.json()), stats.status_code()

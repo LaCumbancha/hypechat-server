@@ -18,6 +18,21 @@ class SuccessfulMessageSentResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
+class SuccessfulMessageStatsResponse(Jsonizable, Response):
+
+    def __init__(self, stats):
+        self.stats = stats
+
+    def json(self):
+        return {
+            "status": MessageResponseStatus.STATS.value,
+            "messages": vars(self.stats)
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class UnsuccessfulMessageSentResponse(Jsonizable, Response):
 
     def __init__(self, message):

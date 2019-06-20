@@ -47,6 +47,24 @@ class UserModelMapper:
         ) if user_entry is not None else None
 
     @classmethod
+    def to_users(cls, users_entries):
+        users = []
+        for user_entry in users_entries:
+            user = PublicUser(
+                user_id=user_entry.user_id,
+                role=user_entry.role,
+                online=user_entry.online,
+                first_name=user_entry.first_name,
+                last_name=user_entry.last_name,
+                profile_pic=user_entry.profile_pic,
+                email=user_entry.email,
+                username=user_entry.username
+            )
+            user.facebook_id = user_entry.facebook_id
+            users += [user]
+        return users
+
+    @classmethod
     def to_user_with_teams(cls, table_entries):
         user_with_teams = []
         for table_entry in table_entries:

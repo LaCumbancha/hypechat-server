@@ -260,3 +260,15 @@ class MessageDatabaseClient:
             ChannelTableEntry.channel_id == channel_id
         ).one_or_none()
         return MessageModelMapper.to_message_receiver(receiver)
+
+    @classmethod
+    def get_team_messages_stats(cls, team_id):
+        stats = db.session.query(
+            MessageTableEntry.send_type,
+            func.count().label("messages")
+        ).group_by(
+            MessageTableEntry.send_type
+        ).filter(
+            MessageTableEntry.team_id == team_id
+        ).all()
+        return MessageModelMapper.to_stats(stats)

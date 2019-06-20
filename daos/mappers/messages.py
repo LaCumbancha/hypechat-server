@@ -1,7 +1,7 @@
 from tables.messages import MessageTableEntry, ChatTableEntry, MentionsByMessagesTableEntry
 
-from dtos.models.messages import Chat, UserMention, ChannelMention, PreviewDirectMessage, PreviewChannelMessage, \
-    ChatMessage, MessageReceiver
+from dtos.models.messages import *
+from models.constants import SendMessageType
 
 
 class MessageDatabaseMapper:
@@ -134,3 +134,16 @@ class MessageModelMapper:
             team_id=receiver.team_id,
             is_user=receiver.is_user
         ) if receiver is not None else None
+
+    @classmethod
+    def to_stats(cls, stats_entries):
+        direct_messages = 0
+        channel_messages = 0
+
+        for stats_entry in stats_entries:
+            if stats_entry.send_type == SendMessageType.DIRECT.value:
+                direct_messages = stats_entry.messages
+            if stats_entry.send_type == SendMessageType.CHANNEL.value:
+                channel_messages = stats_entry.messages
+
+        return MessageStats(direct=direct_messages, channel=channel_messages)

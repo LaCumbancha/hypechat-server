@@ -58,6 +58,11 @@ class UserDatabaseClient:
         return UserModelMapper.to_user(user_entry)
 
     @classmethod
+    def get_all_users(cls):
+        users_entries = db.session.query(UserTableEntry).all()
+        return UserModelMapper.to_users(users_entries)
+
+    @classmethod
     def update_user(cls, user):
         user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.user_id == user.id).one_or_none()
         user_entry.username = user.username
