@@ -1,8 +1,9 @@
 from app import db
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 from daos.database import DatabaseClient
 from daos.teams import TeamDatabaseClient
+from daos.messages import MessageTableEntry
 from daos.mappers.users import UserDatabaseMapper, UserModelMapper
 
 from tables.users import ClientTableEntry, UserTableEntry, PasswordRecoveryTableEntry, UsersByTeamsTableEntry, \
@@ -87,6 +88,15 @@ class UserDatabaseClient:
     @classmethod
     def get_user_profile(cls, user):
         if len(TeamDatabaseClient.get_user_teams_by_user_id(user.id)) > 0:
+            messages = db.session.query(
+                MessageTableEntry.sender_id,
+                MessageTableEntry.team_id,
+                func.count().label("team_messages")
+            ).group_by(
+                MessageTableEntry.sender_id,
+                MessageTableEntry.team_id
+            ).subquery("sq")
+
             user_with_teams = db.session.query(
                 UserTableEntry.user_id,
                 UserTableEntry.username,
@@ -102,17 +112,24 @@ class UserDatabaseClient:
                 TeamTableEntry.location,
                 TeamTableEntry.description,
                 TeamTableEntry.welcome_message,
-                UsersByTeamsTableEntry.role.label("team_role")
+                UsersByTeamsTableEntry.role.label("team_role"),
+                messages.c.team_messages
             ).join(
                 UsersByTeamsTableEntry,
                 UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
             ).join(
                 TeamTableEntry,
                 UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+            ).outerjoin(
+                messages,
+                and_(
+                    UsersByTeamsTableEntry.user_id == messages.c.sender_id,
+                    UsersByTeamsTableEntry.team_id == messages.c.team_id
+                )
             ).filter(
                 UserTableEntry.user_id == user.id
             ).all()
-            return UserModelMapper.to_user_with_teams(user_with_teams)
+            return UserModelMapper.to_user_profile(user_with_teams)
         else:
             return user
 

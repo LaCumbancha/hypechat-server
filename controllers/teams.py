@@ -99,7 +99,7 @@ def team_channels(team_id):
 
 @app.route('/teams/<team_id>/users/<user_id>/profile', methods=['GET'])
 def team_user_profile(team_id, user_id):
-    logger.info(f"Attempting to get user {user_id} from team #{team_id} profile.")
+    logger.info(f"Attempting to get user {user_id} profile, from team #{team_id}.")
     req = ClientRequest(request)
     users = TeamService.team_user_by_id(req.search_user_by_id_data(team_id, user_id))
     return jsonify(users.json()), users.status_code()

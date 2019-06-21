@@ -73,7 +73,7 @@ class UserModelMapper:
         return users
 
     @classmethod
-    def to_user_with_teams(cls, table_entries):
+    def to_user_profile(cls, table_entries):
         user_with_teams = []
         for table_entry in table_entries:
             user = PublicUser(
@@ -92,8 +92,9 @@ class UserModelMapper:
             user.team_picture = table_entry.picture
             user.team_location = table_entry.location
             user.team_description = table_entry.description
-            user.team_message = table_entry.welcome_message
+            user.team_welcome = table_entry.welcome_message
             user.team_role = table_entry.team_role
+            user.team_messages = table_entry.team_messages or 0
             user_with_teams += [user]
         return user_with_teams
 

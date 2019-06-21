@@ -261,10 +261,10 @@ class UserService:
         has_teams = len(TeamDatabaseClient.get_user_teams_by_user_id(user.id))
         profile = UserDatabaseClient.get_user_profile(user)
         cls.logger().info(f"Retrieved user {user.username} profile.")
-        return SuccessfulFullUserResponse(cls._generate_full_user(profile, has_teams))
+        return SuccessfulFullUserResponse(cls._generate_user_profile(profile, has_teams))
 
     @classmethod
-    def _generate_full_user(cls, full_user, has_teams):
+    def _generate_user_profile(cls, full_user, has_teams):
         teams = []
         user_data = full_user
 
@@ -277,8 +277,9 @@ class UserService:
                     "location": team.team_location,
                     "picture": team.team_picture,
                     "description": team.team_description,
-                    "welcome_message": team.team_message,
-                    "role": team.team_role
+                    "welcome_message": team.team_welcome,
+                    "role": team.team_role,
+                    "messages": team.team_messages
                 }]
 
             user_data = full_user[0]
@@ -290,6 +291,7 @@ class UserService:
             "first_name": user_data.first_name,
             "last_name": user_data.last_name,
             "profile_pic": user_data.profile_pic,
+            "created": user_data.created,
             "role": user_data.role,
             "teams": teams
         }
