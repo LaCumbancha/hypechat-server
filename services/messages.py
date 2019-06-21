@@ -102,7 +102,7 @@ class MessageService:
                                f"that doesn't exist.")
             raise ChatNotFoundError("Chat not found.", MessageResponseStatus.CHAT_NOT_FOUND.value)
         else:
-            messages = cls._determinate_messages(user.id, chat_data.chat_id, user.team_id, chat_data.offset)
+            is_channel, messages = cls._determinate_messages(user.id, chat_data.chat_id, user.team_id, chat_data.offset)
             unseen_messages = chat.offset
             try:
                 chat.offset = 0
@@ -113,16 +113,16 @@ class MessageService:
                 cls.logger().error(f"Couldn't set seen messages for user {user.id} in chat {chat.chat_id}.")
 
             cls.logger().info(f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} from user #{user.id}.")
-            return MessageListResponse(cls._generate_messages_list(messages, unseen_messages, user.id, user.team_id))
+            return MessageListResponse(cls._generate_messages_list(messages, unseen_messages, user.id, user.team_id), is_channel)
 
     @classmethod
     def _determinate_messages(cls, user_id, chat_id, team_id, offset):
         if ChannelDatabaseClient.get_channel_by_id(chat_id) is not None:
             cls.logger().debug("Retrieving messages from a channel.")
-            return MessageDatabaseClient.get_channel_chat(chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
+            return True, MessageDatabaseClient.get_channel_chat(chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
         else:
             cls.logger().debug("Retrieving messages from a direct chat.")
-            return MessageDatabaseClient.get_direct_chat(user_id, chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
+            return False, MessageDatabaseClient.get_direct_chat(user_id, chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
 
     @classmethod
     def _generate_messages_list(cls, messages, unseen_offset, user_id, team_id):
