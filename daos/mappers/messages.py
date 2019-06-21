@@ -3,6 +3,8 @@ from tables.messages import MessageTableEntry, ChatTableEntry, MentionsByMessage
 from dtos.models.messages import *
 from models.constants import SendMessageType
 
+import itertools
+
 
 class MessageDatabaseMapper:
 
@@ -137,13 +139,23 @@ class MessageModelMapper:
 
     @classmethod
     def to_stats(cls, stats_entries):
-        direct_messages = 0
-        channel_messages = 0
+        stats = []
+        grouped = itertools.groupby(stats_entries, key=lambda entry: entry.team_id)
 
-        for stats_entry in stats_entries:
-            if stats_entry.send_type == SendMessageType.DIRECT.value:
-                direct_messages = stats_entry.messages
-            if stats_entry.send_type == SendMessageType.CHANNEL.value:
-                channel_messages = stats_entry.messages
+        for team_id, messages in grouped:
+            direct_messages = 0
+            channel_messages = 0
 
-        return MessageStats(direct=direct_messages, channel=channel_messages)
+            for message_type in list(messages):
+                if message_type[1] == SendMessageType.DIRECT.value:
+                    direct_messages = message_type[2]
+                elif message_type[1] == SendMessageType.CHANNEL.value:
+                    channel_messages = message_type[2]
+
+            stats += [MessageStats(
+                team_id=team_id,
+                direct=direct_messages,
+                channel=channel_messages
+            )]
+
+        return stats

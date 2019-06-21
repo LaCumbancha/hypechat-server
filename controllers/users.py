@@ -8,14 +8,6 @@ import logging
 logger = logging.getLogger("UsersController")
 
 
-@app.route('/users', methods=['GET'])
-def get_all_users():
-    logger.info("Attempting to get all app users")
-    req = ClientRequest(request)
-    response = UserService.get_all_users(req.authentication_data())
-    return jsonify(response.json()), response.status_code()
-
-
 @app.route('/users', methods=['POST'])
 def register_user():
     logger.info("Attempting to register new user")

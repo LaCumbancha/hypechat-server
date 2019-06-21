@@ -274,11 +274,10 @@ class MessageService:
         return sender_chat, receivers_chat
 
     @classmethod
-    def team_messages(cls, user_data):
-        admin = Authenticator.authenticate_team(user_data, UserRoles.is_admin)
-        stats = MessageDatabaseClient.get_team_messages_stats(admin.team_id)
-        cls.logger().info(f"Admin #{admin.id} retrieved team {admin.team_id} messages stats, that sum {stats.direct} "
-                          f"direct messages and {stats.channel} channel messages.")
+    def messages_stats(cls, user_data):
+        admin = Authenticator.authenticate(user_data, UserRoles.is_admin)
+        stats = MessageDatabaseClient.get_messages_stats()
+        cls.logger().info(f"Admin #{admin.id} retrieved messages stats for {len(stats)} teams.")
         return SuccessfulMessageStatsResponse(stats)
 
 

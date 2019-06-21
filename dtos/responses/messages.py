@@ -26,7 +26,7 @@ class SuccessfulMessageStatsResponse(Jsonizable, Response):
     def json(self):
         return {
             "status": MessageResponseStatus.STATS.value,
-            "messages": vars(self.stats)
+            "messages": list(map(lambda elem: vars(elem), self.stats))
         }
 
     def status_code(self):
