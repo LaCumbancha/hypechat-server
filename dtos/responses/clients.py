@@ -55,6 +55,7 @@ class ActiveUserOutput(Jsonizable):
         self.profile_pic = user.profile_pic
         self.role = user.role
         self.online = user.online
+        self.created = str(user.created)
 
     def json(self):
         return vars(self)
@@ -85,6 +86,7 @@ class ActiveFullUserOutput(Jsonizable):
         self.profile_pic = user["profile_pic"]
         self.role = user["role"]
         self.teams = user["teams"]
+        self.created = user["created"]
 
     def json(self):
         return {
@@ -94,6 +96,7 @@ class ActiveFullUserOutput(Jsonizable):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "profile_pic": self.profile_pic,
+            "created": self.created,
             "teams": self.teams
         }
 
