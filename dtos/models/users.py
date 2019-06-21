@@ -13,7 +13,7 @@ class RegularClient:
 class User:
 
     def __init__(self, user_id, online=True, role=None, token=None, first_name=None, last_name=None, profile_pic=None,
-                 password=None, email=None, username=None, facebook_id=None):
+                 password=None, email=None, username=None, facebook_id=None, created=None):
         self.id = user_id
         self.role = role or UserRoles.USER.value
         self.online = online
@@ -23,6 +23,7 @@ class User:
         self.profile_pic = profile_pic
         self.password = password
         self.email = email
+        self.created = created
         self.username = username
         self.facebook_id = facebook_id
 
@@ -30,7 +31,7 @@ class User:
 class PublicUser:
 
     def __init__(self, user_id, online=True, role=None, first_name=None, last_name=None, profile_pic=None, email=None,
-                 username=None):
+                 username=None, created=None):
         self.id = user_id
         self.role = role or UserRoles.USER.value
         self.online = online
@@ -39,6 +40,7 @@ class PublicUser:
         self.profile_pic = profile_pic
         self.email = email
         self.username = username
+        self.created = created
 
 
 class PasswordRecovery:

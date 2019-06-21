@@ -95,6 +95,7 @@ class UserDatabaseClient:
                 UserTableEntry.last_name,
                 UserTableEntry.profile_pic,
                 UserTableEntry.role.label("user_role"),
+                UserTableEntry.created,
                 TeamTableEntry.team_id,
                 TeamTableEntry.team_name,
                 TeamTableEntry.picture,
@@ -126,6 +127,7 @@ class UserDatabaseClient:
             UserTableEntry.profile_pic,
             UserTableEntry.online,
             UserTableEntry.role.label("user_role"),
+            UserTableEntry.created,
             UsersByTeamsTableEntry.team_id,
             UsersByTeamsTableEntry.role.label("team_role")
         ).join(
@@ -149,6 +151,7 @@ class UserDatabaseClient:
             UserTableEntry.profile_pic,
             UserTableEntry.online,
             UserTableEntry.role,
+            UserTableEntry.created,
             ChannelTableEntry.channel_id,
             ChannelTableEntry.creator,
             ChannelTableEntry.team_id,

@@ -49,6 +49,7 @@ class UserModelMapper:
             password=user_entry.password,
             email=user_entry.email,
             username=user_entry.username,
+            created=user_entry.created,
             facebook_id=user_entry.facebook_id
         ) if user_entry is not None else None
 
@@ -64,7 +65,8 @@ class UserModelMapper:
                 last_name=user_entry.last_name,
                 profile_pic=user_entry.profile_pic,
                 email=user_entry.email,
-                username=user_entry.username
+                username=user_entry.username,
+                created=user_entry.created
             )
             user.facebook_id = user_entry.facebook_id
             users += [user]
@@ -82,7 +84,8 @@ class UserModelMapper:
                 last_name=table_entry.last_name,
                 profile_pic=table_entry.profile_pic,
                 online=True,
-                role=table_entry.user_role
+                role=table_entry.user_role,
+                created=table_entry.created
             )
             user.team_id = table_entry.team_id
             user.team_name = table_entry.team_name
@@ -107,7 +110,8 @@ class UserModelMapper:
             last_name=table_entry.last_name,
             profile_pic=table_entry.profile_pic,
             role=table_entry.user_role,
-            online=table_entry.online
+            online=table_entry.online,
+            created=table_entry.created
         )
         user.team_id = table_entry.team_id
         user.team_role = table_entry.team_role
@@ -126,7 +130,8 @@ class UserModelMapper:
             last_name=table_entry.last_name,
             profile_pic=table_entry.profile_pic,
             online=table_entry.online,
-            role=table_entry.role
+            role=table_entry.role,
+            created=table_entry.created
         )
         user.team_id = table_entry.team_id
         user.channel_id = table_entry.channel_id

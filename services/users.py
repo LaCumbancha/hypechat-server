@@ -36,7 +36,7 @@ class UserService:
                 user_id=new_client.id,
                 username=user_data.username,
                 email=user_data.email,
-                password=user_data.password,
+                password=hashing.hash(user_data.password),
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 profile_pic=user_data.profile_pic,
