@@ -258,19 +258,28 @@ class UserService:
     @classmethod
     def user_profile(cls, user_data):
         user = Authenticator.authenticate(user_data)
-        has_teams = len(TeamDatabaseClient.get_user_teams_by_user_id(user.id))
-        profile = UserDatabaseClient.get_user_profile(user)
-        cls.logger().info(f"Retrieved user {user.username} profile.")
-        return SuccessfulFullUserResponse(cls._generate_user_profile(profile, has_teams))
+        profile = UserDatabaseClient.get_user_profile(user.id)
+        cls.logger().info(f"Retrieved user #{user.id} profile.")
+        return SuccessfulFullUserResponse(cls._generate_user_profile(profile))
 
     @classmethod
-    def _generate_user_profile(cls, full_user, has_teams):
+    def team_user_profile(cls, user_id, team_id):
+        profile = UserDatabaseClient.get_user_profile(user_id)
+        cls.logger().info(f"Retrieved user #{user_id} profile.")
+        output_profile = cls._generate_user_profile(profile)
+
+        if any(list(map(lambda team: team.get("id") == team_id, output_profile.get("teams")))):
+            return SuccessfulFullUserResponse(output_profile)
+
+    @classmethod
+    def _generate_user_profile(cls, users_with_team):
         teams = []
-        user_data = full_user
+        user_data = users_with_team[0]
+        has_teams = False if len(users_with_team) == 1 and users_with_team[0].team_id is None else True
 
         if has_teams:
 
-            for team in full_user:
+            for team in users_with_team:
                 teams += [{
                     "id": team.team_id,
                     "name": team.team_name,
@@ -281,8 +290,6 @@ class UserService:
                     "role": team.team_role,
                     "messages": team.team_messages
                 }]
-
-            user_data = full_user[0]
 
         return {
             "id": user_data.id,

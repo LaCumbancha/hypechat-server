@@ -135,7 +135,7 @@ class ClientRequestTestCase(unittest.TestCase):
     def test_search_user_by_id_with_authentication_header_works_properly(self):
         input_request = Request(headers=authentication_headers)
         client_request = ClientRequest(input_request)
-        self.assertIsInstance(client_request.search_user_by_id_data(mock, mock), SearchUserByIdDTO)
+        self.assertIsInstance(client_request.team_user_profile_data(mock, mock), SearchUserByIdDTO)
 
     def test_authentication_data_with_authentication_header_works_properly(self):
         input_request = Request(headers=authentication_headers)
@@ -405,7 +405,7 @@ class ClientRequestTestCase(unittest.TestCase):
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestHeaderError, client_request.user_update_data)
         self.assertRaises(MissingRequestHeaderError, client_request.search_users_by_username_data, None, None)
-        self.assertRaises(MissingRequestHeaderError, client_request.search_user_by_id_data, None, None)
+        self.assertRaises(MissingRequestHeaderError, client_request.team_user_profile_data, None, None)
         self.assertRaises(MissingRequestHeaderError, client_request.authentication_data)
         self.assertRaises(MissingRequestHeaderError, client_request.inbox_data)
         self.assertRaises(MissingRequestHeaderError, client_request.chat_data, None, None)

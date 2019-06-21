@@ -143,7 +143,7 @@ class ClientRequest:
             searched_username=searched_username,
         )
 
-    def search_user_by_id_data(self, team_id, user_id):
+    def team_user_profile_data(self, team_id, user_id):
         auth_token = self.headers().get("X-Auth-Token")
 
         if auth_token is None:

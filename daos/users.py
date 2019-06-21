@@ -86,52 +86,49 @@ class UserDatabaseClient:
         db.session.flush()
 
     @classmethod
-    def get_user_profile(cls, user):
-        if len(TeamDatabaseClient.get_user_teams_by_user_id(user.id)) > 0:
-            messages = db.session.query(
-                MessageTableEntry.sender_id,
-                MessageTableEntry.team_id,
-                func.count().label("team_messages")
-            ).group_by(
-                MessageTableEntry.sender_id,
-                MessageTableEntry.team_id
-            ).subquery("sq")
+    def get_user_profile(cls, user_id):
+        messages = db.session.query(
+            MessageTableEntry.sender_id,
+            MessageTableEntry.team_id,
+            func.count().label("team_messages")
+        ).group_by(
+            MessageTableEntry.sender_id,
+            MessageTableEntry.team_id
+        ).subquery("sq")
 
-            user_with_teams = db.session.query(
-                UserTableEntry.user_id,
-                UserTableEntry.username,
-                UserTableEntry.email,
-                UserTableEntry.first_name,
-                UserTableEntry.last_name,
-                UserTableEntry.profile_pic,
-                UserTableEntry.role.label("user_role"),
-                UserTableEntry.created,
-                TeamTableEntry.team_id,
-                TeamTableEntry.team_name,
-                TeamTableEntry.picture,
-                TeamTableEntry.location,
-                TeamTableEntry.description,
-                TeamTableEntry.welcome_message,
-                UsersByTeamsTableEntry.role.label("team_role"),
-                messages.c.team_messages
-            ).join(
-                UsersByTeamsTableEntry,
-                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
-            ).join(
-                TeamTableEntry,
-                UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
-            ).outerjoin(
-                messages,
-                and_(
-                    UsersByTeamsTableEntry.user_id == messages.c.sender_id,
-                    UsersByTeamsTableEntry.team_id == messages.c.team_id
-                )
-            ).filter(
-                UserTableEntry.user_id == user.id
-            ).all()
-            return UserModelMapper.to_user_profile(user_with_teams)
-        else:
-            return user
+        user_with_teams = db.session.query(
+            UserTableEntry.user_id,
+            UserTableEntry.username,
+            UserTableEntry.email,
+            UserTableEntry.first_name,
+            UserTableEntry.last_name,
+            UserTableEntry.profile_pic,
+            UserTableEntry.role.label("user_role"),
+            UserTableEntry.created,
+            TeamTableEntry.team_id,
+            TeamTableEntry.team_name,
+            TeamTableEntry.picture,
+            TeamTableEntry.location,
+            TeamTableEntry.description,
+            TeamTableEntry.welcome_message,
+            UsersByTeamsTableEntry.role.label("team_role"),
+            messages.c.team_messages
+        ).outerjoin(
+            UsersByTeamsTableEntry,
+            UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+        ).outerjoin(
+            TeamTableEntry,
+            UsersByTeamsTableEntry.team_id == TeamTableEntry.team_id
+        ).outerjoin(
+            messages,
+            and_(
+                UsersByTeamsTableEntry.user_id == messages.c.sender_id,
+                UsersByTeamsTableEntry.team_id == messages.c.team_id
+            )
+        ).filter(
+            UserTableEntry.user_id == user_id
+        ).all()
+        return UserModelMapper.to_user_profile(user_with_teams)
 
     @classmethod
     def get_team_user_by_ids(cls, user_id, team_id):
