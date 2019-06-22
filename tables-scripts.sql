@@ -118,7 +118,7 @@ CREATE TABLE messages(
 	message_type MESSAGE_TYPE NOT NULL,
 	timestamp TIMESTAMP NOT NULL DEFAULT now(),
 	PRIMARY KEY (id),
-	FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE,
+	FOREIGN KEY (sender_id) REFERENCES clients (id) ON DELETE CASCADE,
 	FOREIGN KEY (receiver_id) REFERENCES clients (id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
 );

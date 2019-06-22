@@ -108,16 +108,26 @@ class MessageModelMapper:
     def to_channel_messages_previews(cls, last_messages):
         preview_messages = []
         for last_message in last_messages:
+            if last_message.is_user is not None:
+                sender = UserChannelMessageSender(
+                    user_id=last_message.sender_id,
+                    username=last_message.sender_username,
+                    first_name=last_message.sender_first_name,
+                    last_name=last_message.sender_last_name
+                )
+            else:
+                sender = BotChannelMessageSender(
+                    bot_id=last_message.sender_id,
+                    bot_name=last_message.sender_bot_name
+                )
+
             preview_messages += [
                 PreviewChannelMessage(
                     message_id=last_message.message_id,
                     chat_id=last_message.chat_id,
                     chat_name=last_message.chat_name,
                     chat_picture=None,
-                    sender_id=last_message.sender_id,
-                    sender_username=last_message.sender_username,
-                    sender_first_name=last_message.sender_first_name,
-                    sender_last_name=last_message.sender_last_name,
+                    sender=sender,
                     content=last_message.content,
                     message_type=last_message.message_type,
                     timestamp=last_message.message_timestamp,

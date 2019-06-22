@@ -167,10 +167,12 @@ class MessageDatabaseClient:
             UserTableEntry.username.label("sender_username"),
             UserTableEntry.first_name.label("sender_first_name"),
             UserTableEntry.last_name.label("sender_last_name"),
+            BotTableEntry.bot_name.label("sender_bot_name"),
             MessageTableEntry.content.label("content"),
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp.label("message_timestamp"),
-            chats.c.unseen.label("unseen_offset")
+            chats.c.unseen.label("unseen_offset"),
+            UserTableEntry.user_id.label("is_user")
         ).join(
             last_messages,
             and_(
@@ -183,9 +185,12 @@ class MessageDatabaseClient:
                 MessageTableEntry.team_id == chats.c.team_id,
                 MessageTableEntry.receiver_id == chats.c.chat_id
             )
-        ).join(
+        ).outerjoin(
             UserTableEntry,
             UserTableEntry.user_id == MessageTableEntry.sender_id
+        ).outerjoin(
+            BotTableEntry,
+            BotTableEntry.bot_id == MessageTableEntry.sender_id
         ).join(
             ChannelTableEntry,
             ChannelTableEntry.channel_id == MessageTableEntry.receiver_id

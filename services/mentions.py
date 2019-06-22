@@ -2,7 +2,7 @@ from daos.bots import BotDatabaseClient
 from daos.database import DatabaseClient
 from daos.messages import MessageDatabaseClient
 
-from models.constants import SendMessageType
+from models.constants import SendMessageType, ClientType
 from dtos.models.messages import Mention
 
 from services.bots import BotService
@@ -45,7 +45,7 @@ class MentionService:
 
         mentions = []
         for mention in db_mentions:
-            if mention.type == SendMessageType.DIRECT:
+            if mention.type == ClientType.USER:
                 mentions += [{
                     "id": mention.id,
                     "type": "USER",
@@ -53,7 +53,7 @@ class MentionService:
                     "first_name": mention.first_name,
                     "last_name": mention.last_name
                 }]
-            elif mention.type == SendMessageType.CHANNEL:
+            elif mention.type == ClientType.CHANNEL:
                 mentions += [{
                     "id": mention.id,
                     "type": "CHANNEL",

@@ -76,12 +76,7 @@ class MessageService:
                 "chat_id": message.chat_id,
                 "chat_name": message.chat_name,
                 "chat_picture": message.chat_picture,
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.sender_username,
-                    "first_name": message.sender_first_name,
-                    "last_name": message.sender_last_name,
-                },
+                "sender": vars(message.sender),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
