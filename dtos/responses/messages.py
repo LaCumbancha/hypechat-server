@@ -72,6 +72,7 @@ class MessageListResponse(Jsonizable, Response):
 
     def json(self):
         return {
+            "status": MessageResponseStatus.LIST.value,
             "chat_type": SendMessageType.CHANNEL.value if self.is_channel else SendMessageType.DIRECT.value,
             "messages": self.messages_list
         }
