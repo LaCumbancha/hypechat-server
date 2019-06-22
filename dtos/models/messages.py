@@ -65,6 +65,14 @@ class ChannelMention:
         self.name = channel_name
 
 
+class BotMention:
+
+    def __init__(self, bot_id, bot_name):
+        self.id = bot_id
+        self.type = SendMessageType.BOT
+        self.name = bot_name
+
+
 class PreviewDirectMessage:
 
     def __init__(self, message_id, sender_id, receiver_id, chat_username, chat_first_name, chat_last_name, chat_picture,

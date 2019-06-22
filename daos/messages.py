@@ -4,6 +4,7 @@ from sqlalchemy import and_, or_, literal, func
 from daos.database import DatabaseClient
 from daos.mappers.messages import MessageDatabaseMapper, MessageModelMapper
 
+from tables.bots import BotTableEntry
 from tables.users import UserTableEntry, UsersByTeamsTableEntry
 from tables.channels import ChannelTableEntry
 from tables.messages import MessageTableEntry, ChatTableEntry, MentionsByMessagesTableEntry
@@ -52,13 +53,18 @@ class MessageDatabaseClient:
             UserTableEntry.first_name,
             UserTableEntry.last_name,
             ChannelTableEntry.name.label("channel_name"),
-            UserTableEntry.user_id.label("is_user")
+            BotTableEntry.bot_name,
+            UserTableEntry.user_id.label("is_user"),
+            ChannelTableEntry.channel_id.label("is_channel")
         ).outerjoin(
             UserTableEntry,
             UserTableEntry.user_id == MentionsByMessagesTableEntry.client_id
         ).outerjoin(
             ChannelTableEntry,
             ChannelTableEntry.channel_id == MentionsByMessagesTableEntry.client_id
+        ).outerjoin(
+            BotTableEntry,
+            BotTableEntry.bot_id == MentionsByMessagesTableEntry.client_id
         ).filter(
             MentionsByMessagesTableEntry.message_id == message_id
         ).all()

@@ -109,6 +109,7 @@ class ChannelVisibilities(Enum):
 class SendMessageType(Enum):
     DIRECT = "DIRECT"
     CHANNEL = "CHANNEL"
+    BOT = "BOT"
 
 
 class MessageType(Enum):

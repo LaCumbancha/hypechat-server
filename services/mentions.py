@@ -48,10 +48,16 @@ class MentionService:
                     "first_name": mention.first_name,
                     "last_name": mention.last_name
                 }]
-            else:
+            elif mention.type == SendMessageType.CHANNEL:
                 mentions += [{
                     "id": mention.id,
                     "type": "CHANNEL",
+                    "name": mention.name
+                }]
+            else:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "BOT",
                     "name": mention.name
                 }]
 

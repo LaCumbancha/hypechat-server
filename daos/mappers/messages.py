@@ -70,10 +70,15 @@ class MessageModelMapper:
                     first_name=mention_entry.first_name,
                     last_name=mention_entry.last_name
                 )]
-            else:
+            elif mention_entry.is_channel is not None:
                 mentions += [ChannelMention(
                     channel_id=mention_entry.client_id,
                     channel_name=mention_entry.channel_name
+                )]
+            else:
+                mentions += [BotMention(
+                    bot_id=mention_entry.client_id,
+                    bot_name=mention_entry.bot_name
                 )]
         return mentions
 
