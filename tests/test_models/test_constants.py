@@ -47,40 +47,40 @@ class RolesTestCase(unittest.TestCase):
         moderator_role = TeamRoles.MODERATOR.value
         creator_role = TeamRoles.CREATOR.value
         admin_role = UserRoles.ADMIN.value
-        self.assertFalse(TeamRoles.has_higher_role(member_role, member_role))
-        self.assertFalse(TeamRoles.has_higher_role(member_role, moderator_role))
-        self.assertFalse(TeamRoles.has_higher_role(member_role, creator_role))
-        self.assertFalse(TeamRoles.has_higher_role(member_role, admin_role))
+        self.assertFalse(TeamRoles.is_higher_role(member_role, member_role))
+        self.assertFalse(TeamRoles.is_higher_role(member_role, moderator_role))
+        self.assertFalse(TeamRoles.is_higher_role(member_role, creator_role))
+        self.assertFalse(TeamRoles.is_higher_role(member_role, admin_role))
 
     def test_team_moderator_has_higher_role_than_team_member(self):
         member_role = TeamRoles.MEMBER.value
         moderator_role = TeamRoles.MODERATOR.value
         creator_role = TeamRoles.CREATOR.value
         admin_role = UserRoles.ADMIN.value
-        self.assertTrue(TeamRoles.has_higher_role(moderator_role, member_role))
-        self.assertFalse(TeamRoles.has_higher_role(moderator_role, moderator_role))
-        self.assertFalse(TeamRoles.has_higher_role(moderator_role, creator_role))
-        self.assertFalse(TeamRoles.has_higher_role(moderator_role, admin_role))
+        self.assertTrue(TeamRoles.is_higher_role(moderator_role, member_role))
+        self.assertFalse(TeamRoles.is_higher_role(moderator_role, moderator_role))
+        self.assertFalse(TeamRoles.is_higher_role(moderator_role, creator_role))
+        self.assertFalse(TeamRoles.is_higher_role(moderator_role, admin_role))
 
     def test_team_creator_has_higher_role_than_team_member_and_moderator(self):
         member_role = TeamRoles.MEMBER.value
         moderator_role = TeamRoles.MODERATOR.value
         creator_role = TeamRoles.CREATOR.value
         admin_role = UserRoles.ADMIN.value
-        self.assertTrue(TeamRoles.has_higher_role(creator_role, member_role))
-        self.assertTrue(TeamRoles.has_higher_role(creator_role, moderator_role))
-        self.assertFalse(TeamRoles.has_higher_role(creator_role, creator_role))
-        self.assertFalse(TeamRoles.has_higher_role(creator_role, admin_role))
+        self.assertTrue(TeamRoles.is_higher_role(creator_role, member_role))
+        self.assertTrue(TeamRoles.is_higher_role(creator_role, moderator_role))
+        self.assertFalse(TeamRoles.is_higher_role(creator_role, creator_role))
+        self.assertFalse(TeamRoles.is_higher_role(creator_role, admin_role))
 
     def test_superuser_has_higher_role_than_everybody_else_but_other_superuser(self):
         member_role = TeamRoles.MEMBER.value
         moderator_role = TeamRoles.MODERATOR.value
         creator_role = TeamRoles.CREATOR.value
         admin_role = UserRoles.ADMIN.value
-        self.assertTrue(TeamRoles.has_higher_role(admin_role, member_role))
-        self.assertTrue(TeamRoles.has_higher_role(admin_role, moderator_role))
-        self.assertTrue(TeamRoles.has_higher_role(admin_role, creator_role))
-        self.assertFalse(TeamRoles.has_higher_role(admin_role, admin_role))
+        self.assertTrue(TeamRoles.is_higher_role(admin_role, member_role))
+        self.assertTrue(TeamRoles.is_higher_role(admin_role, moderator_role))
+        self.assertTrue(TeamRoles.is_higher_role(admin_role, creator_role))
+        self.assertFalse(TeamRoles.is_higher_role(admin_role, admin_role))
 
     def test_user_creator_comparison_works_properly(self):
         user1_creator = True

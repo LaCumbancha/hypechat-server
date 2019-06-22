@@ -29,15 +29,17 @@ class MentionService:
                     BotService.process_mention(mention, message)
                     new_mention = Mention(message_id=message.message_id, client_id=mention)
                     MessageDatabaseClient.add_mention(new_mention)
+                    cls.logger().debug(f"Mention saved for client {mention}.")
                     NotificationService.notify_mention(message, mention)
 
                 elif BotDatabaseClient.get_bot_by_id(mention) is None:
                     new_mention = Mention(message_id=message.message_id, client_id=mention)
                     MessageDatabaseClient.add_mention(new_mention)
+                    cls.logger().debug(f"Mention saved for user {mention}.")
                     NotificationService.notify_mention(message, mention)
 
             DatabaseClient.commit()
-            cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
+            cls.logger().info(f"{len(mentions)} mentions saved for message #{message.message_id}.")
         except IntegrityError:
             DatabaseClient.rollback()
             cls.logger().error(f"Couldn't save mentions for message #{message.message_id}.")
@@ -69,4 +71,5 @@ class MentionService:
                     "name": mention.name
                 }]
 
+        cls.logger().info(f"{len(mentions)} mentions retrieved for message #{message_id}.")
         return mentions

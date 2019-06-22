@@ -9,8 +9,9 @@ class RecoveryPasswordEmailDTO:
 
 class TeamInvitationEmailDTO:
 
-    def __init__(self, email, inviter_name, token, message_template):
+    def __init__(self, email, team_name, inviter_name, token, message_template):
         self.email = email
+        self.team_name = team_name
         self.inviter_name = inviter_name
         self.token = token
         self.message_template = message_template
