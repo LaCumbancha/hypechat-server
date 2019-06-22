@@ -220,11 +220,15 @@ class MessageDatabaseClient:
             UserTableEntry.username,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
-            UserTableEntry.profile_pic,
-            UserTableEntry.online
-        ).join(
+            UserTableEntry.online,
+            BotTableEntry.bot_name,
+            UserTableEntry.user_id.label("is_user")
+        ).outerjoin(
             UserTableEntry,
             MessageTableEntry.sender_id == UserTableEntry.user_id
+        ).outerjoin(
+            BotTableEntry,
+            MessageTableEntry.sender_id == BotTableEntry.bot_id
         ).filter(and_(
             MessageTableEntry.team_id == team_id,
             MessageTableEntry.receiver_id == chat_id
@@ -242,10 +246,10 @@ class MessageDatabaseClient:
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp,
             UserTableEntry.username,
-            UserTableEntry.profile_pic,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
-            UserTableEntry.online
+            UserTableEntry.online,
+            UserTableEntry.user_id.label("is_user")
         ).join(
             UserTableEntry,
             MessageTableEntry.sender_id == UserTableEntry.user_id

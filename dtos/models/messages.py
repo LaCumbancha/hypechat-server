@@ -24,20 +24,33 @@ class Chat:
 
 class ChatMessage:
 
-    def __init__(self, message_id, sender_id, receiver_id, team_id, content, message_type, timestamp, username,
-                 profile_pic, first_name, last_name, online):
+    def __init__(self, message_id, sender, receiver_id, team_id, content, message_type, timestamp):
         self.message_id = message_id
-        self.sender_id = sender_id
+        self.sender = sender
         self.receiver_id = receiver_id
         self.team_id = team_id
         self.content = content
         self.message_type = message_type
         self.timestamp = timestamp
+
+
+class UserMessageSender:
+
+    def __init__(self, user_id, username, first_name, last_name, online=None):
+        self.id = user_id
         self.username = username
-        self.profile_pic = profile_pic
         self.first_name = first_name
         self.last_name = last_name
+        self.type = ClientType.USER.value
         self.online = online
+
+
+class BotMessageSender:
+
+    def __init__(self, bot_id, bot_name):
+        self.id = bot_id
+        self.name = bot_name
+        self.type = ClientType.BOT.value
 
 
 class Mention:
@@ -103,24 +116,6 @@ class PreviewChannelMessage:
         self.message_type = message_type
         self.timestamp = timestamp
         self.offset = offset
-
-
-class UserChannelMessageSender:
-
-    def __init__(self, user_id, username, first_name, last_name):
-        self.id = user_id
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-        self.type = ClientType.USER.value
-
-
-class BotChannelMessageSender:
-
-    def __init__(self, bot_id, bot_name):
-        self.id = bot_id
-        self.name = bot_name
-        self.type = ClientType.BOT.value
 
 
 class MessageReceiver:
