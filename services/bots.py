@@ -3,6 +3,7 @@ from daos.users import UserDatabaseClient
 from daos.bots import BotDatabaseClient
 
 from dtos.models.bots import Bot
+from dtos.responses.bots import *
 from dtos.responses.clients import *
 
 from models.constants import UserRoles
@@ -27,12 +28,14 @@ class BotService:
             new_client = UserDatabaseClient.add_client()
             new_bot = Bot(
                 bot_id=new_client.id,
+                team_id=admin.team_id,
                 name=bot_data.name,
                 callback=bot_data.callback
             )
             BotDatabaseClient.add_bot(new_bot)
             DatabaseClient.commit()
-            cls.logger().info(f"Bot #{new_bot.id} created with callback url {new_bot.callback} by admin {admin.id}.")
+            cls.logger().info(f"Bot #{new_bot.id} created in team {admin.team_id} with callback url {new_bot.callback} "
+                              f"by admin {admin.id}.")
             return SuccessfulUserMessageResponse("Bot created.", UserResponseStatus.OK.value)
 
         except IntegrityError as exc:
@@ -44,3 +47,9 @@ class BotService:
             else:
                 cls.logger().info(f"Failing to create bot {bot_data.name}.")
                 return UnsuccessfulClientResponse("Couldn't create bot.")
+
+    @classmethod
+    def team_bots(cls, user_data):
+        user = Authenticator.authenticate_team(user_data)
+        bots = BotDatabaseClient.get_team_bots(user.team_id)
+        return SuccessfulBotListResponse(bots)
