@@ -4,6 +4,8 @@ from daos.messages import MessageDatabaseClient
 from models.constants import SendMessageType
 from dtos.models.messages import Mention
 
+from services.bots import BotService
+
 from sqlalchemy.exc import IntegrityError
 
 import logging
@@ -21,6 +23,8 @@ class MentionService:
 
         try:
             for mention in mentions:
+                if message.send_type == SendMessageType.CHANNEL.value:
+                    BotService.process_mention(mention, message)
                 new_mention = Mention(message_id=message.message_id, client_id=mention)
                 MessageDatabaseClient.add_mention(new_mention)
 

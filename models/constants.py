@@ -75,6 +75,7 @@ class TeamRoles(Enum):
     CREATOR = "CREATOR"
     MODERATOR = "MODERATOR"
     MEMBER = "MEMBER"
+    BOT = "BOT"
 
     @classmethod
     def is_team_moderator(cls, user_role):

@@ -3,6 +3,7 @@ import random
 import string
 import datetime
 
+from daos.bots import BotDatabaseClient
 from daos.database import DatabaseClient
 from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
@@ -60,9 +61,15 @@ class Authenticator:
                         raise WrongTokenError("You must be logged to perform this action.",
                                               UserResponseStatus.WRONG_TOKEN.value)
                 else:
-                    logger.info(f"User #{user.id} does not have permissions to perform this action.")
-                    raise NoPermissionsError("You don't have enough permissions to perform this action.",
-                                             TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+                    bot = BotDatabaseClient.get_bot_by_id(payload.get("user_id"))
+
+                    if bot is not None:
+                        logger.info(f"Bot #{bot.id} authenticated.")
+                        return bot
+                    else:
+                        logger.info(f"User #{user.id} does not have permissions to perform this action.")
+                        raise NoPermissionsError("You don't have enough permissions to perform this action.",
+                                                 TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
                 logger.info(f"User not found.")
                 raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
@@ -87,7 +94,7 @@ class Authenticator:
 
         if team_user is not None:
             if role_verifying(team_user.team_role):
-                logger.info(f"User #{team_user.id} authenticated as team #{team_user.team_id} {team_user.team_role}.")
+                logger.info(f"Client #{team_user.id} authenticated as team #{team_user.team_id} {team_user.team_role}.")
                 return team_user
             else:
                 logger.info(f"User #{user.id} does not have permissions to perform this action.")

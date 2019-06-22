@@ -17,6 +17,7 @@ class MessageDatabaseClient:
     def add_message(cls, message):
         message_entry = MessageDatabaseMapper.to_message(message)
         DatabaseClient.add(message_entry)
+        return MessageModelMapper.to_message(message_entry)
 
     @classmethod
     def add_chat(cls, chat):
