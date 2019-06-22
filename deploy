@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Setting environment to PROD."
+sudo echo "Setting environment to PROD."
 cp ./.env ./~.env.temp
 sed "s|\(export APP_SETTINGS=\).*|\1\"production\"|g" ./.env >> ./.temp
 sed "s|\(export FLASK_ENV=\).*|\1\"production\"|g" ./.temp >> ./.temp2
