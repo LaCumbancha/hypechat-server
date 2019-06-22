@@ -1,5 +1,5 @@
 from app import db
-from sqlalchemy import exc, ForeignKey
+from sqlalchemy import exc, func, ForeignKey
 from models.constants import TeamRoles, UserRoles
 from tables.teams import TeamTableEntry
 
@@ -23,6 +23,7 @@ class UserTableEntry(db.Model):
     last_name = db.Column(name='last_name', type_=db.String(), nullable=True)
     profile_pic = db.Column(name='profile_pic', type_=db.String(), nullable=True)
     role = db.Column(name='role', type_=db.String(), nullable=False, default=UserRoles.USER.value)
+    created = db.Column(name='created', type_=db.DateTime(timezone=True), nullable=False, server_default=func.now())
     auth_token = db.Column(name='auth_token', type_=db.String(), nullable=False, default=None)
     online = db.Column(name='online', type_=db.Boolean, nullable=False, default=True)
 

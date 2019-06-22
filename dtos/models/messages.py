@@ -110,6 +110,7 @@ class MessageReceiver:
 
 class MessageStats:
 
-    def __init__(self, direct, channel):
+    def __init__(self, team_id, direct, channel):
+        self.team_id = team_id
         self.direct = direct
         self.channel = channel

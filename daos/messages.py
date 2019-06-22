@@ -277,13 +277,13 @@ class MessageDatabaseClient:
         return MessageModelMapper.to_message_receiver(receiver)
 
     @classmethod
-    def get_team_messages_stats(cls, team_id):
+    def get_messages_stats(cls):
         stats = db.session.query(
+            MessageTableEntry.team_id,
             MessageTableEntry.send_type,
             func.count().label("messages")
         ).group_by(
-            MessageTableEntry.send_type
-        ).filter(
-            MessageTableEntry.team_id == team_id
+            MessageTableEntry.send_type,
+            MessageTableEntry.team_id
         ).all()
         return MessageModelMapper.to_stats(stats)

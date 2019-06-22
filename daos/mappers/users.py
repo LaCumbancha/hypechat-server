@@ -49,6 +49,7 @@ class UserModelMapper:
             password=user_entry.password,
             email=user_entry.email,
             username=user_entry.username,
+            created=user_entry.created,
             facebook_id=user_entry.facebook_id
         ) if user_entry is not None else None
 
@@ -64,14 +65,15 @@ class UserModelMapper:
                 last_name=user_entry.last_name,
                 profile_pic=user_entry.profile_pic,
                 email=user_entry.email,
-                username=user_entry.username
+                username=user_entry.username,
+                created=user_entry.created
             )
             user.facebook_id = user_entry.facebook_id
             users += [user]
         return users
 
     @classmethod
-    def to_user_with_teams(cls, table_entries):
+    def to_user_profile(cls, table_entries):
         user_with_teams = []
         for table_entry in table_entries:
             user = PublicUser(
@@ -82,15 +84,17 @@ class UserModelMapper:
                 last_name=table_entry.last_name,
                 profile_pic=table_entry.profile_pic,
                 online=True,
-                role=table_entry.user_role
+                role=table_entry.user_role,
+                created=table_entry.created
             )
             user.team_id = table_entry.team_id
             user.team_name = table_entry.team_name
             user.team_picture = table_entry.picture
             user.team_location = table_entry.location
             user.team_description = table_entry.description
-            user.team_message = table_entry.welcome_message
+            user.team_welcome = table_entry.welcome_message
             user.team_role = table_entry.team_role
+            user.team_messages = table_entry.team_messages or 0
             user_with_teams += [user]
         return user_with_teams
 
@@ -107,7 +111,8 @@ class UserModelMapper:
             last_name=table_entry.last_name,
             profile_pic=table_entry.profile_pic,
             role=table_entry.user_role,
-            online=table_entry.online
+            online=table_entry.online,
+            created=table_entry.created
         )
         user.team_id = table_entry.team_id
         user.team_role = table_entry.team_role
@@ -126,7 +131,8 @@ class UserModelMapper:
             last_name=table_entry.last_name,
             profile_pic=table_entry.profile_pic,
             online=table_entry.online,
-            role=table_entry.role
+            role=table_entry.role,
+            created=table_entry.created
         )
         user.team_id = table_entry.team_id
         user.channel_id = table_entry.channel_id

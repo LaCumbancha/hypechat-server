@@ -10,8 +10,10 @@ from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.responses.channels import SuccessfulChannelsListResponse
 
-from models.authentication import Authenticator
 from services.emails import EmailService
+from services.users import UserService
+
+from models.authentication import Authenticator
 from models.constants import TeamRoles
 from sqlalchemy.exc import IntegrityError
 
@@ -226,17 +228,10 @@ class TeamService:
         return channels
 
     @classmethod
-    def team_user_by_id(cls, user_data):
+    def team_user_profile(cls, user_data):
         user = Authenticator.authenticate_team(user_data.authentication)
-        user_found = UserDatabaseClient.get_team_user_by_ids(user_data.user_id, user.team_id)
-
-        if user_found is None:
-            cls.logger().info(f"User #{user.id} couldn't find user #{user_data.user_id} profile (in team {user.team_id}).")
-            return NotFoundUserMessageResponse(f"User {user_data.user_id} not found!",
-                                               UserResponseStatus.USER_NOT_FOUND.value)
-
-        cls.logger().info(f"User #{user.id} got user #{user_data.user_id} profile.")
-        return SuccessfulUserResponse(user_found)
+        return UserService.team_user_profile(user_data.user_id, user.team_id) or BadRequestTeamMessageResponse(
+            "You cannot access to this user's profile", TeamResponseStatus.USER_NOT_MEMBER.value)
 
     @classmethod
     def delete_users(cls, delete_data):
