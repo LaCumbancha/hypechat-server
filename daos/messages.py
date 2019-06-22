@@ -4,6 +4,7 @@ from sqlalchemy import and_, or_, literal, func
 from daos.database import DatabaseClient
 from daos.mappers.messages import MessageDatabaseMapper, MessageModelMapper
 
+from tables.bots import BotTableEntry
 from tables.users import UserTableEntry, UsersByTeamsTableEntry
 from tables.channels import ChannelTableEntry
 from tables.messages import MessageTableEntry, ChatTableEntry, MentionsByMessagesTableEntry
@@ -52,13 +53,18 @@ class MessageDatabaseClient:
             UserTableEntry.first_name,
             UserTableEntry.last_name,
             ChannelTableEntry.name.label("channel_name"),
-            UserTableEntry.user_id.label("is_user")
+            BotTableEntry.bot_name,
+            UserTableEntry.user_id.label("is_user"),
+            ChannelTableEntry.channel_id.label("is_channel")
         ).outerjoin(
             UserTableEntry,
             UserTableEntry.user_id == MentionsByMessagesTableEntry.client_id
         ).outerjoin(
             ChannelTableEntry,
             ChannelTableEntry.channel_id == MentionsByMessagesTableEntry.client_id
+        ).outerjoin(
+            BotTableEntry,
+            BotTableEntry.bot_id == MentionsByMessagesTableEntry.client_id
         ).filter(
             MentionsByMessagesTableEntry.message_id == message_id
         ).all()
@@ -161,10 +167,12 @@ class MessageDatabaseClient:
             UserTableEntry.username.label("sender_username"),
             UserTableEntry.first_name.label("sender_first_name"),
             UserTableEntry.last_name.label("sender_last_name"),
+            BotTableEntry.bot_name.label("sender_bot_name"),
             MessageTableEntry.content.label("content"),
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp.label("message_timestamp"),
-            chats.c.unseen.label("unseen_offset")
+            chats.c.unseen.label("unseen_offset"),
+            UserTableEntry.user_id.label("is_user")
         ).join(
             last_messages,
             and_(
@@ -177,9 +185,12 @@ class MessageDatabaseClient:
                 MessageTableEntry.team_id == chats.c.team_id,
                 MessageTableEntry.receiver_id == chats.c.chat_id
             )
-        ).join(
+        ).outerjoin(
             UserTableEntry,
             UserTableEntry.user_id == MessageTableEntry.sender_id
+        ).outerjoin(
+            BotTableEntry,
+            BotTableEntry.bot_id == MessageTableEntry.sender_id
         ).join(
             ChannelTableEntry,
             ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
@@ -209,11 +220,15 @@ class MessageDatabaseClient:
             UserTableEntry.username,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
-            UserTableEntry.profile_pic,
-            UserTableEntry.online
-        ).join(
+            UserTableEntry.online,
+            BotTableEntry.bot_name,
+            UserTableEntry.user_id.label("is_user")
+        ).outerjoin(
             UserTableEntry,
             MessageTableEntry.sender_id == UserTableEntry.user_id
+        ).outerjoin(
+            BotTableEntry,
+            MessageTableEntry.sender_id == BotTableEntry.bot_id
         ).filter(and_(
             MessageTableEntry.team_id == team_id,
             MessageTableEntry.receiver_id == chat_id
@@ -231,10 +246,10 @@ class MessageDatabaseClient:
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp,
             UserTableEntry.username,
-            UserTableEntry.profile_pic,
             UserTableEntry.first_name,
             UserTableEntry.last_name,
-            UserTableEntry.online
+            UserTableEntry.online,
+            UserTableEntry.user_id.label("is_user")
         ).join(
             UserTableEntry,
             MessageTableEntry.sender_id == UserTableEntry.user_id

@@ -76,12 +76,7 @@ class MessageService:
                 "chat_id": message.chat_id,
                 "chat_name": message.chat_name,
                 "chat_picture": message.chat_picture,
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.sender_username,
-                    "first_name": message.sender_first_name,
-                    "last_name": message.sender_last_name,
-                },
+                "sender": vars(message.sender),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
@@ -133,22 +128,15 @@ class MessageService:
         for message in messages:
 
             output_messages += [{
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.username,
-                    "first_name": message.first_name,
-                    "last_name": message.last_name,
-                    "profile_pic": message.profile_pic,
-                    "online": message.online
-                },
+                "sender": vars(message.sender),
                 "content": word_censor.remove_forbidden_words(message),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
-                "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
+                "unseen": True if message.sender.id != user_id and unseen_offset > 0 else False
             }]
 
-            if message.sender_id != user_id:
+            if message.sender.id != user_id:
                 unseen_offset -= 1
 
         return output_messages

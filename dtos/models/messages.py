@@ -1,4 +1,4 @@
-from models.constants import UserRoles, SendMessageType
+from models.constants import UserRoles, ClientType
 
 
 class Message:
@@ -24,20 +24,33 @@ class Chat:
 
 class ChatMessage:
 
-    def __init__(self, message_id, sender_id, receiver_id, team_id, content, message_type, timestamp, username,
-                 profile_pic, first_name, last_name, online):
+    def __init__(self, message_id, sender, receiver_id, team_id, content, message_type, timestamp):
         self.message_id = message_id
-        self.sender_id = sender_id
+        self.sender = sender
         self.receiver_id = receiver_id
         self.team_id = team_id
         self.content = content
         self.message_type = message_type
         self.timestamp = timestamp
+
+
+class UserMessageSender:
+
+    def __init__(self, user_id, username, first_name, last_name, online=None):
+        self.id = user_id
         self.username = username
-        self.profile_pic = profile_pic
         self.first_name = first_name
         self.last_name = last_name
+        self.type = ClientType.USER.value
         self.online = online
+
+
+class BotMessageSender:
+
+    def __init__(self, bot_id, bot_name):
+        self.id = bot_id
+        self.name = bot_name
+        self.type = ClientType.BOT.value
 
 
 class Mention:
@@ -51,7 +64,7 @@ class UserMention:
 
     def __init__(self, user_id, username, first_name, last_name):
         self.id = user_id
-        self.type = SendMessageType.DIRECT
+        self.type = ClientType.USER
         self.username = username
         self.first_name = first_name
         self.last_name = last_name
@@ -61,8 +74,16 @@ class ChannelMention:
 
     def __init__(self, channel_id, channel_name):
         self.id = channel_id
-        self.type = SendMessageType.CHANNEL
+        self.type = ClientType.CHANNEL
         self.name = channel_name
+
+
+class BotMention:
+
+    def __init__(self, bot_id, bot_name):
+        self.id = bot_id
+        self.type = ClientType.BOT
+        self.name = bot_name
 
 
 class PreviewDirectMessage:
@@ -85,16 +106,12 @@ class PreviewDirectMessage:
 
 class PreviewChannelMessage:
 
-    def __init__(self, message_id, chat_id, chat_name, chat_picture, sender_id, sender_username, sender_first_name,
-                 sender_last_name, content, message_type, timestamp, offset):
+    def __init__(self, message_id, chat_id, chat_name, chat_picture, sender, content, message_type, timestamp, offset):
         self.message_id = message_id
         self.chat_id = chat_id
         self.chat_name = chat_name
         self.chat_picture = chat_picture
-        self.sender_id = sender_id
-        self.sender_username = sender_username
-        self.sender_first_name = sender_first_name
-        self.sender_last_name = sender_last_name
+        self.sender = sender
         self.content = content
         self.message_type = message_type
         self.timestamp = timestamp

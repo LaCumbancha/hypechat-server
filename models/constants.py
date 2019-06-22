@@ -111,6 +111,12 @@ class SendMessageType(Enum):
     CHANNEL = "CHANNEL"
 
 
+class ClientType(Enum):
+    BOT = "BOT"
+    USER = "USER"
+    CHANNEL = "CHANNEL"
+
+
 class MessageType(Enum):
     TEXT = "TEXT"
     IMAGE = "IMAGE"

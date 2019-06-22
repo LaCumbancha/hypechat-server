@@ -70,10 +70,15 @@ class MessageModelMapper:
                     first_name=mention_entry.first_name,
                     last_name=mention_entry.last_name
                 )]
-            else:
+            elif mention_entry.is_channel is not None:
                 mentions += [ChannelMention(
                     channel_id=mention_entry.client_id,
                     channel_name=mention_entry.channel_name
+                )]
+            else:
+                mentions += [BotMention(
+                    bot_id=mention_entry.client_id,
+                    bot_name=mention_entry.bot_name
                 )]
         return mentions
 
@@ -103,16 +108,26 @@ class MessageModelMapper:
     def to_channel_messages_previews(cls, last_messages):
         preview_messages = []
         for last_message in last_messages:
+            if last_message.is_user is not None:
+                sender = UserMessageSender(
+                    user_id=last_message.sender_id,
+                    username=last_message.sender_username,
+                    first_name=last_message.sender_first_name,
+                    last_name=last_message.sender_last_name
+                )
+            else:
+                sender = BotMessageSender(
+                    bot_id=last_message.sender_id,
+                    bot_name=last_message.sender_bot_name
+                )
+
             preview_messages += [
                 PreviewChannelMessage(
                     message_id=last_message.message_id,
                     chat_id=last_message.chat_id,
                     chat_name=last_message.chat_name,
                     chat_picture=None,
-                    sender_id=last_message.sender_id,
-                    sender_username=last_message.sender_username,
-                    sender_first_name=last_message.sender_first_name,
-                    sender_last_name=last_message.sender_last_name,
+                    sender=sender,
                     content=last_message.content,
                     message_type=last_message.message_type,
                     timestamp=last_message.message_timestamp,
@@ -125,19 +140,27 @@ class MessageModelMapper:
     def to_messages_chat(cls, messages_entries):
         messages = []
         for message_entry in messages_entries:
+            if message_entry.is_user is not None:
+                sender = UserMessageSender(
+                    user_id=message_entry.sender_id,
+                    username=message_entry.username,
+                    first_name=message_entry.first_name,
+                    last_name=message_entry.last_name,
+                    online=message_entry.online
+                )
+            else:
+                sender = BotMessageSender(
+                    bot_id=message_entry.sender_id,
+                    bot_name=message_entry.bot_name
+                )
             messages += [ChatMessage(
                 message_id=message_entry.message_id,
-                sender_id=message_entry.sender_id,
+                sender=sender,
                 receiver_id=message_entry.receiver_id,
                 team_id=message_entry.team_id,
                 content=message_entry.content,
                 message_type=message_entry.message_type,
-                timestamp=message_entry.timestamp,
-                username=message_entry.username,
-                profile_pic=message_entry.profile_pic,
-                first_name=message_entry.first_name,
-                last_name=message_entry.last_name,
-                online=message_entry.online
+                timestamp=message_entry.timestamp
             )]
         return messages
 

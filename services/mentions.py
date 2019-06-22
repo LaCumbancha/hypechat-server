@@ -1,7 +1,8 @@
+from daos.bots import BotDatabaseClient
 from daos.database import DatabaseClient
 from daos.messages import MessageDatabaseClient
 
-from models.constants import SendMessageType
+from models.constants import SendMessageType, ClientType
 from dtos.models.messages import Mention
 
 from services.bots import BotService
@@ -25,8 +26,12 @@ class MentionService:
             for mention in mentions:
                 if message.send_type == SendMessageType.CHANNEL.value:
                     BotService.process_mention(mention, message)
-                new_mention = Mention(message_id=message.message_id, client_id=mention)
-                MessageDatabaseClient.add_mention(new_mention)
+                    new_mention = Mention(message_id=message.message_id, client_id=mention)
+                    MessageDatabaseClient.add_mention(new_mention)
+
+                elif BotDatabaseClient.get_bot_by_id(mention) is None:
+                    new_mention = Mention(message_id=message.message_id, client_id=mention)
+                    MessageDatabaseClient.add_mention(new_mention)
 
             DatabaseClient.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
@@ -40,7 +45,7 @@ class MentionService:
 
         mentions = []
         for mention in db_mentions:
-            if mention.type == SendMessageType.DIRECT:
+            if mention.type == ClientType.USER:
                 mentions += [{
                     "id": mention.id,
                     "type": "USER",
@@ -48,10 +53,16 @@ class MentionService:
                     "first_name": mention.first_name,
                     "last_name": mention.last_name
                 }]
-            else:
+            elif mention.type == ClientType.CHANNEL:
                 mentions += [{
                     "id": mention.id,
                     "type": "CHANNEL",
+                    "name": mention.name
+                }]
+            else:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "BOT",
                     "name": mention.name
                 }]
 
