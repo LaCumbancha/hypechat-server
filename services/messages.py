@@ -176,7 +176,7 @@ class MessageService:
             for chat_receiver in chat_receivers:
                 MessageDatabaseClient.add_or_update_chat(chat_receiver)
             DatabaseClient.commit()
-            NotificationService.notify_message(new_message)
+            NotificationService.notify_message(new_message, receiver.is_user)
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
         except IntegrityError:
             DatabaseClient.rollback()
