@@ -3,12 +3,16 @@ from unittest.mock import MagicMock
 
 '''Mocking environment properties'''
 import sys
+sys.modules["daos.bots"] = MagicMock()
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.messages"] = MagicMock()
+sys.modules["services.bots"] = MagicMock()
 sys.modules["logging"].getLogger = MagicMock()
 
 from dtos.models.messages import UserMention, ChannelMention
+from models.constants import SendMessageType
 from services.mentions import MentionService
+
 from sqlalchemy.exc import IntegrityError
 
 mock = MagicMock()
@@ -33,6 +37,7 @@ class MentionServiceTestCase(unittest.TestCase):
     def test_saving_mentions_save_one_for_each_mentioned_user(self):
         message = MagicMock()
         message.message_id = 0
+        message.send_type = SendMessageType.CHANNEL.value
         mentions = [0, 1, 2, 3, 4, 5]
 
         def add_mention(mention):

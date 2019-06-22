@@ -10,6 +10,7 @@ import sys
 sys.modules["logging"].getLogger = MagicMock()
 
 from models.constants import UserResponseStatus
+mock = MagicMock()
 
 
 class ResponseTestCase(unittest.TestCase):
@@ -267,7 +268,7 @@ class ResponseTestCase(unittest.TestCase):
 
     def test_messages_list_response_returns_status_code_200_with_status_list_and_key_messages(self):
         messages = MagicMock()
-        response = MessageListResponse(messages)
+        response = MessageListResponse(messages, mock)
         self.assertTrue("messages" in response.json())
         self.assertEqual(response.status_code(), 200)
         self.assertEqual(response.json().get("status"), MessageResponseStatus.LIST.value)

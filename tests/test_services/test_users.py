@@ -225,9 +225,9 @@ class UserServiceTestCase(unittest.TestCase):
 
         response = UserService.login_user(data)
         self.assertFalse(MockedUserDatabase.batch_login)
-        self.assertFalse(MockedUserDatabase.stored_login)
-        self.assertIsInstance(response, SuccessfulUserMessageResponse)
-        self.assertEqual(response.status, UserResponseStatus.WRONG_CREDENTIALS.value)
+        self.assertTrue(MockedUserDatabase.stored_login)
+        self.assertIsInstance(response, SuccessfulUserResponse)
+        self.assertEqual(response.status, UserResponseStatus.ACTIVE.value)
 
     def test_app_user_login_with_correct_password_works_properly(self):
         data = MagicMock()
@@ -541,11 +541,14 @@ class UserServiceTestCase(unittest.TestCase):
         data = MagicMock()
 
         '''Mocked outputs'''
-        user = User(user_id=1, username="TEST")
+        user = MagicMock()
+        user.id = 1
+        user.team_id = None
+        user.username = "TEST"
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
         sys.modules["daos.teams"].TeamDatabaseClient.get_user_teams_by_user_id.return_value = []
-        sys.modules["daos.users"].UserDatabaseClient.get_user_profile.return_value = user
+        sys.modules["daos.users"].UserDatabaseClient.get_user_profile.return_value = [user]
 
         response = UserService.user_profile(data)
         self.assertEqual(1, response.client.id)

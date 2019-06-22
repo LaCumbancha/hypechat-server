@@ -78,15 +78,15 @@ class SuccessfulFullUserResponse(SuccessfulClientResponse):
 class ActiveFullUserOutput(Jsonizable):
 
     def __init__(self, user):
-        self.id = user["id"]
-        self.username = user["username"]
-        self.email = user["email"]
-        self.first_name = user["first_name"]
-        self.last_name = user["last_name"]
-        self.profile_pic = user["profile_pic"]
-        self.role = user["role"]
-        self.teams = user["teams"]
-        self.created = user["created"]
+        self.id = user.get("id")
+        self.username = user.get("username")
+        self.email = user.get("email")
+        self.first_name = user.get("first_name")
+        self.last_name = user.get("last_name")
+        self.profile_pic = user.get("profile_pic")
+        self.role = user.get("role")
+        self.teams = user.get("teams")
+        self.created = user.get("created")
 
     def json(self):
         return {
