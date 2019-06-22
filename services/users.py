@@ -79,7 +79,8 @@ class UserService:
         user = UserDatabaseClient.get_user_by_email(user_data.email)
 
         if user:
-            if hashing.verify(user_data.password, user.password):
+            try:
+                hashing.verify(user_data.password, user.password)
                 cls.logger().debug(f"Generating token for user {user.id}")
                 user.token = Authenticator.generate(user.id, user_data.password)
                 user.online = True
@@ -88,7 +89,7 @@ class UserService:
                 cls.logger().info(f"User #{user.id} logged in")
                 headers = {"auth_token": user.token}
                 return SuccessfulUserResponse(user, headers)
-            else:
+            except ValueError:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
                 return SuccessfulUserMessageResponse("Wrong email or password.",
                                                      UserResponseStatus.WRONG_CREDENTIALS.value)

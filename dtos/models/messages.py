@@ -3,7 +3,8 @@ from models.constants import UserRoles, SendMessageType
 
 class Message:
 
-    def __init__(self, sender_id, receiver_id, team_id, content, send_type, message_type):
+    def __init__(self, sender_id, receiver_id, team_id, content, send_type, message_type, message_id=None):
+        self.message_id = message_id
         self.sender_id = sender_id
         self.receiver_id = receiver_id
         self.team_id = team_id

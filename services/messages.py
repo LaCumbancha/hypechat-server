@@ -179,8 +179,8 @@ class MessageService:
         chat_sender, chat_receivers = cls._increase_chats_offset(user.id, inbox_data.chat_id, user.team_id, receiver.is_user)
 
         try:
-            MessageDatabaseClient.add_message(new_message)
-            if inbox_data.mentions:
+            new_message = MessageDatabaseClient.add_message(new_message)
+            if inbox_data.mentions is not None:
                 MentionService.save_mentions(new_message, inbox_data.mentions)
             MessageDatabaseClient.add_or_update_chat(chat_sender)
             for chat_receiver in chat_receivers:

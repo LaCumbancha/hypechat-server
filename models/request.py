@@ -1,3 +1,4 @@
+from dtos.inputs.bots import *
 from dtos.inputs.users import *
 from dtos.inputs.messages import *
 from dtos.inputs.teams import *
@@ -528,4 +529,33 @@ class ClientRequest:
             token=auth_token,
             team_id=team_id,
             word_id=word_id
+        )
+
+    def new_bot_data(self):
+        auth_token = self.headers().get("X-Auth-Token")
+        team_id = self.json_body().get("team_id")
+        bot_name = self.json_body().get("name")
+        callback = self.json_body().get("url")
+
+        if auth_token is None:
+            self.logger.error("Missing parameter in request headers: X-Auth-Token.")
+            raise MissingRequestHeaderError("X-Auth-Token")
+
+        if team_id is None:
+            self.logger.error("Missing parameter in request body: team_id.")
+            raise MissingRequestParameterError("team_id")
+
+        if bot_name is None:
+            self.logger.error("Missing parameter in request body: name.")
+            raise MissingRequestParameterError("name")
+
+        if callback is None:
+            self.logger.error("Missing parameter in request body: url.")
+            raise MissingRequestParameterError("url")
+
+        return NewBotDTO(
+            token=auth_token,
+            team_id=team_id,
+            bot_name=bot_name,
+            callback=callback
         )

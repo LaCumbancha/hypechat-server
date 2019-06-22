@@ -39,6 +39,18 @@ class MessageDatabaseMapper:
 class MessageModelMapper:
 
     @classmethod
+    def to_message(cls, message_entry):
+        return Message(
+            message_id=message_entry.message_id,
+            sender_id=message_entry.sender_id,
+            receiver_id=message_entry.receiver_id,
+            team_id=message_entry.team_id,
+            content=message_entry.content,
+            send_type=message_entry.send_type,
+            message_type=message_entry.message_type
+        ) if message_entry is not None else None
+
+    @classmethod
     def to_chat(cls, chat_entry):
         return Chat(
             user_id=chat_entry.user_id,
