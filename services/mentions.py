@@ -25,8 +25,8 @@ class MentionService:
             for mention in mentions:
                 if message.send_type == SendMessageType.CHANNEL.value:
                     BotService.process_mention(mention, message)
-                new_mention = Mention(message_id=message.message_id, client_id=mention)
-                MessageDatabaseClient.add_mention(new_mention)
+                    new_mention = Mention(message_id=message.message_id, client_id=mention)
+                    MessageDatabaseClient.add_mention(new_mention)
 
             DatabaseClient.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
