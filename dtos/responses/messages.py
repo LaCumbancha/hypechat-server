@@ -18,6 +18,21 @@ class SuccessfulMessageSentResponse(Jsonizable, Response):
         return StatusCode.OK.value
 
 
+class SuccessfulMessageStatsResponse(Jsonizable, Response):
+
+    def __init__(self, stats):
+        self.stats = stats
+
+    def json(self):
+        return {
+            "status": MessageResponseStatus.STATS.value,
+            "messages": list(map(lambda elem: vars(elem), self.stats))
+        }
+
+    def status_code(self):
+        return StatusCode.OK.value
+
+
 class UnsuccessfulMessageSentResponse(Jsonizable, Response):
 
     def __init__(self, message):
@@ -51,12 +66,13 @@ class BadRequestMessageSentResponse(Jsonizable, Response):
 
 class MessageListResponse(Jsonizable, Response):
 
-    def __init__(self, messages_list):
+    def __init__(self, messages_list, is_channel):
+        self.is_channel = is_channel
         self.messages_list = messages_list
 
     def json(self):
         return {
-            "status": MessageResponseStatus.LIST.value,
+            "chat_type": SendMessageType.CHANNEL.value if self.is_channel else SendMessageType.DIRECT.value,
             "messages": self.messages_list
         }
 

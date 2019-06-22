@@ -28,6 +28,7 @@ class MessageResponseStatus(Enum):
     LIST = "LIST"
     SENT = "SENT"
     ERROR = "ERROR"
+    STATS = "STATS"
     CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
     MESSAGE_TYPE_UNAVAILABLE = "MESSAGE_TYPE_UNAVAILABLE"
 
@@ -65,32 +66,39 @@ class UserRoles(Enum):
     ADMIN = "ADMIN"
     USER = "USER"
 
+    @classmethod
+    def is_admin(cls, user_role):
+        return user_role == UserRoles.ADMIN.value
+
 
 class TeamRoles(Enum):
     CREATOR = "CREATOR"
     MODERATOR = "MODERATOR"
     MEMBER = "MEMBER"
+    BOT = "BOT"
 
     @classmethod
-    def is_team_admin(cls, user):
-        return user.role in [TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
+    def is_team_moderator(cls, user_role):
+        return user_role in [UserRoles.ADMIN.value, TeamRoles.CREATOR.value, TeamRoles.MODERATOR.value]
 
     @classmethod
-    def is_team_creator(cls, user):
-        return user.role == TeamRoles.CREATOR.value
+    def is_team_creator(cls, user_role):
+        return user_role == TeamRoles.CREATOR.value
 
     @classmethod
-    def is_higher_role(cls, user1, user2):
-        if user1.role == TeamRoles.CREATOR.value:
-            return True
-        elif user1.role == TeamRoles.MODERATOR.value and user2.role == TeamRoles.MEMBER.value:
-            return True
-        else:
-            return False
+    def has_higher_role(cls, user1_role, user2_role):
+        role_rank = {
+            TeamRoles.MEMBER.value: 1,
+            TeamRoles.MODERATOR.value: 2,
+            TeamRoles.CREATOR.value: 3,
+            UserRoles.ADMIN.value: 4
+        }
+
+        return role_rank.get(user1_role) > role_rank.get(user2_role)
 
     @classmethod
-    def is_channel_creator(cls, user_id, creator_id):
-        return user_id == creator_id
+    def is_channel_creator(cls, is_channel_creator):
+        return is_channel_creator
 
 
 class ChannelVisibilities(Enum):
@@ -100,6 +108,12 @@ class ChannelVisibilities(Enum):
 
 class SendMessageType(Enum):
     DIRECT = "DIRECT"
+    CHANNEL = "CHANNEL"
+
+
+class ClientType(Enum):
+    BOT = "BOT"
+    USER = "USER"
     CHANNEL = "CHANNEL"
 
 

@@ -66,11 +66,19 @@ def get_user_teams():
     return jsonify(teams.json()), teams.status_code()
 
 
+@app.route('/users/teams/<team_id>/channels', methods=['GET'])
+def get_user_channels(team_id):
+    logger.info(f"Attempting to get user's channels in team #{team_id}.")
+    req = ClientRequest(request)
+    channels = UserService.channels_for_user(req.team_authentication(team_id))
+    return jsonify(channels.json()), channels.status_code()
+
+
 @app.route('/users/profile', methods=['PATCH'])
 def update_user():
     logger.info("Attempting to update user information.")
     req = ClientRequest(request)
-    updated_user = UserService.update_user(req.user_update())
+    updated_user = UserService.update_user(req.user_update_data())
     return jsonify(updated_user.json()), updated_user.status_code()
 
 
@@ -86,7 +94,7 @@ def user_profile():
 def recover_password():
     logger.info("Attempting to recover password.")
     req = ClientRequest(request)
-    user = UserService.recover_password(req.recover_data())
+    user = UserService.recover_password(req.recover_password_data())
     return jsonify(user.json()), user.status_code()
 
 
@@ -94,7 +102,7 @@ def recover_password():
 def regenerate_token():
     logger.info("Attempting to recover password.")
     req = ClientRequest(request)
-    user = UserService.regenerate_token(req.regenerate_data())
+    user = UserService.regenerate_token(req.regenerate_password_data())
 
     response = jsonify(user.json())
     if user.headers():

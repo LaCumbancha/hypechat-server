@@ -20,12 +20,12 @@ class SuccessfulChannelResponse(SuccessfulClientResponse):
 class SuccessfulChannelsListResponse(Jsonizable, Response):
 
     def __init__(self, channels_list):
-        self.channels_list = channels_list
+        self.channels = channels_list
 
     def json(self):
         return {
             "status": UserResponseStatus.LIST.value,
-            "channels": self.channels_list
+            "channels": self.channels
         }
 
     def status_code(self):
@@ -38,10 +38,30 @@ class ActiveChannelOutput(Jsonizable):
         self.channel_id = channel.channel_id
         self.team_id = channel.team_id
         self.name = channel.name
-        self.creator = channel.creator
+        self.creator = ActiveChannelCreator(channel.creator)
         self.visibility = channel.visibility
         self.description = channel.description
         self.welcome_message = channel.welcome_message
+
+    def json(self):
+        return {
+            "channel_id": self.channel_id,
+            "team_id": self.team_id,
+            "name": self.name,
+            "creator": self.creator.json(),
+            "visibility": self.visibility,
+            "description": self.description,
+            "welcome_message": self.welcome_message
+        }
+
+
+class ActiveChannelCreator(Jsonizable):
+
+    def __init__(self, creator):
+        self.id = creator.id
+        self.username = creator.username
+        self.first_name = creator.first_name
+        self.last_name = creator.last_name
 
     def json(self):
         return vars(self)

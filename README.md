@@ -75,7 +75,22 @@ docker run --net host -d -p 5000:5000 hypechat-server
 ### Testing
 The test module uses Unittest framework. To run tests:
 ```
-python -m unittest -v tests
+coverage run -m unittest discover -s tests
+```
+To get the coverage report:
+```
+coverage report -m
+```
+For a prettier presentation:
+```
+coverage html
+```
+And check ```./htmlcov/index.html```
+
+Also, we provide with the script ```test```, so for the full test experience just make sure to give it execution permissions and try it!
+```
+chmod +x ./test
+./test
 ```
 
 ### Deployment

@@ -12,7 +12,7 @@ logger = logging.getLogger("MessagesController")
 def get_preview_messages(team_id):
     logger.info(f"Attempting to get all preview messages for user from team #{team_id}.")
     req = ClientRequest(request)
-    messages = MessageService.get_preview_messages(req.team_authentication(team_id))
+    messages = MessageService.get_preview_messages(req.team_authentication_data(team_id))
     return jsonify(messages.json()), messages.status_code()
 
 

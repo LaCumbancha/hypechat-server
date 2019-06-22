@@ -1,8 +1,14 @@
-from app import db
+from daos.bots import BotDatabaseClient
+from daos.database import DatabaseClient
+from daos.messages import MessageDatabaseClient
+
+from models.constants import SendMessageType, ClientType
+from dtos.models.messages import Mention
+
+from services.bots import BotService
 from services.notifications import NotificationService
-from tables.users import UserTableEntry
-from tables.messages import MentionsByMessagesTableEntry
-from sqlalchemy import exc, and_
+
+from sqlalchemy.exc import IntegrityError
 
 import logging
 
@@ -19,42 +25,48 @@ class MentionService:
 
         try:
             for mention in mentions:
-                new_mention = MentionsByMessagesTableEntry(
-                    message_id=message.message_id,
-                    user_id=mention
-                )
-                db.session.add(new_mention)
-                db.session.flush()
-                NotificationService.notify_mention(message, mention)
+                if message.send_type == SendMessageType.CHANNEL.value:
+                    BotService.process_mention(mention, message)
+                    new_mention = Mention(message_id=message.message_id, client_id=mention)
+                    MessageDatabaseClient.add_mention(new_mention)
+                    NotificationService.notify_mention(message, mention)
 
-            db.session.commit()
+                elif BotDatabaseClient.get_bot_by_id(mention) is None:
+                    new_mention = Mention(message_id=message.message_id, client_id=mention)
+                    MessageDatabaseClient.add_mention(new_mention)
+                    NotificationService.notify_mention(message, mention)
+
+            DatabaseClient.commit()
             cls.logger().debug(f"{len(mentions)} mentions saved for message #{message.message_id}.")
-        except exc.IntegrityError:
-            db.session.rollback()
+        except IntegrityError:
+            DatabaseClient.rollback()
             cls.logger().error(f"Couldn't save mentions for message #{message.message_id}.")
 
     @classmethod
     def get_mentions(cls, message_id):
-        db_mentions = db.session.query(
-            UserTableEntry.user_id,
-            UserTableEntry.username,
-            UserTableEntry.first_name,
-            UserTableEntry.last_name
-        ).join(
-            MentionsByMessagesTableEntry,
-            and_(
-                MentionsByMessagesTableEntry.user_id == UserTableEntry.user_id,
-                MentionsByMessagesTableEntry.message_id == message_id
-            )
-        ).all()
+        db_mentions = MessageDatabaseClient.get_mentions_by_message(message_id)
 
         mentions = []
         for mention in db_mentions:
-            mentions += [{
-                "user_id": mention.user_id,
-                "username": mention.username,
-                "first_name": mention.first_name,
-                "last_name": mention.last_name
-            }]
+            if mention.type == ClientType.USER:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "USER",
+                    "username": mention.username,
+                    "first_name": mention.first_name,
+                    "last_name": mention.last_name
+                }]
+            elif mention.type == ClientType.CHANNEL:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "CHANNEL",
+                    "name": mention.name
+                }]
+            else:
+                mentions += [{
+                    "id": mention.id,
+                    "type": "BOT",
+                    "name": mention.name
+                }]
 
         return mentions

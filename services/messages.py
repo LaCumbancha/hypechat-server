@@ -1,15 +1,20 @@
-from app import db
+from daos.database import *
+from daos.users import UserDatabaseClient
+from daos.teams import TeamDatabaseClient
+from daos.channels import ChannelDatabaseClient
+from daos.messages import MessageDatabaseClient
+
+from dtos.models.messages import *
 from dtos.responses.messages import *
+
 from exceptions.exceptions import *
 from models.authentication import Authenticator
-from services.mentions import MentionService
+
 from services.notifications import NotificationService
-from tables.users import *
-from tables.messages import *
-from tables.channels import *
-from tables.teams import *
-from sqlalchemy import exc, func, and_, or_, literal
-from sqlalchemy.orm import exc as orm
+from services.mentions import MentionService
+
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import FlushError
 
 import logging
 
@@ -26,136 +31,14 @@ class MessageService:
     def get_preview_messages(cls, user_data):
         user = Authenticator.authenticate_team(user_data)
 
-        direct_messages = cls._get_direct_messages_previews(user.user_id, user.team_id)
-        channel_messages = cls._get_channel_messages_previews(user.user_id, user.team_id)
+        db_direct_messages = MessageDatabaseClient.get_direct_messages_previews(user.id, user.team_id)
+        db_channel_messages = MessageDatabaseClient.get_channel_messages_previews(user.id, user.team_id)
+        direct_messages = cls._generate_direct_chats_list(db_direct_messages, user.id, user.team_id)
+        channel_messages = cls._generate_channel_chats_list(db_channel_messages, user.team_id)
         total_messages = direct_messages + channel_messages
 
-        cls.logger().info(f"Retrieved {len(total_messages)} chats from user #{user.user_id} ({user.username}).")
+        cls.logger().info(f"Retrieved {len(total_messages)} chats from user #{user.id} ({user.username}).")
         return ChatsListResponse(total_messages)
-
-    @classmethod
-    def _get_direct_messages_previews(cls, user_id, team_id):
-        cls.logger().debug("Retrieving messages preview from a direct chat.")
-        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user_id).subquery("sq1")
-
-        last_messages_mixed = db.session.query(
-            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user1"),
-            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id).label("user2"),
-            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
-        ).filter(and_(
-            or_(
-                MessageTableEntry.receiver_id == user_id,
-                MessageTableEntry.sender_id == user_id
-            ),
-            MessageTableEntry.team_id == team_id,
-            MessageTableEntry.send_type == SendMessageType.DIRECT.value
-        )).group_by(
-            func.least(MessageTableEntry.sender_id, MessageTableEntry.receiver_id),
-            func.greatest(MessageTableEntry.sender_id, MessageTableEntry.receiver_id)
-        ).subquery("sq2")
-
-        preview_messages = db.session.query(
-            MessageTableEntry.message_id,
-            MessageTableEntry.sender_id,
-            MessageTableEntry.receiver_id,
-            UserTableEntry.username,
-            UserTableEntry.first_name,
-            UserTableEntry.last_name,
-            UserTableEntry.profile_pic,
-            UserTableEntry.online,
-            MessageTableEntry.content,
-            MessageTableEntry.message_type,
-            MessageTableEntry.timestamp,
-            chats.c.unseen
-        ).join(
-            last_messages_mixed,
-            and_(
-                or_(
-                    MessageTableEntry.sender_id == last_messages_mixed.c.user1,
-                    MessageTableEntry.sender_id == last_messages_mixed.c.user2,
-                ),
-                or_(
-                    MessageTableEntry.receiver_id == last_messages_mixed.c.user1,
-                    MessageTableEntry.receiver_id == last_messages_mixed.c.user2,
-                ),
-                MessageTableEntry.timestamp == last_messages_mixed.c.maxtimestamp,
-                MessageTableEntry.send_type == SendMessageType.DIRECT.value
-            )
-        ).join(
-            chats,
-            and_(
-                or_(
-                    MessageTableEntry.sender_id == chats.c.chat_id,
-                    MessageTableEntry.receiver_id == chats.c.chat_id,
-                ),
-                or_(
-                    MessageTableEntry.sender_id == chats.c.user_id,
-                    MessageTableEntry.receiver_id == chats.c.user_id,
-                )
-            )
-        ).join(
-            UserTableEntry,
-            or_(
-                and_(
-                    UserTableEntry.user_id == last_messages_mixed.c.user1,
-                    UserTableEntry.user_id != user_id
-                ),
-                and_(
-                    UserTableEntry.user_id == last_messages_mixed.c.user2,
-                    UserTableEntry.user_id != user_id
-                )
-            )
-        ).all()
-
-        return cls._generate_direct_chats_list(preview_messages, user_id, team_id)
-
-    @classmethod
-    def _get_channel_messages_previews(cls, user_id, team_id):
-        cls.logger().debug("Retrieving messages preview from a channel chat.")
-        chats = db.session.query(ChatTableEntry).filter(ChatTableEntry.user_id == user_id).subquery("sq1")
-
-        last_messages = db.session.query(
-            MessageTableEntry.receiver_id.label("channel_id"),
-            func.max(MessageTableEntry.timestamp).label("maxtimestamp")
-        ).filter(and_(
-            MessageTableEntry.team_id == team_id,
-            MessageTableEntry.send_type == SendMessageType.CHANNEL.value
-        )).group_by(
-            MessageTableEntry.receiver_id
-        ).subquery("sq2")
-
-        preview_messages = db.session.query(
-            MessageTableEntry.message_id,
-            MessageTableEntry.receiver_id.label("chat_id"),
-            ChannelTableEntry.name.label("chat_name"),
-            UserTableEntry.profile_pic.label("chat_picture"),
-            MessageTableEntry.sender_id.label("sender_id"),
-            UserTableEntry.username.label("sender_username"),
-            MessageTableEntry.content.label("content"),
-            MessageTableEntry.message_type,
-            MessageTableEntry.timestamp.label("message_timestamp"),
-            chats.c.unseen.label("unseen_offset")
-        ).join(
-            last_messages,
-            and_(
-                MessageTableEntry.receiver_id == last_messages.c.channel_id,
-                MessageTableEntry.timestamp == last_messages.c.maxtimestamp
-            )
-        ).join(
-            chats,
-            and_(
-                MessageTableEntry.team_id == chats.c.team_id,
-                MessageTableEntry.receiver_id == chats.c.chat_id
-            )
-        ).join(
-            UserTableEntry,
-            UserTableEntry.user_id == MessageTableEntry.sender_id
-        ).join(
-            ChannelTableEntry,
-            ChannelTableEntry.channel_id == MessageTableEntry.receiver_id
-        ).all()
-
-        return cls._generate_channel_chats_list(preview_messages, team_id)
 
     @classmethod
     def _generate_direct_chats_list(cls, last_messages, user_id, team_id):
@@ -166,20 +49,20 @@ class MessageService:
         for message in last_messages:
             chats += [{
                 "chat_id": message.sender_id if message.sender_id != user_id else message.receiver_id,
-                "chat_name": message.username,
-                "chat_picture": message.profile_pic,
+                "chat_name": message.chat_username,
+                "chat_picture": message.chat_picture,
                 "sender": {
                     "id": message.sender_id,
-                    "username": message.username,
-                    "first_name": message.first_name,
-                    "last_name": message.last_name,
+                    "username": message.chat_username,
+                    "first_name": message.chat_first_name,
+                    "last_name": message.chat_last_name,
                 },
                 "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
-                "unseen": True if (message.unseen > 0) else False,
-                "offset": message.unseen,
+                "unseen": True if (message.offset > 0) else False,
+                "offset": message.offset,
             }]
 
         return chats
@@ -189,22 +72,19 @@ class MessageService:
         word_censor = WordCensor(team_id)
         chats = []
 
-        last_messages.sort(key=lambda msg: msg.message_timestamp, reverse=True)
+        last_messages.sort(key=lambda msg: msg.timestamp, reverse=True)
         for message in last_messages:
             chats += [{
                 "chat_id": message.chat_id,
                 "chat_name": message.chat_name,
                 "chat_picture": message.chat_picture,
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.sender_username,
-                },
+                "sender": vars(message.sender),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,
-                "timestamp": message.message_timestamp,
-                "unseen": True if (message.unseen_offset > 0) else False,
-                "offset": message.unseen_offset,
+                "timestamp": message.timestamp,
+                "unseen": True if (message.offset > 0) else False,
+                "offset": message.offset,
             }]
 
         return chats
@@ -212,88 +92,34 @@ class MessageService:
     @classmethod
     def get_messages_from_chat(cls, chat_data):
         user = Authenticator.authenticate_team(chat_data.authentication)
+        chat = MessageDatabaseClient.get_chat_by_ids(user.id, chat_data.chat_id, user.team_id)
 
-        chat = db.session.query(ChatTableEntry).filter(and_(
-            ChatTableEntry.user_id == user.user_id,
-            ChatTableEntry.chat_id == chat_data.chat_id,
-            ChatTableEntry.team_id == user.team_id
-        )).one_or_none()
-
-        if not chat:
-            cls.logger().error(
-                f"User #{user.user_id} trying to retrieve messages from chat {chat_data.chat_id}, that doesnt' exist.")
+        if chat is None:
+            cls.logger().error(f"User #{user.id} trying to retrieve messages from chat {chat_data.chat_id}, "
+                               f"that doesn't exist.")
             raise ChatNotFoundError("Chat not found.", MessageResponseStatus.CHAT_NOT_FOUND.value)
         else:
-            messages = cls._determinate_messages(user.user_id, chat_data.chat_id, user.team_id, chat_data.offset)
-            unseen_messages = chat.unseen_offset
+            is_channel, messages = cls._determinate_messages(user.id, chat_data.chat_id, user.team_id, chat_data.offset)
+            unseen_messages = chat.offset
             try:
-                chat.unseen_offset = 0
-                db.session.commit()
-                cls.logger().error(
-                    f"{unseen_messages} messages set as seen for user {user.user_id} in chat {chat.chat_id}.")
-            except exc.IntegrityError:
-                db.session().rollback()
-                cls.logger().error(f"Couldn't set seen messages for user {user.user_id} in chat {chat.chat_id}.")
+                chat.offset = 0
+                DatabaseClient.commit()
+                cls.logger().error(f"{unseen_messages} messages set as seen for user {user.id} in chat {chat.chat_id}.")
+            except IntegrityError:
+                DatabaseClient.rollback()
+                cls.logger().error(f"Couldn't set seen messages for user {user.id} in chat {chat.chat_id}.")
 
-            cls.logger().info(
-                f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} " +
-                f"from user #{user.user_id} ({user.username}).")
-            return MessageListResponse(
-                cls._generate_messages_list(messages, unseen_messages, user.user_id, user.team_id))
+            cls.logger().info(f"Retrieved {len(messages)} messages from chat {chat_data.chat_id} from user #{user.id}.")
+            return MessageListResponse(cls._generate_messages_list(messages, unseen_messages, user.id, user.team_id), is_channel)
 
     @classmethod
     def _determinate_messages(cls, user_id, chat_id, team_id, offset):
-        if db.session.query(ChannelTableEntry).filter(ChannelTableEntry.channel_id == chat_id).one_or_none():
+        if ChannelDatabaseClient.get_channel_by_id(chat_id) is not None:
             cls.logger().debug("Retrieving messages from a channel.")
-            return db.session.query(
-                MessageTableEntry.message_id,
-                MessageTableEntry.sender_id,
-                MessageTableEntry.receiver_id,
-                MessageTableEntry.team_id,
-                MessageTableEntry.content,
-                MessageTableEntry.message_type,
-                MessageTableEntry.timestamp,
-                UserTableEntry.username,
-                UserTableEntry.first_name,
-                UserTableEntry.last_name,
-                UserTableEntry.profile_pic,
-                UserTableEntry.online
-            ).join(
-                UserTableEntry,
-                MessageTableEntry.sender_id == UserTableEntry.user_id
-            ).filter(and_(
-                MessageTableEntry.team_id == team_id,
-                MessageTableEntry.receiver_id == chat_id
-            )).offset(offset).limit(CHAT_MESSAGE_PAGE).all()
+            return True, MessageDatabaseClient.get_channel_chat(chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
         else:
             cls.logger().debug("Retrieving messages from a direct chat.")
-            return db.session.query(
-                MessageTableEntry.message_id,
-                MessageTableEntry.sender_id,
-                MessageTableEntry.receiver_id,
-                MessageTableEntry.team_id,
-                MessageTableEntry.content,
-                MessageTableEntry.message_type,
-                MessageTableEntry.timestamp,
-                UserTableEntry.username,
-                UserTableEntry.profile_pic,
-                UserTableEntry.first_name,
-                UserTableEntry.last_name,
-                UserTableEntry.online
-            ).join(
-                UserTableEntry,
-                MessageTableEntry.sender_id == UserTableEntry.user_id
-            ).filter(and_(
-                MessageTableEntry.team_id == team_id,
-                or_(
-                    and_(
-                        MessageTableEntry.sender_id == user_id,
-                        MessageTableEntry.receiver_id == chat_id),
-                    and_(
-                        MessageTableEntry.sender_id == chat_id,
-                        MessageTableEntry.receiver_id == user_id)
-                ),
-            )).offset(offset).limit(CHAT_MESSAGE_PAGE).all()
+            return False, MessageDatabaseClient.get_direct_chat(user_id, chat_id, team_id, offset=offset, limit=CHAT_MESSAGE_PAGE)
 
     @classmethod
     def _generate_messages_list(cls, messages, unseen_offset, user_id, team_id):
@@ -304,22 +130,15 @@ class MessageService:
         for message in messages:
 
             output_messages += [{
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.username,
-                    "first_name": message.first_name,
-                    "last_name": message.last_name,
-                    "profile_pic": message.profile_pic,
-                    "online": message.online
-                },
+                "sender": vars(message.sender),
                 "content": word_censor.remove_forbidden_words(message),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "type": message.message_type,
                 "timestamp": message.timestamp,
-                "unseen": True if message.sender_id != user_id and unseen_offset > 0 else False
+                "unseen": True if message.sender.id != user_id and unseen_offset > 0 else False
             }]
 
-            if message.sender_id != user_id:
+            if message.sender.id != user_id:
                 unseen_offset -= 1
 
         return output_messages
@@ -328,18 +147,18 @@ class MessageService:
     def send_message(cls, inbox_data):
         user = Authenticator.authenticate_team(inbox_data.authentication)
 
-        if user.user_id == inbox_data.chat_id:
+        if user.id == inbox_data.chat_id:
             raise WrongActionError("You cannot send a message to yourself!", MessageResponseStatus.ERROR.value)
 
         receiver = cls._determinate_message_receiver(inbox_data.chat_id, user.team_id)
-        if not receiver or receiver.team_id != user.team_id:
-            cls.logger().info(
-                f"Trying to send a message to client #{inbox_data.chat_id} who's not part of team {user.team_id}.")
+        if receiver is None or receiver.team_id != user.team_id:
+            cls.logger().info(f"Trying to send a message to client #{inbox_data.chat_id} who's not part of team "
+                              f"{user.team_id}.")
             return BadRequestMessageSentResponse("The receiver it's not part of this team!",
                                                  TeamResponseStatus.USER_NOT_MEMBER.value)
 
-        new_message = MessageTableEntry(
-            sender_id=user.user_id,
+        new_message = Message(
+            sender_id=user.id,
             receiver_id=inbox_data.chat_id,
             team_id=user.team_id,
             content=inbox_data.content,
@@ -347,34 +166,28 @@ class MessageService:
             message_type=inbox_data.message_type
         )
 
-        chat_sender, chat_receivers = cls._increase_chats_offset(user.user_id, inbox_data.chat_id, user.team_id,
-                                                                 receiver.is_user)
+        chat_sender, chat_receivers = cls._increase_chats_offset(user.id, inbox_data.chat_id, user.team_id, receiver.is_user)
 
         try:
-            db.session.add(new_message)
-            db.session.flush()
-            if inbox_data.mentions:
+            new_message = MessageDatabaseClient.add_message(new_message)
+            if inbox_data.mentions is not None:
                 MentionService.save_mentions(new_message, inbox_data.mentions)
-            db.session.add(chat_sender)
-            db.session.flush()
+            MessageDatabaseClient.add_or_update_chat(chat_sender)
             for chat_receiver in chat_receivers:
-                db.session.add(chat_receiver)
-                db.session.flush()
-            db.session.commit()
+                MessageDatabaseClient.add_or_update_chat(chat_receiver)
+            DatabaseClient.commit()
             NotificationService.notify_message(new_message)
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
-        except exc.IntegrityError:
-            db.session.rollback()
-            if not db.session.query(ClientTableEntry).filter(
-                    ClientTableEntry.client_id == inbox_data.chat_id).one_or_none():
-                cls.logger().error(
-                    f"User #{new_message.sender_id} trying to sent a message to an nonexistent user.")
+        except IntegrityError:
+            DatabaseClient.rollback()
+            if UserDatabaseClient.get_client_by_id(inbox_data.chat_id) is None:
+                cls.logger().error(f"User #{new_message.sender_id} trying to sent a message to an nonexistent user.")
                 raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
             else:
-                cls.logger().error(
-                    f"Failing to send message from user #{new_message.sender_id} to client #{inbox_data.chat_id}.")
+                cls.logger().error(f"Failing to send message from user #{new_message.sender_id} to client"
+                                   f" #{inbox_data.chat_id}.")
                 return UnsuccessfulMessageSentResponse("Couldn't sent message.")
-        except orm.FlushError:
+        except FlushError:
             cls.logger().error(
                 f"Failing to send message from user #{new_message.sender_id} to client #{inbox_data.chat_id} "
                 f"due to DB problems.")
@@ -384,113 +197,85 @@ class MessageService:
 
     @classmethod
     def _determinate_message_receiver(cls, receiver_id, team_id):
-        receiver = db.session.query(
-            UserTableEntry.user_id,
-            UsersByTeamsTableEntry.team_id,
-            literal(True).label("is_user")
-        ).join(
-            UsersByTeamsTableEntry,
-            and_(
-                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
-                UsersByTeamsTableEntry.user_id == receiver_id,
-                UsersByTeamsTableEntry.team_id == team_id
-            )
-        ).one_or_none()
+        receiver = MessageDatabaseClient.get_message_direct_receiver_by_ids(receiver_id, team_id)
 
-        if not receiver:
+        if receiver is None:
             cls.logger().debug("Channel message sent.")
-            receiver = db.session.query(
-                ChannelTableEntry.team_id,
-                literal(False).label("is_user")
-            ).filter(
-                ChannelTableEntry.channel_id == receiver_id
-            ).one_or_none()
+            receiver = MessageDatabaseClient.get_message_channel_receiver_by_ids(receiver_id)
 
         return receiver
 
     @classmethod
     def _increase_chats_offset(cls, sender_id, receiver_id, team_id, is_direct_message):
-        sender_chat = db.session.query(ChatTableEntry).filter(and_(
-            ChatTableEntry.user_id == sender_id,
-            ChatTableEntry.chat_id == receiver_id,
-            ChatTableEntry.team_id == team_id
-        )).one_or_none()
+        sender_chat = MessageDatabaseClient.get_chat_by_ids(sender_id, receiver_id, team_id)
 
-        if sender_chat:
+        if sender_chat is not None:
             cls.logger().debug("Sender chat already exist. Setting sender offset in 0.")
-            sender_chat.unseen_offset = 0
+            sender_chat.offset = 0
         else:
             cls.logger().debug("New sender chat. Initializing sender offset in 0.")
-            sender_chat = ChatTableEntry(
+            sender_chat = Chat(
                 user_id=sender_id,
                 chat_id=receiver_id,
-                team_id=team_id,
-                unseen_offset=0
+                team_id=team_id
             )
 
         receivers_chat = []
 
         if is_direct_message:
             cls.logger().debug("Defining receiver chat offset for a Direct Message.")
+            receiver_user = MessageDatabaseClient.get_chat_by_ids(receiver_id, sender_id, team_id)
 
-            receiver_user = db.session.query(ChatTableEntry).filter(and_(
-                ChatTableEntry.user_id == receiver_id,
-                ChatTableEntry.chat_id == sender_id,
-                ChatTableEntry.team_id == team_id
-            )).one_or_none()
-
-            if receiver_user:
+            if receiver_user is not None:
                 cls.logger().debug("Receiver chat already exist. Increasing receiver offset by 1.")
-                receiver_user.unseen_offset += 1
+                receiver_user.offset += 1
                 receivers_chat += [receiver_user]
             else:
                 cls.logger().debug("New receiver chat. Initializing receiver offset in 1.")
-                receivers_chat += [ChatTableEntry(
+                receivers_chat += [Chat(
                     user_id=receiver_id,
                     chat_id=sender_id,
                     team_id=team_id,
-                    unseen_offset=1
+                    offset=1
                 )]
 
         else:
 
             cls.logger().debug("Defining receivers chat offset for a Channel Message.")
-            channel_members = db.session.query(UsersByChannelsTableEntry).filter(and_(
-                UsersByChannelsTableEntry.channel_id == receiver_id,
-                UsersByChannelsTableEntry.user_id != sender_id
-            )).all()
+            channel_members = ChannelDatabaseClient.get_all_channel_users_by_channel_id(receiver_id, sender_id)
 
-            cls.logger().debug(f"Channel has {len(channel_members)} members.")
+            cls.logger().debug(f"Channel has {len(channel_members)} other members.")
 
             for member in channel_members:
-                receiver_user = db.session.query(ChatTableEntry).filter(and_(
-                    ChatTableEntry.user_id == member.user_id,
-                    ChatTableEntry.chat_id == receiver_id,
-                    ChatTableEntry.team_id == team_id
-                )).one_or_none()
+                receiver_user = MessageDatabaseClient.get_chat_by_ids(member.id, receiver_id, team_id)
 
                 if receiver_user:
                     cls.logger().debug(f"Receiving channel member chat already exists. Increasing offset by 1.")
-                    receiver_user.unseen_offset += 1
+                    receiver_user.offset += 1
                     receivers_chat += [receiver_user]
                 else:
                     cls.logger().debug(f"New receiving channel member. Initializing offset in 1.")
-                    receivers_chat += [ChatTableEntry(
-                        user_id=member.user_id,
+                    receivers_chat += [Chat(
+                        user_id=member.id,
                         chat_id=receiver_id,
                         team_id=team_id,
-                        unseen_offset=1
+                        offset=1
                     )]
 
         return sender_chat, receivers_chat
+
+    @classmethod
+    def messages_stats(cls, user_data):
+        admin = Authenticator.authenticate(user_data, UserRoles.is_admin)
+        stats = MessageDatabaseClient.get_messages_stats()
+        cls.logger().info(f"Admin #{admin.id} retrieved messages stats for {len(stats)} teams.")
+        return SuccessfulMessageStatsResponse(stats)
 
 
 class WordCensor:
 
     def __init__(self, team_id):
-        self.forbidden_words = db.session.query(ForbiddenWordsTableEntry).filter(
-            ForbiddenWordsTableEntry.team_id == team_id
-        ).all()
+        self.forbidden_words = TeamDatabaseClient.get_forbidden_words_from_team(team_id)
 
     def remove_forbidden_words(self, message):
         message_content = message.content
