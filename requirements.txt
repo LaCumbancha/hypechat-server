@@ -10,6 +10,6 @@ PyJWT==1.4.0
 pycrypto==2.6.1
 ecdsa==0.13.2
 requests==2.22.0
-Pyrebase==3.0.27
+pyfcm==1.4.7
 pytest==4.6.3
 coverage
