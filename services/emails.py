@@ -53,16 +53,16 @@ class EmailService:
         return message.as_string()
 
     @classmethod
-    def team_invitation_message(cls, invitation_data):
+    def team_invitation_message(cls, invitation):
         from_address = cls._email_address
-        to_address = invitation_data.email
+        to_address = invitation.email
 
         message = MIMEMultipart()
         message['From'] = from_address
         message['To'] = to_address
         message['Subject'] = 'Hypechat\'s Team Service'
-        body = f"Hi!\n\nYou've been invited to join a team by {invitation_data.inviter_name}. The access token is: " \
-            f"{invitation_data.token}."
+        body = f"Hi!\n\nYou've been invited to join team {invitation.team_name} by {invitation.inviter_name}" \
+            f". The access token is: {invitation.token}."
         message.attach(MIMEText(body, 'plain'))
 
         return message.as_string()

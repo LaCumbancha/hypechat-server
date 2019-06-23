@@ -12,6 +12,7 @@ from dtos.responses.channels import SuccessfulChannelsListResponse
 
 from services.emails import EmailService
 from services.users import UserService
+from services.notifications import NotificationService
 
 from models.authentication import Authenticator
 from models.constants import TeamRoles
@@ -127,17 +128,20 @@ class TeamService:
 
         try:
             TeamDatabaseClient.add_invite(new_invite)
+            team = TeamDatabaseClient.get_team_by_id(team_admin.team_id)
             DatabaseClient.commit()
             cls.logger().info(f"New invitation for {new_invite.email} to join team #{team_admin.team_id}, by user #"
                               f"{team_admin.id}.")
 
             email_data = TeamInvitationEmailDTO(
                 email=invite_data.email,
+                team_name= team.name,
                 inviter_name=team_admin.username,
                 token=invite_token,
                 message_template=EmailService.team_invitation_message
             )
             EmailService.send_email(email_data)
+            NotificationService.notify_team_invitation(new_invite, team_admin.id)
             cls.logger().info(f"Team #{team_admin.team_id} invitation email sent to {new_invite.email}.")
 
         except IntegrityError:
@@ -240,7 +244,7 @@ class TeamService:
 
         if delete_user is not None:
 
-            if TeamRoles.has_higher_role(user.team_role, delete_user.role):
+            if TeamRoles.is_higher_role(user.team_role, delete_user.role):
                 try:
                     TeamDatabaseClient.delete_team_user(delete_user)
                     DatabaseClient.commit()
@@ -276,11 +280,13 @@ class TeamService:
             return BadRequestTeamMessageResponse("The given user is not part this team.",
                                                  TeamResponseStatus.USER_NOT_MEMBER.value)
 
+        old_role = user_team.role
         user_team.role = change_role_data.new_role
 
         try:
             TeamDatabaseClient.update_team_user(user_team)
             DatabaseClient.commit()
+            NotificationService.notify_change_role(user_team, old_role, team_admin.id)
             cls.logger().info(f"User #{user_team.user_id} set as team #{team_admin.team_id} {user_team.team_role} by "
                               f"user #{team_admin.id}.")
         except IntegrityError:
