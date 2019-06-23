@@ -37,14 +37,19 @@ class NotificationService:
                 },
                 "invitation_token": invitation.token
             }
-            response = cls.push_service.notify_topic_subscribers(topic_name=invited_user.id, message_title=cls.APP_NAME,
-                                                                 message_body=message_body, data_message=data)
 
-            if response.get("failure") > 0:
-                cls.logger().error(f"There's been some problems sending user #{invited_user.id}'s team invite "
-                                   f"notification to Firebase.")
-            else:
-                cls.logger().info(f"Team invite notified to user #{invited_user.id}.")
+            try:
+                response = cls.push_service.notify_topic_subscribers(topic_name=invited_user.id, message_title=cls.APP_NAME,
+                                                                     message_body=message_body, data_message=data)
+
+                if response.get("failure") > 0:
+                    cls.logger().error(f"There's been some problems sending user #{invited_user.id}'s team invite "
+                                       f"notification to Firebase.")
+                else:
+                    cls.logger().info(f"Team invite notified to user #{invited_user.id}.")
+
+            except ConnectionError:
+                cls.logger().error("Couldn't connect to Firebase server.")
 
         else:
             cls.logger().info(f"The invited user is not already registered so it cannot receive a notification.")
@@ -65,14 +70,19 @@ class NotificationService:
                 "last_name": admin.last_name
             }
         }
-        response = cls.push_service.notify_topic_subscribers(topic_name=user_team.user_id, message_title=cls.APP_NAME,
-                                                             message_body=message_body, data_message=data)
 
-        if response.get("failure") > 0:
-            cls.logger().error(f"There's been some problems sending user #{user_team.user_id} new role notifications"
-                               f" to Firebase.")
-        else:
-            cls.logger().info(f"New role notified to user #{user_team.user_id}.")
+        try:
+            response = cls.push_service.notify_topic_subscribers(topic_name=user_team.user_id, message_title=cls.APP_NAME,
+                                                                 message_body=message_body, data_message=data)
+
+            if response.get("failure") > 0:
+                cls.logger().error(f"There's been some problems sending user #{user_team.user_id} new role notifications"
+                                   f" to Firebase.")
+            else:
+                cls.logger().info(f"New role notified to user #{user_team.user_id}.")
+
+        except ConnectionError:
+            cls.logger().error("Couldn't connect to Firebase server.")
 
     @classmethod
     def notify_channel_invitation(cls, user_channel, inviter_id):
@@ -90,14 +100,19 @@ class NotificationService:
                 "last_name": inviter_user.last_name
             }
         }
-        response = cls.push_service.notify_topic_subscribers(topic_name=user_channel.user_id, message_title=cls.APP_NAME,
-                                                             message_body=message_body, data_message=data)
 
-        if response.get("failure") > 0:
-            cls.logger().error(f"There's been some problems sending user #{user_channel.user_id}'s' channel invite "
-                               f"notification to Firebase.")
-        else:
-            cls.logger().info(f"Channel invitation notified to user #{user_channel.user_id}.")
+        try:
+            response = cls.push_service.notify_topic_subscribers(topic_name=user_channel.user_id, message_title=cls.APP_NAME,
+                                                                 message_body=message_body, data_message=data)
+
+            if response.get("failure") > 0:
+                cls.logger().error(f"There's been some problems sending user #{user_channel.user_id}'s' channel invite "
+                                   f"notification to Firebase.")
+            else:
+                cls.logger().info(f"Channel invitation notified to user #{user_channel.user_id}.")
+
+        except ConnectionError:
+            cls.logger().error("Couldn't connect to Firebase server.")
 
     @classmethod
     def notify_message(cls, message, is_user_receiver):
@@ -119,14 +134,18 @@ class NotificationService:
             message_body = "Your receive a channel message!"
             data["channel_name"] = channel.name
 
-        response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id, message_title=cls.APP_NAME,
-                                                             message_body=message_body, data_message=data)
+        try:
+            response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id, message_title=cls.APP_NAME,
+                                                                 message_body=message_body, data_message=data)
 
-        if response.get("failure") > 0:
-            cls.logger().error(f"There's been some problems sending the messages notification for receiver "
-                               f"#{message.receiver_id} to Firebase.")
-        else:
-            cls.logger().info(f"New message notified to receiver #{message.receiver_id}.")
+            if response.get("failure") > 0:
+                cls.logger().error(f"There's been some problems sending the messages notification for receiver "
+                                   f"#{message.receiver_id} to Firebase.")
+            else:
+                cls.logger().info(f"New message notified to receiver #{message.receiver_id}.")
+
+        except ConnectionError:
+            cls.logger().error("Couldn't connect to Firebase server.")
 
     @classmethod
     def notify_mention(cls, message, mentioned_id):
@@ -147,11 +166,14 @@ class NotificationService:
         if channel is not None:
             data["channel_name"] = channel.name
 
-        response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id, message_title=cls.APP_NAME,
-                                                             message_body=message_body, data_message=data)
+        try:
+            response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id, message_title=cls.APP_NAME,
+                                                                 message_body=message_body, data_message=data)
 
-        if response.get("failure") > 0:
-            cls.logger().error(f"There's been some problems sending the mentions notification for receiver "
-                               f"#{message.receiver_id} to Firebase.")
-        else:
-            cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
+            if response.get("failure") > 0:
+                cls.logger().error(f"There's been some problems sending the mentions notification for receiver "
+                                   f"#{message.receiver_id} to Firebase.")
+            else:
+                cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
+        except ConnectionError:
+            cls.logger().error("Couldn't connect to Firebase server.")
