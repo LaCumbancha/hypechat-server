@@ -80,7 +80,7 @@ class ChannelService:
             new_chat = Chat(user_id=invited_user.id, chat_id=user.channel_id, team_id=user.team_id)
             MessageDatabaseClient.add_chat(new_chat)
             DatabaseClient.commit()
-            NotificationService.notify_channel_invitation(new_user_by_channel, user.id)
+            NotificationService.notify_channel_invitation(new_channel_user, user.id)
             cls.logger().info(f"User #{invited_user.id} added to channel #{user.channel_id} by {user.username}.")
 
         except IntegrityError:

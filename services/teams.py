@@ -287,8 +287,8 @@ class TeamService:
             TeamDatabaseClient.update_team_user(user_team)
             DatabaseClient.commit()
             NotificationService.notify_change_role(user_team, old_role, team_admin.id)
-            cls.logger().info(f"User #{user_team.user_id} set as team #{team_admin.team_id} {user_team.team_role} by "
-                              f"user #{team_admin.id}.")
+            cls.logger().info(f"User #{user_team.user_id} set as team #{team_admin.team_id} {user_team.role} by user "
+                              f"#{team_admin.id}.")
         except IntegrityError:
             DatabaseClient.rollback()
             cls.logger().error(f"Failing to modifying role of #{user_team.user_id} in team #{user_team.team_id}.")
