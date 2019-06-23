@@ -43,7 +43,7 @@ class NotificationService:
                 cls.logger().error(f"There's been some problems sending user #{invited_user.id}'s team invite "
                                    f"notification.")
             else:
-                cls.logger().info(f"User #{invited_user.id}'s team invitation notified.")
+                cls.logger().info(f"Team invite notified to user #{invited_user.id}.")
 
     @classmethod
     def notify_change_role(cls, user_team, old_role, admin_id):
@@ -67,7 +67,7 @@ class NotificationService:
         if response.get("failure"):
             cls.logger().error(f"There's been some problems sending user #{user_team.user_id} new role notifications")
         else:
-            cls.logger().info(f"User #{user_team.user_id}'s new role notified.")
+            cls.logger().info(f"New role notified to user #{user_team.user_id}.")
 
     @classmethod
     def notify_channel_invitation(cls, user_channel, inviter_id):
@@ -92,7 +92,7 @@ class NotificationService:
             cls.logger().error(f"There's been some problems sending user #{inviter_user.id}'s' channel invite "
                                f"notification.")
         else:
-            cls.logger().info(f"User #{invited_user.id}'s channel invitation notified.")
+            cls.logger().info(f"Channel invitation notified to user #{invited_user.id}.")
 
     @classmethod
     def notify_message(cls, message, is_user_receiver):
@@ -117,11 +117,11 @@ class NotificationService:
         response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id, message_title=cls.APP_NAME,
                                                              message_body=message_body, data_message=data)
 
-        if response.get("failure"):
+        if response.get("failure") > 0:
             cls.logger().error(f"There's been some problems sending the messages notification for receiver "
                                f"#{message.receiver_id}.")
         else:
-            cls.logger().info(f"Receiver #{message.receiver_id}'s messages notified.")
+            cls.logger().info(f"New message notified to receiver #{message.receiver_id}.")
 
     @classmethod
     def notify_mention(cls, message, mentioned_id):
@@ -149,4 +149,4 @@ class NotificationService:
             cls.logger().error(f"There's been some problems sending the mentions notification for receiver "
                                f"#{message.receiver_id}.")
         else:
-            cls.logger().info(f"Receiver #{message.receiver_id}'s mentions notified.")
+            cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
