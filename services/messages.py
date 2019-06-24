@@ -103,6 +103,7 @@ class MessageService:
             unseen_messages = chat.offset
             try:
                 chat.offset = 0
+                MessageDatabaseClient.add_or_update_chat(chat)
                 DatabaseClient.commit()
                 cls.logger().error(f"{unseen_messages} messages set as seen for user {user.id} in chat {chat.chat_id}.")
             except IntegrityError:
