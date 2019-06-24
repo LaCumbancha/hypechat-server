@@ -86,7 +86,7 @@ class TeamRoles(Enum):
         return user_role == TeamRoles.CREATOR.value
 
     @classmethod
-    def has_higher_role(cls, user1_role, user2_role):
+    def is_higher_role(cls, user1_role, user2_role):
         role_rank = {
             TeamRoles.MEMBER.value: 1,
             TeamRoles.MODERATOR.value: 2,
@@ -122,3 +122,11 @@ class MessageType(Enum):
     IMAGE = "IMAGE"
     FILE = "FILE"
     SNIPPET = "SNIPPET"
+
+
+class NotificationType(Enum):
+    TEAM_INVITATION = "TEAM_INVITATION"
+    CHANNEL_INVITATION = "CHANNEL_INVITATION"
+    TEAM_ROLE_CHANGE = "TEAM_ROLE_CHANGE"
+    MESSAGE = "MESSAGE"
+    MENTION = "MENTION"

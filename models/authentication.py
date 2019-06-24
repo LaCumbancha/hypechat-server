@@ -87,7 +87,7 @@ class Authenticator:
         if user.role == UserRoles.ADMIN.value:
             user.user_role = user.role
             user.team_id = authentication.team_id
-            user.team_role = None
+            user.team_role = user.role
             return user
 
         team_user = UserDatabaseClient.get_team_user_by_ids(user.id, authentication.team_id)

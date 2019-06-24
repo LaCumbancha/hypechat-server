@@ -9,6 +9,8 @@ from dtos.responses.messages import *
 
 from exceptions.exceptions import *
 from models.authentication import Authenticator
+
+from services.notifications import NotificationService
 from services.mentions import MentionService
 
 from sqlalchemy.exc import IntegrityError
@@ -101,6 +103,7 @@ class MessageService:
             unseen_messages = chat.offset
             try:
                 chat.offset = 0
+                MessageDatabaseClient.add_or_update_chat(chat)
                 DatabaseClient.commit()
                 cls.logger().error(f"{unseen_messages} messages set as seen for user {user.id} in chat {chat.chat_id}.")
             except IntegrityError:
@@ -174,6 +177,7 @@ class MessageService:
             for chat_receiver in chat_receivers:
                 MessageDatabaseClient.add_or_update_chat(chat_receiver)
             DatabaseClient.commit()
+            NotificationService.notify_message(new_message, receiver.is_user)
             cls.logger().info(f"Message sent from user #{new_message.sender_id} to client #{new_message.receiver_id}.")
         except IntegrityError:
             DatabaseClient.rollback()
