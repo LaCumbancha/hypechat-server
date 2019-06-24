@@ -7,6 +7,7 @@ sys.modules["daos.bots"] = MagicMock()
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.messages"] = MagicMock()
 sys.modules["services.bots"] = MagicMock()
+sys.modules["services.notifications"] = MagicMock()
 sys.modules["logging"].getLogger = MagicMock()
 
 from dtos.models.messages import UserMention, ChannelMention
