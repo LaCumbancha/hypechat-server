@@ -5,7 +5,7 @@ from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
 from daos.channels import ChannelDatabaseClient
 
-from models.constants import TeamRoles
+from models.constants import TeamRoles, NotificationType
 
 import logging
 import os
@@ -29,6 +29,7 @@ class NotificationService:
         if invited_user is not None:
             message_body = "You have been invited to join a team!"
             data = {
+                "notification_type": NotificationType.TEAM_INVITATION.value,
                 "team_name": team.name,
                 "inviter": {
                     "username": invited_user.username,
@@ -67,6 +68,7 @@ class NotificationService:
         condition = "upgraded" if TeamRoles.is_higher_role(new_role, old_role) else "downgraded"
         message_body = f"You have been {condition} in team {team.name}!"
         data = {
+            "notification_type": NotificationType.TEAM_ROLE_CHANGE.value,
             "team_name": team.name,
             "admin": {
                 "username": admin.username,
@@ -100,6 +102,7 @@ class NotificationService:
 
         message_body = f"You have been added to channel {channel.name} in team {team.name}!"
         data = {
+            "notification_type": NotificationType.CHANNEL_INVITATION.value,
             "channel_name": channel.name,
             "team_name": team.name,
             "inviter": {
@@ -133,6 +136,7 @@ class NotificationService:
 
         message_body = "You receive a direct message!"
         data = {
+            "notification_type": NotificationType.MESSAGE.value,
             "team_name": team.name,
             "sender": {
                 "username": sender_user.username,
@@ -170,6 +174,7 @@ class NotificationService:
 
         message_body = "You have been mentioned!"
         data = {
+            "notification_type": NotificationType.MENTION.value,
             "team_name": team.name,
             "sender": {
                 "username": sender_user.username,
