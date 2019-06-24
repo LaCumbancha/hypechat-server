@@ -99,3 +99,19 @@ class EmailTestCase(unittest.TestCase):
 
         EmailService.send_email(data)
         self.assertTrue(MockedEmailServer.email_sent)
+
+    def test_recovery_token_email_properly_created(self):
+        data = MagicMock()
+        data.email = "test@test"
+        response = EmailService.recovery_token_message(data)
+        self.assertTrue(self.__class__._text_contains(response, "Hypechat\'s Recovery Password Service"))
+
+    def test_team_invitation_email_properly_created(self):
+        data = MagicMock()
+        data.email = "test@test"
+        response = EmailService.team_invitation_message(data)
+        self.assertTrue(self.__class__._text_contains(response, "Hypechat\'s Team Service"))
+
+    @classmethod
+    def _text_contains(cls, text, elem):
+        return text.find(elem) >= 0
