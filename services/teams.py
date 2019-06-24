@@ -64,49 +64,43 @@ class TeamService:
 
     @classmethod
     def add_user(cls, add_data):
-        admin = Authenticator.authenticate(add_data.authentication)
+        admin = Authenticator.authenticate(add_data.authentication, UserRoles.is_admin)
+        user = UserDatabaseClient.get_user_by_id(add_data.add_user_id)
 
-        if admin.role == UserRoles.ADMIN.value:
-            user = UserDatabaseClient.get_user_by_id(add_data.add_user_id)
+        if user is None:
+            cls.logger().info(f"User {add_data.add_user_id} not found.")
+            raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
-            if user is None:
-                cls.logger().info(f"User {add_data.add_user_id} not found.")
-                raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+        if TeamDatabaseClient.get_user_in_team_by_ids(user.id, add_data.authentication.team_id) is not None:
+            cls.logger().info(
+                f"User {add_data.add_user_id} already part of team #{add_data.authentication.team_id}.")
+            return BadRequestTeamMessageResponse("This user already belongs to the team.",
+                                                 TeamResponseStatus.ALREADY_REGISTERED.value)
 
-            if TeamDatabaseClient.get_user_in_team_by_ids(user.id, add_data.authentication.team_id) is not None:
-                cls.logger().info(
-                    f"User {add_data.add_user_id} already part of team #{add_data.authentication.team_id}.")
-                return BadRequestTeamMessageResponse("This user already belongs to the team.",
-                                                     TeamResponseStatus.ALREADY_REGISTERED.value)
+        previous_invitation = TeamDatabaseClient.get_team_invite(add_data.authentication.team_id, user.email)
 
-            previous_invitation = TeamDatabaseClient.get_team_invite(add_data.authentication.team_id, user.email)
+        if previous_invitation is not None:
+            cls.logger().info(f"Deleting old invitation for user {add_data.add_user_id} to team "
+                              f"#{add_data.authentication.team_id}.")
+            TeamDatabaseClient.delete_invite(previous_invitation)
+            DatabaseClient.commit()
 
-            if previous_invitation is not None:
-                cls.logger().info(f"Deleting old invitation for user {add_data.add_user_id} to team "
-                                  f"#{add_data.authentication.team_id}.")
-                TeamDatabaseClient.delete_invite(previous_invitation)
-                DatabaseClient.commit()
+        added_user = TeamUser(
+            user_id=add_data.add_user_id,
+            team_id=add_data.authentication.team_id
+        )
 
-            added_user = TeamUser(
-                user_id=add_data.add_user_id,
-                team_id=add_data.authentication.team_id
-            )
+        try:
+            TeamDatabaseClient.add_team_user(added_user)
+            DatabaseClient.commit()
+            cls.logger().info(
+                f"Added user #{added_user.user_id} to team #{added_user.team_id} by admin #{admin.id}.")
+            return SuccessfulTeamMessageResponse("User added.", TeamResponseStatus.ADDED.value)
 
-            try:
-                TeamDatabaseClient.add_team_user(added_user)
-                DatabaseClient.commit()
-                cls.logger().info(
-                    f"Added user #{added_user.user_id} to team #{added_user.team_id} by admin #{admin.id}.")
-                return SuccessfulTeamMessageResponse("User added.", TeamResponseStatus.ADDED.value)
-
-            except IntegrityError:
-                DatabaseClient.rollback()
-                cls.logger().error(f"Couldn't add user #{added_user.user_id} to team #{added_user.team_id}.")
-                return UnsuccessfulTeamMessageResponse("Couldn't invite user to team.")
-
-        else:
-            raise NoPermissionsError("You must be ADMIN to perform this action.",
-                                     TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+        except IntegrityError:
+            DatabaseClient.rollback()
+            cls.logger().error(f"Couldn't add user #{added_user.user_id} to team #{added_user.team_id}.")
+            return UnsuccessfulTeamMessageResponse("Couldn't invite user to team.")
 
     @classmethod
     def invite_user(cls, invite_data):
