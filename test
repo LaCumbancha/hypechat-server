@@ -20,5 +20,5 @@ coverage run -a --source=controllers,dtos,handlers,models,services,utils,service
 echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html
-rm .coverage
-rm -rf ./htmlcov
+#rm .coverage
+#rm -rf ./htmlcov
