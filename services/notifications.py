@@ -39,12 +39,16 @@ class NotificationService:
             }
 
             try:
-                response = cls.push_service.notify_topic_subscribers(topic_name=invited_user.id, message_title=cls.APP_NAME,
+                cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+                                   f"and body \"{message_body}\"")
+                response = cls.push_service.notify_topic_subscribers(topic_name=invited_user.id,
+                                                                     message_title=cls.APP_NAME,
                                                                      message_body=message_body, data_message=data)
 
-                if response.get("failure") > 0:
-                    cls.logger().error(f"There's been some problems sending user #{invited_user.id}'s team invite "
-                                       f"notification to Firebase.")
+                failures = response.get("failure")
+                if failures > 0:
+                    cls.logger().error(f"There's been detected {failures} failures sending user #{invited_user.id}'s "
+                                       f"team invite notification to Firebase.")
                 else:
                     cls.logger().info(f"Team invite notified to user #{invited_user.id}.")
 
@@ -72,12 +76,16 @@ class NotificationService:
         }
 
         try:
-            response = cls.push_service.notify_topic_subscribers(topic_name=user_team.user_id, message_title=cls.APP_NAME,
+            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+                               f"and body \"{message_body}\"")
+            response = cls.push_service.notify_topic_subscribers(topic_name=user_team.user_id,
+                                                                 message_title=cls.APP_NAME,
                                                                  message_body=message_body, data_message=data)
 
-            if response.get("failure") > 0:
-                cls.logger().error(f"There's been some problems sending user #{user_team.user_id} new role notifications"
-                                   f" to Firebase.")
+            failures = response.get("failure")
+            if failures > 0:
+                cls.logger().error(f"There's been detected {failures} failures sending user #{user_team.user_id} new "
+                                   f"role notifications to Firebase.")
             else:
                 cls.logger().info(f"New role notified to user #{user_team.user_id}.")
 
@@ -102,12 +110,16 @@ class NotificationService:
         }
 
         try:
-            response = cls.push_service.notify_topic_subscribers(topic_name=user_channel.user_id, message_title=cls.APP_NAME,
+            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+                               f"and body \"{message_body}\"")
+            response = cls.push_service.notify_topic_subscribers(topic_name=user_channel.user_id,
+                                                                 message_title=cls.APP_NAME,
                                                                  message_body=message_body, data_message=data)
 
-            if response.get("failure") > 0:
-                cls.logger().error(f"There's been some problems sending user #{user_channel.user_id}'s' channel invite "
-                                   f"notification to Firebase.")
+            failures = response.get("failure")
+            if failures > 0:
+                cls.logger().error(f"There's been detected {failures} failures sending user #{user_channel.user_id}'s "
+                                   f"channel invite notification to Firebase.")
             else:
                 cls.logger().info(f"Channel invitation notified to user #{user_channel.user_id}.")
 
@@ -135,12 +147,16 @@ class NotificationService:
             data["channel_name"] = channel.name
 
         try:
-            response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id, message_title=cls.APP_NAME,
+            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+                               f"and body \"{message_body}\"")
+            response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id,
+                                                                 message_title=cls.APP_NAME,
                                                                  message_body=message_body, data_message=data)
 
-            if response.get("failure") > 0:
-                cls.logger().error(f"There's been some problems sending the messages notification for receiver "
-                                   f"#{message.receiver_id} to Firebase.")
+            failures = response.get("failure")
+            if failures > 0:
+                cls.logger().error(f"There's been detected {failures} failures sending the messages notification for "
+                                   f"receiver #{message.receiver_id} to Firebase.")
             else:
                 cls.logger().info(f"New message notified to receiver #{message.receiver_id}.")
 
@@ -167,12 +183,15 @@ class NotificationService:
             data["channel_name"] = channel.name
 
         try:
+            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+                               f"and body \"{message_body}\"")
             response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id, message_title=cls.APP_NAME,
                                                                  message_body=message_body, data_message=data)
 
-            if response.get("failure") > 0:
-                cls.logger().error(f"There's been some problems sending the mentions notification for receiver "
-                                   f"#{message.receiver_id} to Firebase.")
+            failures = response.get("failure")
+            if failures > 0:
+                cls.logger().error(f"There's been detected {failures} failures sending the mentions notification for "
+                                   f"receiver #{message.receiver_id} to Firebase.")
             else:
                 cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
         except ConnectionError:
