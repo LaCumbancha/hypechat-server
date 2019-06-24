@@ -76,7 +76,7 @@ class NotificationService:
         }
 
         try:
-            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+            cls.logger().debug(f"Sending notification to topic {user_team.user_id}, with title \"{cls.APP_NAME}\" "
                                f"and body \"{message_body}\"")
             response = cls.push_service.notify_topic_subscribers(topic_name=user_team.user_id,
                                                                  message_title=cls.APP_NAME,
@@ -110,7 +110,7 @@ class NotificationService:
         }
 
         try:
-            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+            cls.logger().debug(f"Sending notification to topic {user_channel.user_id}, with title \"{cls.APP_NAME}\" "
                                f"and body \"{message_body}\"")
             response = cls.push_service.notify_topic_subscribers(topic_name=user_channel.user_id,
                                                                  message_title=cls.APP_NAME,
@@ -147,7 +147,7 @@ class NotificationService:
             data["channel_name"] = channel.name
 
         try:
-            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+            cls.logger().debug(f"Sending notification to topic {message.receiver_id}, with title \"{cls.APP_NAME}\" "
                                f"and body \"{message_body}\"")
             response = cls.push_service.notify_topic_subscribers(topic_name=message.receiver_id,
                                                                  message_title=cls.APP_NAME,
@@ -183,7 +183,7 @@ class NotificationService:
             data["channel_name"] = channel.name
 
         try:
-            cls.logger().debug(f"Sending notification to topic {invited_user.id}, with title \"{cls.APP_NAME}\" "
+            cls.logger().debug(f"Sending notification to topic {mentioned_id}, with title \"{cls.APP_NAME}\" "
                                f"and body \"{message_body}\"")
             response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id, message_title=cls.APP_NAME,
                                                                  message_body=message_body, data_message=data)
