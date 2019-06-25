@@ -21,7 +21,6 @@ class BotModelMapper:
     def to_bot(cls, bot_entry):
         return Bot(
             bot_id=bot_entry.bot_id,
-            team_id=bot_entry.team_id,
             name=bot_entry.bot_name,
             callback=bot_entry.callback_url,
             token=bot_entry.token
@@ -33,7 +32,6 @@ class BotModelMapper:
         for bot_entry in bots_entries:
             bots += [Bot(
                 bot_id=bot_entry.bot_id,
-                team_id=bot_entry.team_id,
                 name=bot_entry.bot_name,
                 callback=bot_entry.callback_url,
                 token=bot_entry.token
