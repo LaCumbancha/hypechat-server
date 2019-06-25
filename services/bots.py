@@ -90,8 +90,9 @@ class BotService:
         if bot is not None:
             body = {
                 "params": cls._parse_message(message.content, bot.name),
-                "team_id": message.team_id,
-                "chat_id": message.receiver_id
+                "user_id": message.sender_id,
+                "chat_id": message.receiver_id,
+                "team_id": message.team_id
             }
             headers = {"X-Auth-Token": bot.token}
             requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
