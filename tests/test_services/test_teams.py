@@ -3,8 +3,11 @@ from unittest.mock import MagicMock
 
 from dtos.models.users import User, PublicUser
 from dtos.models.teams import Team, TeamUser, TeamInvite
+from dtos.models.channels import Channel, ChannelCreator
+
 from dtos.responses.teams import *
 from dtos.responses.clients import *
+from dtos.responses.channels import *
 
 from exceptions.exceptions import UserNotFoundError
 from sqlalchemy.exc import IntegrityError
@@ -375,7 +378,7 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(0, len(response.users))
         self.assertIsInstance(response, SuccessfulUsersListResponse)
 
-    def test_get_team_users_with_empty_list_works_properly(self):
+    def test_get_team_users_with_non_empty_list_works_properly(self):
         data = MagicMock()
         user = User(user_id=0)
         user.team_id = 0
@@ -400,3 +403,37 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(TeamRoles.MEMBER.value, response.users[1].get("team_role"))
         self.assertIsInstance(response, SuccessfulUsersListResponse)
 
+    def test_get_team_channels_with_empty_list_works_properly(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        user.team_id = 0
+        channels = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_channels_by_team_id.return_value = channels
+
+        response = TeamService.team_channels(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(0, len(response.channels))
+        self.assertIsInstance(response, SuccessfulChannelsListResponse)
+
+    def test_get_team_channels_with_non_empty_list_works_properly(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        user.team_id = 0
+
+        channel1 = Channel(channel_id=1, creator=ChannelCreator(user_id=0), name="TEST-1", team_id=0)
+        channel2 = Channel(channel_id=2, creator=ChannelCreator(user_id=0), name="TEST-2", team_id=0)
+        channels = [channel1, channel2]
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_channels_by_team_id.return_value = channels
+
+        response = TeamService.team_channels(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(2, len(response.channels))
+        self.assertEqual(1, response.channels[0].get("id"))
+        self.assertEqual("TEST-1", response.channels[0].get("name"))
+        self.assertEqual(2, response.channels[1].get("id"))
+        self.assertEqual("TEST-2", response.channels[1].get("name"))
+        self.assertIsInstance(response, SuccessfulChannelsListResponse)

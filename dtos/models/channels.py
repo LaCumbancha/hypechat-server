@@ -16,7 +16,7 @@ class Channel:
 
 class ChannelCreator:
 
-    def __init__(self, user_id, username, first_name, last_name):
+    def __init__(self, user_id, username=None, first_name=None, last_name=None):
         self.id = user_id
         self.username = username
         self.first_name = first_name
