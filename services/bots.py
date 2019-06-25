@@ -11,21 +11,56 @@ from dtos.responses.clients import *
 from models.constants import UserRoles, TeamRoles
 from models.authentication import Authenticator
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+import os
 import json
 import logging
 import requests
 
 
 class BotService:
-
+    TITO_ID = os.getenv("TITO_ID")
     EMPTY_TEXT = ""
     BOT_MENTION_FORMAT = "@{} "
+    TITO_WELCOME_PARAMS = "welcome-user"
 
     @classmethod
     def logger(cls):
         return logging.getLogger(cls.__name__)
+
+    @classmethod
+    def register_tito(cls, team_id):
+        try:
+            team_tito = TeamUser(
+                user_id=cls.TITO_ID,
+                team_id=team_id,
+                role=TeamRoles.BOT.value
+            )
+            TeamDatabaseClient.add_team_user(team_tito)
+            DatabaseClient.commit()
+            cls.logger().info(f"Tito added to team #{team_id}.")
+        except SQLAlchemyError:
+            cls.logger().error(f"Failing to register Tito into team #{team_id}.", exc)
+            raise
+
+    @classmethod
+    def tito_welcome(cls, user_id, team_id):
+        bot = BotDatabaseClient.get_bot_by_id(cls.TITO_ID)
+        team = TeamDatabaseClient.get_team_by_id(team_id)
+
+        if bot is not None and team.welcome_message is not None:
+            body = {
+                "params": cls.TITO_WELCOME_PARAMS,
+                "message": team.welcome_message,
+                "user_id": user_id,
+                "team_id": team_id
+            }
+            headers = {"X-Auth-Token": bot.token}
+            requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
+            cls.logger().info(f"Tito notified to welcome user #{user_id} to team #{team_id}")
+        elif team.welcome_message is not None:
+            cls.logger().info(f"There's no message for Tito to welcome user #{user_id}.")
 
     @classmethod
     def create_bot(cls, bot_data):
@@ -35,7 +70,6 @@ class BotService:
             new_client = UserDatabaseClient.add_client()
             new_bot = Bot(
                 bot_id=new_client.id,
-                team_id=admin.team_id,
                 name=bot_data.name,
                 callback=bot_data.callback,
                 token=Authenticator.generate(new_client.id)
@@ -75,8 +109,9 @@ class BotService:
         if bot is not None:
             body = {
                 "params": cls._parse_message(message.content, bot.name),
-                "team_id": message.team_id,
-                "chat_id": message.receiver_id
+                "user_id": message.sender_id,
+                "chat_id": message.receiver_id,
+                "team_id": message.team_id
             }
             headers = {"X-Auth-Token": bot.token}
             requests.post(url=bot.callback, data=json.dumps(body), headers=headers)

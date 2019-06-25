@@ -4,6 +4,7 @@ from daos.database import DatabaseClient
 from daos.mappers.bots import BotDatabaseMapper, BotModelMapper
 
 from tables.bots import BotTableEntry
+from tables.users import UsersByTeamsTableEntry
 
 
 class BotDatabaseClient:
@@ -25,5 +26,16 @@ class BotDatabaseClient:
 
     @classmethod
     def get_team_bots(cls, team_id):
-        bots_entries = db.session.query(BotTableEntry).filter(BotTableEntry.team_id == team_id).all()
+        bots_entries = db.session.query(
+            BotTableEntry.bot_id,
+            BotTableEntry.bot_name,
+            BotTableEntry.callback_url,
+            BotTableEntry.token,
+            UsersByTeamsTableEntry.team_id
+        ).join(
+            UsersByTeamsTableEntry,
+            UsersByTeamsTableEntry.user_id == BotTableEntry.bot_id
+        ).filter(
+            UsersByTeamsTableEntry.team_id == team_id
+        ).all()
         return BotModelMapper.to_bots(bots_entries)
