@@ -47,15 +47,20 @@ class BotService:
     @classmethod
     def tito_welcome(cls, user_id, team_id):
         bot = BotDatabaseClient.get_bot_by_id(cls.TITO_ID)
+        team = TeamDatabaseClient.get_team_by_id(team_id)
 
-        if bot is not None:
+        if bot is not None and team.welcome_message is not None:
             body = {
                 "params": cls.TITO_WELCOME_PARAMS,
+                "message": team.welcome_message,
                 "user_id": user_id,
                 "team_id": team_id
             }
             headers = {"X-Auth-Token": bot.token}
             requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
+            cls.logger().info(f"Tito notified to welcome user #{user_id} to team #{team_id}")
+        elif team.welcome_message is not None:
+            cls.logger().info(f"There's no message for Tito to welcome user #{user_id}.")
 
     @classmethod
     def create_bot(cls, bot_data):
