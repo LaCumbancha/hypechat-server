@@ -96,6 +96,7 @@ class TeamService:
             try:
                 TeamDatabaseClient.add_team_user(added_user)
                 DatabaseClient.commit()
+                BotService.tito_welcome(added_user.user_id, added_user.team_id)
                 cls.logger().info(f"Added user #{added_user.user_id} to team #{added_user.team_id} by admin #{admin.id}.")
                 return SuccessfulTeamMessageResponse("User added.", TeamResponseStatus.ADDED.value)
 
@@ -171,6 +172,7 @@ class TeamService:
             TeamDatabaseClient.add_team_user(new_user_team)
             TeamDatabaseClient.delete_invite(invite)
             DatabaseClient.commit()
+            BotService.tito_welcome(new_user_team.user_id, new_user_team.team_id)
             cls.logger().info(f"User #{user.id} joined team #{invite.team_id}.")
         except IntegrityError:
             DatabaseClient.rollback()

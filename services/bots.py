@@ -23,6 +23,7 @@ class BotService:
     TITO_ID = os.getenv("TITO_ID")
     EMPTY_TEXT = ""
     BOT_MENTION_FORMAT = "@{} "
+    TITO_WELCOME_PARAMS = "welcome-user"
 
     @classmethod
     def logger(cls):
@@ -42,6 +43,19 @@ class BotService:
         except SQLAlchemyError:
             cls.logger().error(f"Failing to register Tito into team #{team_id}.", exc)
             raise
+
+    @classmethod
+    def tito_welcome(cls, user_id, team_id):
+        bot = BotDatabaseClient.get_bot_by_id(cls.TITO_ID)
+
+        if bot is not None:
+            body = {
+                "params": cls.TITO_WELCOME_PARAMS,
+                "user_id": user_id,
+                "team_id": team_id
+            }
+            headers = {"X-Auth-Token": bot.token}
+            requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
 
     @classmethod
     def create_bot(cls, bot_data):
