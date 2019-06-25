@@ -8,7 +8,6 @@ class BotDatabaseMapper:
     def to_bot(cls, bot):
         return BotTableEntry(
             bot_id=bot.id,
-            team_id=bot.team_id,
             bot_name=bot.name,
             callback_url=bot.callback,
             token=bot.token
