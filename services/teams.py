@@ -280,7 +280,7 @@ class TeamService:
         user_team = TeamDatabaseClient.get_user_in_team_by_ids(change_role_data.user_id, team_admin.team_id)
         if user_team is None:
             cls.logger().info(
-                f"Trying to modify role from user #{user_team.user_id}, who's not part of team #{user.team_id}")
+                f"Trying to modify role from user #{change_role_data.user_id}, who's not part of team #{team_admin.team_id}")
             return BadRequestTeamMessageResponse("The given user is not part this team.",
                                                  TeamResponseStatus.USER_NOT_MEMBER.value)
 

@@ -29,6 +29,9 @@ mock = MagicMock()
 
 
 class MockedTeamDatabase:
+    batch_team_user = None
+    stored_team_user = TeamUser(user_id=0, team_id=0, role=TeamRoles.MEMBER.value)
+
     batch_invites = 0
     stored_invites = 1
 
@@ -568,4 +571,91 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(0, MockedTeamDatabase.batch_team_users)
         self.assertEqual(0, MockedTeamDatabase.stored_team_users)
         self.assertEqual(TeamResponseStatus.REMOVED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_change_role_to_creator_returns_bad_request(self):
+        data = MagicMock()
+        data.new_role = TeamRoles.CREATOR.value
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+
+        response = TeamService.change_role(data)
+        self.assertEqual(TeamResponseStatus.ROLE_UNAVAILABLE.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_change_role_to_not_member_user_returns_bad_request(self):
+        data = MagicMock()
+        data.new_role = TeamRoles.MODERATOR.value
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = None
+
+        response = TeamService.change_role(data)
+        self.assertEqual(TeamResponseStatus.USER_NOT_MEMBER.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_change_role_with_database_error_returns_unsuccessful(self):
+        data = MagicMock()
+        data.new_role = TeamRoles.MODERATOR.value
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user_to_change = TeamUser(user_id=1, team_id=0, role=TeamRoles.MEMBER.value)
+
+        def update_team_user(team_user):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_user = team_user
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_user = None
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = user_to_change
+        sys.modules["daos.teams"].TeamDatabaseClient.update_team_user = MagicMock(side_effect=update_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.change_role(data)
+        self.assertIsNone(MockedTeamDatabase.batch_team_user)
+        self.assertEqual(TeamRoles.MEMBER.value, MockedTeamDatabase.stored_team_user.role)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_change_role_without_database_error_works_properly(self):
+        data = MagicMock()
+        data.new_role = TeamRoles.MODERATOR.value
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user_to_change = TeamUser(user_id=1, team_id=0, role=TeamRoles.MEMBER.value)
+
+        def update_team_user(team_user):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_user = team_user
+
+        def commit():
+            MockedTeamDatabase.stored_team_user = MockedTeamDatabase.batch_team_user
+            MockedTeamDatabase.batch_team_user = None
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = user_to_change
+        sys.modules["daos.teams"].TeamDatabaseClient.update_team_user = MagicMock(side_effect=update_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.change_role(data)
+        self.assertIsNone(MockedTeamDatabase.batch_team_user)
+        self.assertEqual(TeamRoles.MODERATOR.value, MockedTeamDatabase.stored_team_user.role)
         self.assertIsInstance(response, SuccessfulTeamMessageResponse)
