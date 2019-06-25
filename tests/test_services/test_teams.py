@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from dtos.models.users import User, PublicUser
-from dtos.models.teams import Team, TeamUser, TeamInvite
+from dtos.models.teams import Team, TeamUser, TeamInvite, ForbiddenWord
 from dtos.models.channels import Channel, ChannelCreator
 
 from dtos.responses.teams import *
@@ -44,6 +44,8 @@ class MockedTeamDatabase:
     stored_teams = []
     batch_team_users = []
     stored_team_users = []
+    batch_forbidden_words = []
+    stored_forbidden_words = []
 
 
 class UserServiceTestCase(unittest.TestCase):
@@ -274,6 +276,39 @@ class UserServiceTestCase(unittest.TestCase):
         response = TeamService.invite_user(data)
         self.assertEqual(TeamResponseStatus.ALREADY_INVITED.value, response.status)
         self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_invite_user_with_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        mod = User(user_id=0)
+        mod.team_id = 0
+        team = Team(team_id=0, name="TEST")
+
+        def add_invite(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_invites = 1
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_invites = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = mod
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_email.return_value = None
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_invite.return_value = None
+        sys.modules["models.authentication"].Authenticator.generate_team_invitation.return_value = "TEST-INVITE"
+        sys.modules["daos.teams"].TeamDatabaseClient.add_invite = MagicMock(side_effect=add_invite)
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.invite_user(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_invites)
+        self.assertEqual(1, MockedTeamDatabase.stored_invites)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
 
     def test_invite_user_with_correct_data_works_properly(self):
         data = MagicMock()
@@ -820,3 +855,301 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual("TEST-1", MockedTeamDatabase.stored_team.name)
         self.assertEqual(TeamResponseStatus.UPDATED.value, response.status)
         self.assertIsInstance(response, SuccessfulTeamResponse)
+
+    def test_search_team_users_with_empty_list_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        members = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_users_by_likely_name.return_value = members
+
+        response = TeamService.search_users(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(0, len(response.users))
+        self.assertIsInstance(response, SuccessfulUsersListResponse)
+
+    def test_search_team_users_with_non_empty_list_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        member1 = PublicUser(user_id=1)
+        member1.team_id = 0
+        member1.team_role = TeamRoles.MEMBER.value
+        member2 = PublicUser(user_id=2)
+        member2.team_id = 0
+        member2.team_role = TeamRoles.MEMBER.value
+        members = [member1, member2]
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_users_by_likely_name.return_value = members
+
+        response = TeamService.search_users(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(2, len(response.users))
+        self.assertEqual(1, response.users[0].get("id"))
+        self.assertEqual(TeamRoles.MEMBER.value, response.users[0].get("team_role"))
+        self.assertEqual(2, response.users[1].get("id"))
+        self.assertEqual(TeamRoles.MEMBER.value, response.users[1].get("team_role"))
+        self.assertIsInstance(response, SuccessfulUsersListResponse)
+
+    def test_delete_team_with_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_teams = 0
+        MockedTeamDatabase.stored_teams = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        team = Team(team_id=0, name="TEST-0")
+
+        def delete_team(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_teams = 1
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_teams = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team = MagicMock(side_effect=delete_team)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.delete_team(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_teams)
+        self.assertEqual(1, MockedTeamDatabase.stored_teams)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_delete_team_without_unknown_integrity_works_properly(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_teams = 0
+        MockedTeamDatabase.stored_teams = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        team = Team(team_id=0, name="TEST-0")
+
+        def delete_team(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_teams = 1
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_teams -= MockedTeamDatabase.batch_teams
+            MockedTeamDatabase.batch_teams = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team = MagicMock(side_effect=delete_team)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.delete_team(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_teams)
+        self.assertEqual(0, MockedTeamDatabase.stored_teams)
+        self.assertEqual(TeamResponseStatus.REMOVED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_add_forbidden_word_already_registered_returns_bad_request(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_word.return_value = MagicMock()
+
+        response = TeamService.add_forbidden_word(data)
+        self.assertEqual(TeamResponseStatus.ALREADY_REGISTERED.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_add_new_forbidden_with_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+        data.word = "TEST"
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+
+        def add_forbidden_word(forbidden_word):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words += [forbidden_word]
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_word.return_value = None
+        sys.modules["daos.teams"].TeamDatabaseClient.add_forbidden_word = MagicMock(side_effect=add_forbidden_word)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.add_forbidden_word(data)
+        self.assertEqual(0, len(MockedTeamDatabase.batch_forbidden_words))
+        self.assertEqual(0, len(MockedTeamDatabase.stored_forbidden_words))
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_add_new_forbidden_without_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+        data.word = "TEST"
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+
+        def add_forbidden_word(forbidden_word):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words += [forbidden_word]
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_forbidden_words += MockedTeamDatabase.batch_forbidden_words
+            MockedTeamDatabase.batch_forbidden_words = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_word.return_value = None
+        sys.modules["daos.teams"].TeamDatabaseClient.add_forbidden_word = MagicMock(side_effect=add_forbidden_word)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.add_forbidden_word(data)
+        self.assertEqual(0, len(MockedTeamDatabase.batch_forbidden_words))
+        self.assertEqual(1, len(MockedTeamDatabase.stored_forbidden_words))
+        self.assertEqual(TeamResponseStatus.ADDED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_get_forbidden_words_with_empty_list_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        words = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_words_from_team.return_value = words
+
+        response = TeamService.forbidden_words(data)
+        self.assertEqual(TeamResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(0, len(response.words))
+        self.assertIsInstance(response, SuccessfulForbiddenWordsList)
+
+    def test_get_forbidden_words_with_non_empty_list_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        word1 = ForbiddenWord(word="TEST-1", team_id=0)
+        word2 = ForbiddenWord(word="TEST-2", team_id=0)
+        words = [word1, word2]
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_words_from_team.return_value = words
+
+        response = TeamService.forbidden_words(data)
+        self.assertEqual(TeamResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(2, len(response.words))
+        self.assertEqual("TEST-1", response.words[0].get("word"))
+        self.assertEqual("TEST-2", response.words[1].get("word"))
+        self.assertIsInstance(response, SuccessfulForbiddenWordsList)
+
+    def test_delete_forbidden_word_not_found_returns_bad_request_response(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_id.return_value = None
+
+        response = TeamService.delete_forbidden_word(data)
+        self.assertEqual(TeamResponseStatus.NOT_FOUND.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_delete_forbidden_word_with_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_forbidden_words = 0
+        MockedTeamDatabase.stored_forbidden_words = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        word = ForbiddenWord(word="TEST", team_id=0)
+
+        def delete_word(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words = 1
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_id.return_value = word
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_forbidden_word = MagicMock(side_effect=delete_word)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.delete_forbidden_word(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_forbidden_words)
+        self.assertEqual(1, MockedTeamDatabase.stored_forbidden_words)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_delete_forbidden_word_without_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_forbidden_words = 0
+        MockedTeamDatabase.stored_forbidden_words = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        word = ForbiddenWord(word="TEST", team_id=0)
+
+        def delete_word(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_forbidden_words = 1
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_forbidden_words -= MockedTeamDatabase.batch_forbidden_words
+            MockedTeamDatabase.batch_forbidden_words = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_forbidden_word_by_id.return_value = word
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_forbidden_word = MagicMock(side_effect=delete_word)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.delete_forbidden_word(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_forbidden_words)
+        self.assertEqual(0, MockedTeamDatabase.stored_forbidden_words)
+        self.assertEqual(TeamResponseStatus.REMOVED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
