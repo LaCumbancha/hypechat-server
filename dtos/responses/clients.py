@@ -103,13 +103,13 @@ class ActiveFullUserOutput(Jsonizable):
 
 class SuccessfulUsersListResponse(Jsonizable, Response):
 
-    def __init__(self, users_list):
-        self.users_list = users_list
+    def __init__(self, users):
+        self.users = users
 
     def json(self):
         return {
             "status": UserResponseStatus.LIST.value,
-            "users": self.users_list
+            "users": self.users
         }
 
     def status_code(self):

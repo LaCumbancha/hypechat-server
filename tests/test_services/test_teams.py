@@ -1,9 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
 
-from dtos.models.users import User
-from dtos.models.teams import Team, TeamUser
+from dtos.models.users import User, PublicUser
+from dtos.models.teams import Team, TeamUser, TeamInvite
 from dtos.responses.teams import *
+from dtos.responses.clients import *
+
 from exceptions.exceptions import UserNotFoundError
 from sqlalchemy.exc import IntegrityError
 
@@ -279,27 +281,122 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(TeamResponseStatus.INVITED.value, response.status)
         self.assertIsInstance(response, SuccessfulTeamMessageResponse)
 
-    def test_invite_user_with_unknown_integrity_error_returns_unsuccessful(self):
+    def test_accept_invite_not_found_returns_bad_request(self):
         data = MagicMock()
-        mod = User(user_id=0)
-        mod.team_id = 0
-        team = Team(team_id=0, name="TEST")
+        user = User(user_id=0)
 
-        def add_invite(_):
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_invite_by_token.return_value = None
+
+        response = TeamService.accept_invite(data)
+        self.assertEqual(UserResponseStatus.WRONG_CREDENTIALS.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_accept_invite_found_works_properly(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        invite = TeamInvite(team_id=0, email="test@test", token="TEST-TOKEN")
+
+        def delete_invite(_):
             from tests.test_services import test_teams
             MockedTeamDatabase.batch_invites = 1
+
+        def add_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users += [TeamUser(user_id=0, team_id=0, role="CREATOR")]
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_invites += MockedTeamDatabase.batch_invites
+            MockedTeamDatabase.stored_team_users = MockedTeamDatabase.batch_team_users
+            MockedTeamDatabase.batch_invites = 0
+            MockedTeamDatabase.batch_team_users = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_invite_by_token.return_value = invite
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_invite = MagicMock(side_effect=delete_invite)
+        sys.modules["daos.teams"].TeamDatabaseClient.add_team_user = MagicMock(side_effect=add_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.accept_invite(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_invites)
+        self.assertEqual(2, MockedTeamDatabase.stored_invites)
+        self.assertEqual(0, len(MockedTeamDatabase.batch_team_users))
+        self.assertEqual(1, len(MockedTeamDatabase.stored_team_users))
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_accept_invite_with_unknown_integrity_error_returns_bad_request(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        invite = TeamInvite(team_id=0, email="test@test", token="TEST-TOKEN")
+
+        def delete_invite(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_invites = 1
+
+        def add_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users += [TeamUser(user_id=0, team_id=0, role="CREATOR")]
 
         def commit():
             from tests.test_services import test_teams
             raise IntegrityError(mock, mock, mock)
 
-        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = mod
-        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_email.return_value = None
-        sys.modules["daos.teams"].TeamDatabaseClient.get_team_invite.return_value = None
-        sys.modules["models.authentication"].Authenticator.generate_team_invitation.return_value = "TEST-INVITE"
-        sys.modules["daos.teams"].TeamDatabaseClient.add_invite = MagicMock(side_effect=add_invite)
-        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
-        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_invites = 0
+            MockedTeamDatabase.batch_team_users = []
 
-        response = TeamService.invite_user(data)
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_invite_by_token.return_value = invite
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_invite = MagicMock(side_effect=delete_invite)
+        sys.modules["daos.teams"].TeamDatabaseClient.add_team_user = MagicMock(side_effect=add_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.accept_invite(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_invites)
+        self.assertEqual(1, MockedTeamDatabase.stored_invites)
+        self.assertEqual(0, len(MockedTeamDatabase.batch_team_users))
+        self.assertEqual(0, len(MockedTeamDatabase.stored_team_users))
         self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_get_team_users_with_empty_list_works_properly(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        user.team_id = 0
+        members = []
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_users_by_team_id.return_value = members
+
+        response = TeamService.team_users(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(0, len(response.users))
+        self.assertIsInstance(response, SuccessfulUsersListResponse)
+
+    def test_get_team_users_with_empty_list_works_properly(self):
+        data = MagicMock()
+        user = User(user_id=0)
+        user.team_id = 0
+
+        member1 = PublicUser(user_id=1)
+        member1.team_id = 0
+        member1.team_role = TeamRoles.MEMBER.value
+        member2 = PublicUser(user_id=2)
+        member2.team_id = 0
+        member2.team_role = TeamRoles.MEMBER.value
+        members = [member1, member2]
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_all_team_users_by_team_id.return_value = members
+
+        response = TeamService.team_users(data)
+        self.assertEqual(UserResponseStatus.LIST.value, response.json().get("status"))
+        self.assertEqual(2, len(response.users))
+        self.assertEqual(1, response.users[0].get("id"))
+        self.assertEqual(TeamRoles.MEMBER.value, response.users[0].get("team_role"))
+        self.assertEqual(2, response.users[1].get("id"))
+        self.assertEqual(TeamRoles.MEMBER.value, response.users[1].get("team_role"))
+        self.assertIsInstance(response, SuccessfulUsersListResponse)
+
