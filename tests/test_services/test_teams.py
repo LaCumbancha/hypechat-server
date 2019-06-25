@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 '''Mocking environment properties'''
 import sys
+
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.users"] = MagicMock()
 sys.modules["daos.teams"] = MagicMock()
@@ -25,10 +26,14 @@ sys.modules["models.authentication"] = MagicMock()
 sys.modules["logging"].getLogger = MagicMock()
 
 from services.teams import TeamService
+
 mock = MagicMock()
 
 
 class MockedTeamDatabase:
+    batch_team = None
+    stored_team = Team(team_id=0, name="TEST-0")
+
     batch_team_user = None
     stored_team_user = TeamUser(user_id=0, team_id=0, role=TeamRoles.MEMBER.value)
 
@@ -659,3 +664,159 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertIsNone(MockedTeamDatabase.batch_team_user)
         self.assertEqual(TeamRoles.MODERATOR.value, MockedTeamDatabase.stored_team_user.role)
         self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_leave_team_with_database_error_returns_unsuccessful(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_team_users = 0
+        MockedTeamDatabase.stored_team_users = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        delete_user = TeamUser(user_id=0, team_id=0)
+
+        def delete_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users = 1
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = delete_user
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team_user = MagicMock(side_effect=delete_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.leave_team(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_team_users)
+        self.assertEqual(1, MockedTeamDatabase.stored_team_users)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_leave_team_without_database_error_works_properly(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_team_users = 0
+        MockedTeamDatabase.stored_team_users = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        delete_user = TeamUser(user_id=0, team_id=0)
+
+        def delete_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users = 1
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_team_users -= MockedTeamDatabase.batch_team_users
+            MockedTeamDatabase.batch_team_users = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = delete_user
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team_user = MagicMock(side_effect=delete_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.leave_team(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_team_users)
+        self.assertEqual(0, MockedTeamDatabase.stored_team_users)
+        self.assertEqual(TeamResponseStatus.REMOVED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)
+
+    def test_update_team_with_used_name_returns_bad_request(self):
+        data = MagicMock()
+        data.updated_team = {"team_name": "TEST"}
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        team = Team(team_id=0, name="TEST-0")
+
+        def update_team(team):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team = team
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            MockedTeamDatabase.batch_team = None
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.teams"].TeamDatabaseClient.update_team = MagicMock(side_effect=update_team)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_name.return_value = MagicMock()
+
+        response = TeamService.update_information(data)
+        self.assertIsNone(MockedTeamDatabase.batch_team)
+        self.assertEqual("TEST-0", MockedTeamDatabase.stored_team.name)
+        self.assertEqual(TeamResponseStatus.ALREADY_REGISTERED.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_update_team_with_database_error_returns_unsuccessful(self):
+        data = MagicMock()
+        data.updated_team = {"team_name": "TEST"}
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        team = Team(team_id=0, name="TEST-0")
+
+        def update_team(team):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team = team
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            MockedTeamDatabase.batch_team = None
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.teams"].TeamDatabaseClient.update_team = MagicMock(side_effect=update_team)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_name.return_value = None
+
+        response = TeamService.update_information(data)
+        self.assertIsNone(MockedTeamDatabase.batch_team)
+        self.assertEqual("TEST-0", MockedTeamDatabase.stored_team.name)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_update_team_without_database_error_works_properly(self):
+        data = MagicMock()
+        data.updated_team = {"team_name": "TEST-1"}
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        team = Team(team_id=0, name="TEST-0")
+
+        def update_team(team):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team = team
+            return team
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_team = MockedTeamDatabase.batch_team
+            MockedTeamDatabase.batch_team = None
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.teams"].TeamDatabaseClient.update_team = MagicMock(side_effect=update_team)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.update_information(data)
+        self.assertIsNone(MockedTeamDatabase.batch_team)
+        self.assertEqual("TEST-1", MockedTeamDatabase.stored_team.name)
+        self.assertEqual(TeamResponseStatus.UPDATED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamResponse)

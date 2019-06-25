@@ -23,7 +23,7 @@ echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html
 
-echo -n  "Remove coverage data [Y/N]? "
+echo -n  "Remove coverage data? [Y/N]: "
 while true; do
     read -r OPTION
     OPTION=${OPTION^^}
