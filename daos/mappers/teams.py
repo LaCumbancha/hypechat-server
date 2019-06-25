@@ -59,7 +59,8 @@ class TeamModelMapper:
     def to_user_in_team(cls, user_team_entry):
         return TeamUser(
             user_id=user_team_entry.user_id,
-            team_id=user_team_entry.team_id
+            team_id=user_team_entry.team_id,
+            role=user_team_entry.role
         ) if user_team_entry is not None else None
 
     @classmethod

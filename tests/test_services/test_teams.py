@@ -151,6 +151,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_add_nonexistent_user_throws_exception(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         admin = User(user_id=0)
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = admin
@@ -160,6 +162,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_add_user_already_part_of_team_returns_bad_request(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         admin = User(user_id=0)
         user = User(user_id=1)
 
@@ -173,6 +177,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_add_user_with_previous_invitation_delete_the_old_one_and_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         admin = User(user_id=0)
         user = User(user_id=1)
 
@@ -209,6 +215,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_add_user_with_unknown_integrity_error_returns_unsuccessful(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         admin = User(user_id=0)
         user = User(user_id=1)
 
@@ -232,6 +240,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_invite_user_already_part_of_team_returns_bad_request(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         mod = User(user_id=0)
         user = User(user_id=1)
 
@@ -244,6 +254,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_invite_user_already_invited_returns_bad_request(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         mod = User(user_id=0)
         mod.team_id = 0
 
@@ -257,6 +269,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_invite_user_with_correct_data_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         mod = User(user_id=0)
         mod.team_id = 0
         team = Team(team_id=0, name="TEST")
@@ -286,6 +300,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_accept_invite_not_found_returns_bad_request(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
 
         sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
@@ -297,6 +313,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_accept_invite_found_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         invite = TeamInvite(team_id=0, email="test@test", token="TEST-TOKEN")
 
@@ -330,6 +348,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_accept_invite_with_unknown_integrity_error_returns_bad_request(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         invite = TeamInvite(team_id=0, email="test@test", token="TEST-TOKEN")
 
@@ -366,6 +386,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_get_team_users_with_empty_list_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         user.team_id = 0
         members = []
@@ -380,6 +402,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_get_team_users_with_non_empty_list_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         user.team_id = 0
 
@@ -405,6 +429,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_get_team_channels_with_empty_list_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         user.team_id = 0
         channels = []
@@ -419,6 +445,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     def test_get_team_channels_with_non_empty_list_works_properly(self):
         data = MagicMock()
+
+        '''Mocked outputs'''
         user = User(user_id=0)
         user.team_id = 0
 
@@ -437,3 +465,107 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(2, response.channels[1].get("id"))
         self.assertEqual("TEST-2", response.channels[1].get("name"))
         self.assertIsInstance(response, SuccessfulChannelsListResponse)
+
+    def test_team_user_profile_returns_bad_request_when_user_service_returns_none(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["services.users"].UserService.team_user_profile.return_value = None
+
+        response = TeamService.team_user_profile(data)
+        self.assertEqual(TeamResponseStatus.USER_NOT_MEMBER.value, response.status)
+        self.assertIsInstance(response, BadRequestTeamMessageResponse)
+
+    def test_delete_user_not_found_returns_not_found_response(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = None
+
+        response = TeamService.delete_user(data)
+        self.assertEqual(UserResponseStatus.USER_NOT_FOUND.value, response.status)
+        self.assertIsInstance(response, NotFoundTeamMessageResponse)
+
+    def test_delete_user_with_higher_role_returns_bad_request(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MEMBER.value
+        delete_user = TeamUser(user_id=1, team_id=0, role=TeamRoles.MODERATOR.value)
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = delete_user
+
+        response = TeamService.delete_user(data)
+        self.assertEqual(TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value, response.status)
+        self.assertIsInstance(response, ForbiddenTeamMessageResponse)
+
+    def test_delete_user_with_unknown_integrity_error_returns_unsuccessful(self):
+        data = MagicMock()
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        delete_user = TeamUser(user_id=1, team_id=0, role=TeamRoles.MEMBER.value)
+
+        def delete_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users = 1
+
+        def commit():
+            raise IntegrityError(mock, mock, mock)
+
+        def rollback():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = delete_user
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team_user = MagicMock(side_effect=delete_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+
+        response = TeamService.delete_user(data)
+        self.assertIsInstance(response, UnsuccessfulTeamMessageResponse)
+
+    def test_delete_user_without_database_errors_works_properly(self):
+        data = MagicMock()
+        MockedTeamDatabase.batch_team_users = 0
+        MockedTeamDatabase.stored_team_users = 1
+
+        '''Mocked outputs'''
+        user = User(user_id=0)
+        user.team_id = 0
+        user.team_role = TeamRoles.MODERATOR.value
+        delete_user = TeamUser(user_id=1, team_id=0, role=TeamRoles.MEMBER.value)
+
+        def delete_team_user(_):
+            from tests.test_services import test_teams
+            MockedTeamDatabase.batch_team_users += 1
+
+        def commit():
+            from tests.test_services import test_teams
+            MockedTeamDatabase.stored_team_users -= MockedTeamDatabase.batch_team_users
+            MockedTeamDatabase.batch_team_users = 0
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_ids.return_value = delete_user
+        sys.modules["daos.teams"].TeamDatabaseClient.delete_team_user = MagicMock(side_effect=delete_team_user)
+        sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+
+        response = TeamService.delete_user(data)
+        self.assertEqual(0, MockedTeamDatabase.batch_team_users)
+        self.assertEqual(0, MockedTeamDatabase.stored_team_users)
+        self.assertEqual(TeamResponseStatus.REMOVED.value, response.status)
+        self.assertIsInstance(response, SuccessfulTeamMessageResponse)

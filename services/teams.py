@@ -239,7 +239,7 @@ class TeamService:
                                                          TeamResponseStatus.USER_NOT_MEMBER.value)
 
     @classmethod
-    def delete_users(cls, delete_data):
+    def delete_user(cls, delete_data):
         user = Authenticator.authenticate_team(delete_data.authentication, TeamRoles.is_team_moderator)
         delete_user = TeamDatabaseClient.get_user_in_team_by_ids(delete_data.delete_id, user.team_id)
 

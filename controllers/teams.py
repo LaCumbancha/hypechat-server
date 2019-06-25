@@ -109,7 +109,7 @@ def team_user_profile(team_id, user_id):
 def delete_users(team_id, delete_id):
     logger.info(f"Attempting to delete user {delete_id} from team #{team_id}.")
     req = ClientRequest(request)
-    response = TeamService.delete_users(req.delete_user_team_data(team_id, delete_id))
+    response = TeamService.delete_user(req.delete_user_team_data(team_id, delete_id))
     return jsonify(response.json()), response.status_code()
 
 
