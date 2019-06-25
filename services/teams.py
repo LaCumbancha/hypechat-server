@@ -10,6 +10,7 @@ from dtos.responses.clients import *
 from dtos.responses.teams import *
 from dtos.responses.channels import SuccessfulChannelsListResponse
 
+from services.bots import BotService
 from services.emails import EmailService
 from services.users import UserService
 from services.notifications import NotificationService
@@ -47,6 +48,7 @@ class TeamService:
                 role=TeamRoles.CREATOR.value
             )
             TeamDatabaseClient.add_team_user(new_user_by_team)
+            BotService.register_tito(team.id)
             DatabaseClient.commit()
             cls.logger().info(f"Team #{team.id} created.")
             cls.logger().info(f"User #{user.id} assigned as team #{team.id} {new_user_by_team.role}.")

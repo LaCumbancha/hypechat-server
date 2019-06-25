@@ -11,21 +11,37 @@ from dtos.responses.clients import *
 from models.constants import UserRoles, TeamRoles
 from models.authentication import Authenticator
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+import os
 import json
 import logging
 import requests
 
 
 class BotService:
-
+    TITO_ID = os.getenv("TITO_ID")
     EMPTY_TEXT = ""
     BOT_MENTION_FORMAT = "@{} "
 
     @classmethod
     def logger(cls):
         return logging.getLogger(cls.__name__)
+
+    @classmethod
+    def register_tito(cls, team_id):
+        try:
+            team_tito = TeamUser(
+                user_id=cls.TITO_ID,
+                team_id=team_id,
+                role=TeamRoles.BOT.value
+            )
+            TeamDatabaseClient.add_team_user(team_tito)
+            DatabaseClient.commit()
+            cls.logger().info(f"Tito added to team #{team_id}.")
+        except SQLAlchemyError:
+            cls.logger().error(f"Failing to register Tito into team #{team_id}.", exc)
+            raise
 
     @classmethod
     def create_bot(cls, bot_data):
@@ -35,7 +51,6 @@ class BotService:
             new_client = UserDatabaseClient.add_client()
             new_bot = Bot(
                 bot_id=new_client.id,
-                team_id=admin.team_id,
                 name=bot_data.name,
                 callback=bot_data.callback,
                 token=Authenticator.generate(new_client.id)
