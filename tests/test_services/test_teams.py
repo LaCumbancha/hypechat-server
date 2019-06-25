@@ -12,6 +12,7 @@ import sys
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.users"] = MagicMock()
 sys.modules["daos.teams"] = MagicMock()
+sys.modules["services.bots"] = MagicMock()
 sys.modules["services.users"] = MagicMock()
 sys.modules["services.emails"] = MagicMock()
 sys.modules["services.notifications"] = MagicMock()

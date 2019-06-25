@@ -492,6 +492,7 @@ class UserServiceTestCase(unittest.TestCase):
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = MagicMock()
 
         response = UserService.update_user(data)
         self.assertIsInstance(response, BadRequestUserMessageResponse)
