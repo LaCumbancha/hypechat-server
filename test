@@ -21,6 +21,8 @@ echo "Testing Teams Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_teams.py
 echo "Testing Notifications Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_notifications.py
+echo "Testing Bots Service:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_bots.py
 echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html

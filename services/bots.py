@@ -39,7 +39,8 @@ class BotService:
             TeamDatabaseClient.add_team_user(team_tito)
             DatabaseClient.commit()
             cls.logger().info(f"Tito added to team #{team_id}.")
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
+            DatabaseClient.rollback()
             cls.logger().error(f"Failing to register Tito into team #{team_id}.", exc)
             raise
 
