@@ -119,6 +119,7 @@ class UserService:
                 new_user = User(
                     user_id=new_client.id,
                     facebook_id=facebook_user.facebook_id,
+                    username=facebook_user.username,
                     email=facebook_user.email,
                     first_name=facebook_user.first_name,
                     last_name=facebook_user.last_name,
