@@ -227,9 +227,9 @@ class UserServiceTestCase(unittest.TestCase):
 
         response = UserService.login_user(data)
         self.assertFalse(MockedUserDatabase.batch_login)
-        self.assertTrue(MockedUserDatabase.stored_login)
-        self.assertIsInstance(response, SuccessfulUserResponse)
-        self.assertEqual(response.status, UserResponseStatus.ACTIVE.value)
+        self.assertFalse(MockedUserDatabase.stored_login)
+        self.assertIsInstance(response, SuccessfulUserMessageResponse)
+        self.assertEqual(response.status, UserResponseStatus.WRONG_CREDENTIALS.value)
 
     def test_app_user_login_with_correct_password_works_properly(self):
         data = MagicMock()

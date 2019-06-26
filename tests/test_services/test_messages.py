@@ -57,14 +57,14 @@ class MessagesServiceTestCase(unittest.TestCase):
         user.team_id = 0
         user.team_role = TeamRoles.MEMBER.value
 
-        direct1 = PreviewDirectMessage(message_id=0, sender_id=0, receiver_id=1, chat_username="Tester1",
-                                       chat_first_name="Test1", chat_last_name="Test1", chat_picture=None,
-                                       content="Testeando1", message_type="TEXT", offset=1, chat_online=False,
+        sender1 = UserMessageSender(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        direct1 = PreviewDirectMessage(message_id=0, sender=sender1, receiver_id=1, chat_name="Tester0", offset=1,
+                                       content="Testeando1", message_type="TEXT", chat_online=False, chat_picture=None,
                                        timestamp=datetime.now() + timedelta(hours=-3))
 
-        direct2 = PreviewDirectMessage(message_id=1, sender_id=1, receiver_id=0, chat_username="Tester2",
-                                       chat_first_name="Test2", chat_last_name="Test2", chat_picture=None,
-                                       content="Testeando2", message_type="TEXT", offset=0, chat_online=False,
+        sender2 = BotMessageSender(bot_id=5, bot_name="Test-Bot")
+        direct2 = PreviewDirectMessage(message_id=1, sender=sender2, receiver_id=0, chat_name="Test-Bot", offset=0,
+                                       content="Testeando2", message_type="TEXT", chat_online=False, chat_picture=None,
                                        timestamp=datetime.now() + timedelta(hours=-2))
 
         sender3 = UserMessageSender(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
@@ -93,9 +93,9 @@ class MessagesServiceTestCase(unittest.TestCase):
         self.assertEqual(3, response.chats[1].get("chat_id"))
         self.assertEqual(False, response.chats[1].get("unseen"))
         self.assertEqual(0, response.chats[1].get("sender").get("id"))
-        self.assertEqual(1, response.chats[2].get("chat_id"))
+        self.assertEqual(5, response.chats[2].get("chat_id"))
         self.assertEqual(False, response.chats[2].get("unseen"))
-        self.assertEqual(1, response.chats[2].get("sender").get("id"))
+        self.assertEqual(5, response.chats[2].get("sender").get("id"))
         self.assertEqual(1, response.chats[3].get("chat_id"))
         self.assertEqual(True, response.chats[3].get("unseen"))
         self.assertEqual(0, response.chats[3].get("sender").get("id"))
