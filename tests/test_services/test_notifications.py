@@ -288,3 +288,72 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual(NotificationType.MESSAGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
+    def test_notify_mention_to_bot_does_not_send_notification(self):
+        message = Message(sender_id=0, receiver_id=1, team_id=0, content="Sarasa",
+                          send_type=SendMessageType.DIRECT.value, message_type=MessageType.TEXT.value)
+        mentioned_id = 1
+
+        '''Mocked outputs'''
+        bot_mentioned = Bot(bot_id=0, name="Test-Bot", callback=None, token=None)
+
+        def send_notification(topic_name, message_title, message_body, data_message):
+            from tests.test_services import test_notifications
+            MockedNotificationServer.notification = Notification(topic_name, message_title, message_body, data_message)
+            return {"failure": 0}
+
+        sys.modules["daos.bots"].BotDatabaseClient.get_bot_by_id.return_value = bot_mentioned
+        sys.modules["pyfcm"].FCMNotification().notify_topic_subscribers = MagicMock(side_effect=send_notification)
+
+        NotificationService.notify_mention(message, mentioned_id)
+        self.assertIsNone(MockedNotificationServer.notification)
+
+    def test_notify_mention_to_user_from_user_in_channel_does_send_notification(self):
+        message = Message(sender_id=0, receiver_id=1, team_id=0, content="Sarasa",
+                          send_type=SendMessageType.DIRECT.value, message_type=MessageType.TEXT.value)
+        mentioned_id = 1
+
+        '''Mocked outputs'''
+        user_sender = PublicUser(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        channel = Channel(channel_id=0, team_id=0, name="Test-Channel",
+                          creator=ChannelCreator(0, "Tester0", "Test0", "Test0"))
+        team = Team(team_id=0, name="Test-Team")
+
+        def send_notification(topic_name, message_title, message_body, data_message):
+            from tests.test_services import test_notifications
+            MockedNotificationServer.notification = Notification(topic_name, message_title, message_body, data_message)
+            return {"failure": 0}
+
+        sys.modules["daos.bots"].BotDatabaseClient.get_bot_by_id.return_value = None
+        sys.modules["daos.teams"].TeamDatabaseClient.get_team_by_id.return_value = team
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = user_sender
+        sys.modules["daos.channels"].ChannelDatabaseClient.get_channel_by_id.return_value = channel
+        sys.modules["pyfcm"].FCMNotification().notify_topic_subscribers = MagicMock(side_effect=send_notification)
+
+        NotificationService.notify_mention(message, mentioned_id)
+        self.assertEqual(1, MockedNotificationServer.notification.topic_name)
+        self.assertEqual("Hypechat", MockedNotificationServer.notification.message_title)
+        self.assertEqual("You have been mentioned!", MockedNotificationServer.notification.message_body)
+        self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
+        self.assertEqual("Test-Channel", MockedNotificationServer.notification.data_message.get("channel_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
+        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("sender").get("username"))
+        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("first_name"))
+        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("last_name"))
+        self.assertEqual(NotificationType.MENTION.value,
+                         MockedNotificationServer.notification.data_message.get("notification_type"))
+
+    def test_when_connection_error_is_raised_by_pyfcm_notification_is_not_send(self):
+
+        def send_notification(topic_name, message_title, message_body, data_message):
+            raise ConnectionError
+
+        sys.modules["pyfcm"].FCMNotification().notify_topic_subscribers = MagicMock(side_effect=send_notification)
+
+        NotificationService.notify_team_invitation(mock, mock)
+        self.assertIsNone(MockedNotificationServer.notification)
+        NotificationService.notify_channel_invitation(mock, mock)
+        self.assertIsNone(MockedNotificationServer.notification)
+        NotificationService.notify_message(mock, mock)
+        self.assertIsNone(MockedNotificationServer.notification)
+        NotificationService.notify_mention(mock, mock)
+        self.assertIsNone(MockedNotificationServer.notification)
