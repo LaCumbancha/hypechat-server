@@ -36,6 +36,7 @@ class MessageService:
         direct_messages = cls._generate_direct_chats_list(db_direct_messages, user.id, user.team_id)
         channel_messages = cls._generate_channel_chats_list(db_channel_messages, user.team_id)
         total_messages = direct_messages + channel_messages
+        total_messages.sort(key=lambda msg: msg.get("timestamp"), reverse=True)
 
         cls.logger().info(f"Retrieved {len(total_messages)} chats from user #{user.id} ({user.username}).")
         return ChatsListResponse(total_messages)

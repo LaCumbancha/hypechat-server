@@ -83,13 +83,13 @@ class MessageListResponse(Jsonizable, Response):
 
 class ChatsListResponse(Jsonizable, Response):
 
-    def __init__(self, chats_list):
-        self.chats_list = chats_list
+    def __init__(self, chats):
+        self.chats = chats
 
     def json(self):
         return {
             "status": MessageResponseStatus.LIST.value,
-            "chats": self.chats_list
+            "chats": self.chats
         }
 
     def status_code(self):
