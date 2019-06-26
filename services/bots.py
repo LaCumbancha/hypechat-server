@@ -14,7 +14,6 @@ from models.authentication import Authenticator
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 import os
-import json
 import logging
 import requests
 
@@ -57,7 +56,7 @@ class BotService:
                 "team_id": team_id
             }
             headers = {"X-Auth-Token": bot.token}
-            requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
+            requests.post(url=bot.callback, json=body, headers=headers)
             cls.logger().info(f"Tito notified to welcome user #{user_id} to team #{team_id}")
         elif team.welcome_message is not None:
             cls.logger().info(f"There's no message for Tito to welcome user #{user_id}.")
@@ -114,7 +113,7 @@ class BotService:
                 "team_id": message.team_id
             }
             headers = {"X-Auth-Token": bot.token}
-            requests.post(url=bot.callback, data=json.dumps(body), headers=headers)
+            requests.post(url=bot.callback, json=body, headers=headers)
 
     @classmethod
     def _parse_message(cls, text, bot_name):
