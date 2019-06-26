@@ -1,6 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
 
+from dtos.models.messages import UserMention, ChannelMention, BotMention
+from models.constants import SendMessageType
+from sqlalchemy.exc import IntegrityError
+
 '''Mocking environment properties'''
 import sys
 sys.modules["daos.bots"] = MagicMock()
@@ -10,12 +14,7 @@ sys.modules["services.bots"] = MagicMock()
 sys.modules["services.notifications"] = MagicMock()
 sys.modules["logging"].getLogger = MagicMock()
 
-from dtos.models.messages import UserMention, ChannelMention, BotMention
-from models.constants import SendMessageType
 from services.mentions import MentionService
-
-from sqlalchemy.exc import IntegrityError
-
 mock = MagicMock()
 
 
@@ -26,10 +25,6 @@ class MockedMentionsDatabase:
 
 
 class MentionServiceTestCase(unittest.TestCase):
-
-    def setUp(self):
-        MockedMentionsDatabase.batch_mentions = []
-        MockedMentionsDatabase.saved_mentions = []
 
     def tearDown(self):
         MockedMentionsDatabase.batch_mentions = []

@@ -23,7 +23,6 @@ environment_properties = {
 }
 
 from services.notifications import NotificationService
-
 mock = MagicMock()
 
 

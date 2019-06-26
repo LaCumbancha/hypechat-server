@@ -26,7 +26,6 @@ environment_properties = {
 }
 
 from services.bots import BotService
-
 mock = MagicMock()
 
 
