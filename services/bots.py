@@ -29,7 +29,7 @@ class BotService:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def register_tito(cls, team_id):
+    def register_tito_in_team(cls, team_id):
         try:
             team_tito = TeamUser(
                 user_id=cls.TITO_ID,
