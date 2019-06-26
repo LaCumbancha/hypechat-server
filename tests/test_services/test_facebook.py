@@ -9,8 +9,8 @@ import sys
 sys.modules["config"] = MagicMock()
 sys.modules["json"] = MagicMock()
 sys.modules["requests"] = MagicMock()
-sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
 sys.modules["logging"].getLogger = MagicMock()
+sys.modules["os"].getenv = MagicMock(side_effect=lambda key: environment_properties.get(key))
 
 environment_properties = {
     'FACEBOOK_APP_SECRET': "TEST"

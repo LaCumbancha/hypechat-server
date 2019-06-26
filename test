@@ -1,24 +1,48 @@
 #!/usr/bin/env bash
 
 echo "Running tests..."
-echo "TESTING RESPONSES:"
+echo "Testing Responses:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_dtos/test_responses.py
-echo "TESTING ROLES:"
+echo "Testing Roles:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_constants.py
-echo "TESTING REQUESTS:"
+echo "Testing Requests:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_requests.py
-echo "TESTING AUTHENTICATION:"
+echo "Testing Authentication:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_models/test_authentication.py
-echo "TESTING EMAIL SERVICE:"
+echo "Testing Email Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_emails.py
-echo "TESTING FACEBOOK SERVICE:"
+echo "Testing Facebook Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_facebook.py
-echo "TESTING MENTIONS SERVICE:"
+echo "Testing Mentions Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_mentions.py
-echo "TESTING USERS SERVICE:"
+echo "Testing Users Service:"
 coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_users.py
+echo "Testing Teams Service:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_teams.py
+echo "Testing Notifications Service:"
+coverage run -a --source=controllers,dtos,handlers,models,services,utils,services, -m unittest tests/test_services/test_notifications.py
 echo "Generating coverage report..."
 coverage html
 sensible-browser ./htmlcov/index.html
-rm .coverage
-rm -rf ./htmlcov
+
+echo -n  "Remove coverage data? [Y/N]: "
+while true; do
+    read -r OPTION
+    OPTION=${OPTION^^}
+
+    if [[ "YES" == "$OPTION"* ]]; then
+        DELETE=1
+        break
+    elif [[ "NO" == "$OPTION"* ]]; then
+        DELETE=0
+        break
+    else
+        echo -n "Wrong option. Retype [Y/N]: "
+    fi
+done
+
+if [[ ${DELETE} == 1 ]]; then
+    rm .coverage
+    rm -rf ./htmlcov
+    echo "Coverage data removed!"
+fi

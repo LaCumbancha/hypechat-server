@@ -48,13 +48,13 @@ class SuccessfulTeamsListResponse(Jsonizable, Response):
 
 class SuccessfulForbiddenWordsList(Jsonizable, Response):
 
-    def __init__(self, words_list):
-        self.words_list = words_list
+    def __init__(self, words):
+        self.words = words
 
     def json(self):
         return {
             "status": TeamResponseStatus.LIST.value,
-            "forbidden_words": self.words_list
+            "forbidden_words": self.words
         }
 
     def status_code(self):

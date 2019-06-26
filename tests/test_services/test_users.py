@@ -92,6 +92,7 @@ class UserServiceTestCase(unittest.TestCase):
 
         sys.modules["daos.users"].UserDatabaseClient.add_client = MagicMock(side_effect=add_client)
         sys.modules["daos.users"].UserDatabaseClient.add_user = MagicMock(side_effect=add_user)
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username = MagicMock()
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
         sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
 
@@ -100,7 +101,7 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(0, len(MockedUserDatabase.stored_users))
         self.assertEqual(0, len(MockedUserDatabase.batch_clients))
         self.assertEqual(0, len(MockedUserDatabase.batch_users))
-        self.assertIsInstance(response, UnsuccessfulClientResponse)
+        self.assertIsInstance(response, BadRequestUserMessageResponse)
 
     def test_create_user_with_email_in_use_returns_bad_request(self):
         data = MagicMock()
@@ -127,15 +128,15 @@ class UserServiceTestCase(unittest.TestCase):
         sys.modules["daos.users"].UserDatabaseClient.add_user = MagicMock(side_effect=add_user)
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
         sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
-        sys.modules["daos.users"].UserDatabaseClient.get_user_by_email.return_value = None
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = None
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_email.return_value = MagicMock()
 
         response = UserService.create_user(data)
         self.assertEqual(0, len(MockedUserDatabase.stored_clients))
         self.assertEqual(0, len(MockedUserDatabase.stored_users))
         self.assertEqual(0, len(MockedUserDatabase.batch_clients))
         self.assertEqual(0, len(MockedUserDatabase.batch_users))
-        self.assertIsInstance(response, UnsuccessfulClientResponse)
+        self.assertIsInstance(response, BadRequestUserMessageResponse)
 
     def test_create_user_with_unknown_error_returns_unsuccessful(self):
         data = MagicMock()
@@ -162,6 +163,7 @@ class UserServiceTestCase(unittest.TestCase):
         sys.modules["daos.users"].UserDatabaseClient.add_user = MagicMock(side_effect=add_user)
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
         sys.modules["daos.database"].DatabaseClient.rollback = MagicMock(side_effect=rollback)
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = None
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_email.return_value = None
 
         response = UserService.create_user(data)
@@ -225,9 +227,9 @@ class UserServiceTestCase(unittest.TestCase):
 
         response = UserService.login_user(data)
         self.assertFalse(MockedUserDatabase.batch_login)
-        self.assertFalse(MockedUserDatabase.stored_login)
-        self.assertIsInstance(response, SuccessfulUserMessageResponse)
-        self.assertEqual(response.status, UserResponseStatus.WRONG_CREDENTIALS.value)
+        self.assertTrue(MockedUserDatabase.stored_login)
+        self.assertIsInstance(response, SuccessfulUserResponse)
+        self.assertEqual(response.status, UserResponseStatus.ACTIVE.value)
 
     def test_app_user_login_with_correct_password_works_properly(self):
         data = MagicMock()
@@ -478,7 +480,7 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertIsInstance(response, SuccessfulChannelsListResponse)
         self.assertEqual(2, len(response.channels))
 
-    def test_update_user_with_used_username_returns_unsuccessful_client(self):
+    def test_update_user_with_used_username_returns_bad_request(self):
         data = MagicMock()
         data.updated_user = {"username": "TEST"}
 
@@ -490,9 +492,10 @@ class UserServiceTestCase(unittest.TestCase):
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = MagicMock()
 
         response = UserService.update_user(data)
-        self.assertIsInstance(response, UnsuccessfulClientResponse)
+        self.assertIsInstance(response, BadRequestUserMessageResponse)
 
     def test_update_user_with_used_email_returns_bad_request(self):
         data = MagicMock()
@@ -506,10 +509,11 @@ class UserServiceTestCase(unittest.TestCase):
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
-        sys.modules["daos.users"].UserDatabaseClient.get_user_by_email.return_value = None
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = None
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_email.return_value = MagicMock()
 
         response = UserService.update_user(data)
-        self.assertIsInstance(response, UnsuccessfulClientResponse)
+        self.assertIsInstance(response, BadRequestUserMessageResponse)
 
     def test_update_user_with_new_unused_username_works_properly(self):
         data = MagicMock()
@@ -541,11 +545,14 @@ class UserServiceTestCase(unittest.TestCase):
         data = MagicMock()
 
         '''Mocked outputs'''
-        user = User(user_id=1, username="TEST")
+        user = MagicMock()
+        user.id = 1
+        user.team_id = None
+        user.username = "TEST"
 
         sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
         sys.modules["daos.teams"].TeamDatabaseClient.get_user_teams_by_user_id.return_value = []
-        sys.modules["daos.users"].UserDatabaseClient.get_user_profile.return_value = user
+        sys.modules["daos.users"].UserDatabaseClient.get_user_profile.return_value = [user]
 
         response = UserService.user_profile(data)
         self.assertEqual(1, response.client.id)
@@ -588,6 +595,27 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual("TEST2", response.client.teams[1]["name"])
         self.assertEqual("MEMBER", response.client.teams[1]["role"])
         self.assertIsInstance(response, SuccessfulFullUserResponse)
+
+    def test_user_profile_from_different_team_returns_none(self):
+        searched_user_id = 1
+        active_user_team_id = 0
+
+        '''Mocked outputs'''
+        user = User(user_id=1, username="TEST")
+        teams = [Team(team_id=1, name="TEST1")]
+        user_with_teams = MagicMock()
+        user_with_teams.id = 0
+        user_with_teams.username = "TEST"
+        user_with_teams.team_id = 1
+        user_with_teams.team_name = "TEST1"
+        user_with_teams.team_role = "MEMBER"
+
+        sys.modules["models.authentication"].Authenticator.authenticate.return_value = user
+        sys.modules["daos.teams"].TeamDatabaseClient.get_user_teams_by_user_id.return_value = teams
+        sys.modules["daos.users"].UserDatabaseClient.get_user_profile.return_value = user_with_teams
+
+        response = UserService.team_user_profile(searched_user_id, active_user_team_id)
+        self.assertIsNone(response)
 
     def test_recover_password_with_not_found_user_throws_exception(self):
         data = MagicMock()
