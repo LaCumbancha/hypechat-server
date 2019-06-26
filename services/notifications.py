@@ -134,19 +134,28 @@ class NotificationService:
 
     @classmethod
     def notify_message(cls, message, is_user_receiver):
-        sender_user = UserDatabaseClient.get_user_by_id(message.sender_id)
         team = TeamDatabaseClient.get_team_by_id(message.team_id)
+        sender = UserDatabaseClient.get_user_by_id(message.sender_id)
+
+        if sender is None:
+            sender = BotDatabaseClient.get_bot_by_id(message.sender_id)
+            sender_data = {
+                "id": sender.id,
+                "name": sender.name
+            }
+        else:
+            sender_data = {
+                "id": sender.id,
+                "username": sender.username,
+                "first_name": sender.first_name,
+                "last_name": sender.last_name
+            }
 
         message_body = "You receive a direct message!"
         data = {
             "notification_type": NotificationType.MESSAGE.value,
             "team_name": team.name,
-            "sender": {
-                "id": sender_user.id,
-                "username": sender_user.username,
-                "first_name": sender_user.first_name,
-                "last_name": sender_user.last_name
-            }
+            "sender": sender_data
         }
 
         if not is_user_receiver:

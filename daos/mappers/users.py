@@ -1,6 +1,8 @@
 from tables.users import UserTableEntry, PasswordRecoveryTableEntry
 from dtos.models.users import User, PublicUser, PasswordRecovery, RegularClient
 
+from models.constants import TeamRoles
+
 
 class UserDatabaseMapper:
 
@@ -103,19 +105,29 @@ class UserModelMapper:
         if table_entry is None:
             return None
 
-        user = PublicUser(
-            user_id=table_entry.user_id,
-            username=table_entry.username,
-            email=table_entry.email,
-            first_name=table_entry.first_name,
-            last_name=table_entry.last_name,
-            profile_pic=table_entry.profile_pic,
-            role=table_entry.user_role,
-            online=table_entry.online,
-            created=table_entry.created
-        )
-        user.team_id = table_entry.team_id
-        user.team_role = table_entry.team_role
+        if table_entry.team_role == TeamRoles.BOT.value:
+            user = PublicUser(
+                user_id=table_entry.user_id,
+                username=table_entry.bot_name
+            )
+            user.team_id = table_entry.team_id
+            user.team_role = table_entry.team_role
+
+        else:
+            user = PublicUser(
+                user_id=table_entry.user_id,
+                username=table_entry.username,
+                email=table_entry.email,
+                first_name=table_entry.first_name,
+                last_name=table_entry.last_name,
+                profile_pic=table_entry.profile_pic,
+                role=table_entry.user_role,
+                online=table_entry.online,
+                created=table_entry.created
+            )
+            user.team_id = table_entry.team_id
+            user.team_role = table_entry.team_role
+
         return user
 
     @classmethod

@@ -61,18 +61,18 @@ class Authenticator:
                         raise WrongTokenError("You must be logged to perform this action.",
                                               UserResponseStatus.WRONG_TOKEN.value)
                 else:
-                    bot = BotDatabaseClient.get_bot_by_id(payload.get("user_id"))
-
-                    if bot is not None:
-                        logger.info(f"Bot #{bot.id} authenticated.")
-                        return bot
-                    else:
-                        logger.info(f"User #{user.id} does not have permissions to perform this action.")
-                        raise NoPermissionsError("You don't have enough permissions to perform this action.",
-                                                 TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
+                    logger.info(f"User #{user.id} does not have permissions to perform this action.")
+                    raise NoPermissionsError("You don't have enough permissions to perform this action.",
+                                             TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
             else:
-                logger.info(f"User not found.")
-                raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
+                bot = BotDatabaseClient.get_bot_by_id(payload.get("user_id"))
+
+                if bot is not None:
+                    logger.info(f"Bot #{bot.id} authenticated.")
+                    return bot
+                else:
+                    logger.info(f"User not found.")
+                    raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
         except DecodeError:
             logger.info(f"Failing to authenticate user.")
@@ -107,7 +107,7 @@ class Authenticator:
                 logger.info(f"Team #{authentication.team_id} not found.")
                 raise TeamNotFoundError("Team not found.", TeamResponseStatus.NOT_FOUND.value)
             else:
-                logger.info(f"User {user.username} trying to access team #{team.id}, when it's not part of it.")
+                logger.info(f"Client #{user.id} trying to access team #{team.id}, when it's not part of it.")
                 raise NoPermissionsError("You're not part of this team!",
                                          TeamResponseStatus.NOT_ENOUGH_PERMISSIONS.value)
 

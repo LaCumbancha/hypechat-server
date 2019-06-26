@@ -6,6 +6,7 @@ from daos.teams import TeamDatabaseClient
 from daos.messages import MessageTableEntry
 from daos.mappers.users import UserDatabaseMapper, UserModelMapper
 
+from tables.bots import BotTableEntry
 from tables.users import ClientTableEntry, UserTableEntry, PasswordRecoveryTableEntry, UsersByTeamsTableEntry, \
     UsersByChannelsTableEntry
 from tables.teams import TeamTableEntry
@@ -133,7 +134,9 @@ class UserDatabaseClient:
     @classmethod
     def get_team_user_by_ids(cls, user_id, team_id):
         team_user_entry = db.session.query(
-            UserTableEntry.user_id,
+            UsersByTeamsTableEntry.user_id,
+            UsersByTeamsTableEntry.team_id,
+            UsersByTeamsTableEntry.role.label("team_role"),
             UserTableEntry.username,
             UserTableEntry.email,
             UserTableEntry.first_name,
@@ -142,15 +145,16 @@ class UserDatabaseClient:
             UserTableEntry.online,
             UserTableEntry.role.label("user_role"),
             UserTableEntry.created,
-            UsersByTeamsTableEntry.team_id,
-            UsersByTeamsTableEntry.role.label("team_role")
-        ).join(
-            UsersByTeamsTableEntry,
-            and_(
-                UsersByTeamsTableEntry.user_id == UserTableEntry.user_id,
-                UsersByTeamsTableEntry.user_id == user_id,
-                UsersByTeamsTableEntry.team_id == team_id
-            )
+            BotTableEntry.bot_name
+        ).outerjoin(
+            UserTableEntry,
+            UsersByTeamsTableEntry.user_id == UserTableEntry.user_id
+        ).outerjoin(
+            BotTableEntry,
+            UsersByTeamsTableEntry.user_id == BotTableEntry.bot_id
+        ).filter(
+            UsersByTeamsTableEntry.user_id == user_id,
+            UsersByTeamsTableEntry.team_id == team_id
         ).one_or_none()
         return UserModelMapper.to_team_user(team_user_entry)
 
