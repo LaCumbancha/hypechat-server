@@ -5,6 +5,7 @@ from time import sleep
 from exceptions.exceptions import WrongTokenError, UserNotFoundError, NoPermissionsError, TeamNotFoundError, \
     ChannelNotFoundError
 
+from dtos.models.bots import Bot
 from dtos.models.users import User, PublicUser
 from dtos.models.teams import Team
 from dtos.models.channels import Channel
@@ -14,6 +15,7 @@ from models.constants import TeamRoles, UserRoles
 '''Mocking environment properties'''
 import sys
 sys.modules["config"] = MagicMock()
+sys.modules["daos.bots"] = MagicMock()
 sys.modules["daos.database"] = MagicMock()
 sys.modules["daos.users"] = MagicMock()
 sys.modules["daos.teams"] = MagicMock()
@@ -55,12 +57,25 @@ class AuthenticationTestCase(unittest.TestCase):
         authentication.token = "FAKE-TOKEN"
         self.assertRaises(WrongTokenError, Authenticator.authenticate, authentication)
 
-    def test_user_not_found_after_token_decoding_throws_exception(self):
+    def test_not_user_found_but_bot_found_after_token_decoding_authenticates(self):
+        user_id = 0
+        token = Authenticator.generate(user_id)
+        authentication = MagicMock()
+        authentication.token = token
+        bot = Bot(bot_id=0, name="TEST", callback=None, token=None)
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = None
+        sys.modules["daos.bots"].BotDatabaseClient.get_bot_by_id.return_value = bot
+        authenticated_client = Authenticator.authenticate(authentication)
+        self.assertEqual(0, authenticated_client.id)
+        self.assertEqual("TEST", authenticated_client.name)
+
+    def test_not_user_nor_bot_found_after_token_decoding_throws_exception(self):
         user_id = 0
         token = Authenticator.generate(user_id)
         authentication = MagicMock()
         authentication.token = token
         sys.modules["daos.users"].UserDatabaseClient.get_user_by_id.return_value = None
+        sys.modules["daos.bots"].BotDatabaseClient.get_bot_by_id.return_value = None
         self.assertRaises(UserNotFoundError, Authenticator.authenticate, authentication)
 
     def test_user_with_different_token_in_database_throws_exception(self):

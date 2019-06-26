@@ -7,6 +7,7 @@ from models.constants import TeamRoles, NotificationType
 
 '''Mocking environment properties'''
 import sys
+sys.modules["daos.bots"] = MagicMock()
 sys.modules["daos.users"] = MagicMock()
 sys.modules["daos.channels"] = MagicMock()
 sys.modules["daos.teams"] = MagicMock()
