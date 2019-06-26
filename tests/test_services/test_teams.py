@@ -51,12 +51,18 @@ class MockedTeamDatabase:
 class UserServiceTestCase(unittest.TestCase):
 
     def tearDown(self):
+        MockedTeamDatabase.batch_team = None
+        MockedTeamDatabase.stored_team = Team(team_id=0, name="TEST-0")
+        MockedTeamDatabase.batch_team_user = None
+        MockedTeamDatabase.stored_team_user = TeamUser(user_id=0, team_id=0, role=TeamRoles.MEMBER.value)
         MockedTeamDatabase.batch_invites = 0
         MockedTeamDatabase.stored_invites = 1
         MockedTeamDatabase.batch_teams = []
         MockedTeamDatabase.stored_teams = []
         MockedTeamDatabase.batch_team_users = []
         MockedTeamDatabase.stored_team_users = []
+        MockedTeamDatabase.batch_forbidden_words = []
+        MockedTeamDatabase.stored_forbidden_words = []
 
     def test_create_team_with_name_in_use_returns_bad_request(self):
         data = MagicMock()

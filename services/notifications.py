@@ -1,4 +1,3 @@
-from app import db
 from pyfcm import FCMNotification
 
 from daos.users import UserDatabaseClient
@@ -32,8 +31,9 @@ class NotificationService:
                 "notification_type": NotificationType.TEAM_INVITATION.value,
                 "team_name": team.name,
                 "inviter": {
-                    "username": invited_user.username,
-                    "first_name": invited_user.first_name,
+                    "id": inviter_user.id,
+                    "username": inviter_user.username,
+                    "first_name": inviter_user.first_name,
                     "last_name": inviter_user.last_name
                 },
                 "invitation_token": invitation.token
@@ -71,6 +71,7 @@ class NotificationService:
             "notification_type": NotificationType.TEAM_ROLE_CHANGE.value,
             "team_name": team.name,
             "admin": {
+                "id": admin.id,
                 "username": admin.username,
                 "first_name": admin.first_name,
                 "last_name": admin.last_name
@@ -106,6 +107,7 @@ class NotificationService:
             "channel_name": channel.name,
             "team_name": team.name,
             "inviter": {
+                "id": inviter_user.id,
                 "username": inviter_user.username,
                 "first_name": inviter_user.first_name,
                 "last_name": inviter_user.last_name
@@ -139,6 +141,7 @@ class NotificationService:
             "notification_type": NotificationType.MESSAGE.value,
             "team_name": team.name,
             "sender": {
+                "id": sender_user.id,
                 "username": sender_user.username,
                 "first_name": sender_user.first_name,
                 "last_name": sender_user.last_name
@@ -177,6 +180,7 @@ class NotificationService:
             "notification_type": NotificationType.MENTION.value,
             "team_name": team.name,
             "sender": {
+                "sender": sender_user.id,
                 "username": sender_user.username,
                 "first_name": sender_user.first_name,
                 "last_name": sender_user.last_name
