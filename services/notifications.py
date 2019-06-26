@@ -1,5 +1,6 @@
 from pyfcm import FCMNotification
 
+from daos.bots import BotDatabaseClient
 from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
 from daos.channels import ChannelDatabaseClient
@@ -133,19 +134,28 @@ class NotificationService:
 
     @classmethod
     def notify_message(cls, message, is_user_receiver):
-        sender_user = UserDatabaseClient.get_user_by_id(message.sender_id)
         team = TeamDatabaseClient.get_team_by_id(message.team_id)
+        sender = UserDatabaseClient.get_user_by_id(message.sender_id)
+
+        if sender is None:
+            sender = BotDatabaseClient.get_bot_by_id(message.sender_id)
+            sender_data = {
+                "id": sender.id,
+                "name": sender.name
+            }
+        else:
+            sender_data = {
+                "id": sender.id,
+                "username": sender.username,
+                "first_name": sender.first_name,
+                "last_name": sender.last_name
+            }
 
         message_body = "You receive a direct message!"
         data = {
             "notification_type": NotificationType.MESSAGE.value,
             "team_name": team.name,
-            "sender": {
-                "id": sender_user.id,
-                "username": sender_user.username,
-                "first_name": sender_user.first_name,
-                "last_name": sender_user.last_name
-            }
+            "sender": sender_data
         }
 
         if not is_user_receiver:
@@ -172,36 +182,41 @@ class NotificationService:
 
     @classmethod
     def notify_mention(cls, message, mentioned_id):
-        sender_user = UserDatabaseClient.get_user_by_id(message.sender_id)
-        team = TeamDatabaseClient.get_team_by_id(message.team_id)
+        is_not_bot = BotDatabaseClient.get_bot_by_id(mentioned_id) is None
 
-        message_body = "You have been mentioned!"
-        data = {
-            "notification_type": NotificationType.MENTION.value,
-            "team_name": team.name,
-            "sender": {
-                "sender": sender_user.id,
-                "username": sender_user.username,
-                "first_name": sender_user.first_name,
-                "last_name": sender_user.last_name
+        if is_not_bot:
+            sender_user = UserDatabaseClient.get_user_by_id(message.sender_id)
+            team = TeamDatabaseClient.get_team_by_id(message.team_id)
+
+            message_body = "You have been mentioned!"
+            data = {
+                "notification_type": NotificationType.MENTION.value,
+                "team_name": team.name,
+                "sender": {
+                    "sender": sender_user.id,
+                    "username": sender_user.username,
+                    "first_name": sender_user.first_name,
+                    "last_name": sender_user.last_name
+                }
             }
-        }
 
-        channel = ChannelDatabaseClient.get_channel_by_id(mentioned_id)
-        if channel is not None:
-            data["channel_name"] = channel.name
+            channel = ChannelDatabaseClient.get_channel_by_id(mentioned_id)
+            if channel is not None:
+                data["channel_name"] = channel.name
 
-        try:
-            cls.logger().debug(f"Sending notification to topic {mentioned_id}, with title \"{cls.APP_NAME}\" "
-                               f"and body \"{message_body}\"")
-            response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id, message_title=cls.APP_NAME,
-                                                                 message_body=message_body, data_message=data)
+            try:
+                cls.logger().debug(f"Sending notification to topic {mentioned_id}, with title \"{cls.APP_NAME}\" "
+                                   f"and body \"{message_body}\"")
+                response = cls.push_service.notify_topic_subscribers(topic_name=mentioned_id,
+                                                                     message_title=cls.APP_NAME,
+                                                                     message_body=message_body, data_message=data)
 
-            failures = response.get("failure")
-            if failures > 0:
-                cls.logger().error(f"There's been detected {failures} failures sending the mentions notification for "
-                                   f"receiver #{message.receiver_id} to Firebase.")
-            else:
-                cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
-        except ConnectionError:
-            cls.logger().error("Couldn't connect to Firebase server.")
+                failures = response.get("failure")
+                if failures > 0:
+                    cls.logger().error(
+                        f"There's been detected {failures} failures sending the mentions notification for "
+                        f"receiver #{message.receiver_id} to Firebase.")
+                else:
+                    cls.logger().info(f"New mention notified to receiver #{message.receiver_id}.")
+            except ConnectionError:
+                cls.logger().error("Couldn't connect to Firebase server.")

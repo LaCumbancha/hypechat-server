@@ -65,6 +65,7 @@ class ChannelResponseStatus(Enum):
 class UserRoles(Enum):
     ADMIN = "ADMIN"
     USER = "USER"
+    BOT = "BOT"
 
     @classmethod
     def is_admin(cls, user_role):
