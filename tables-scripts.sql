@@ -113,7 +113,7 @@ CREATE TABLE messages(
 	sender_id INTEGER NOT NULL,
 	receiver_id INTEGER NOT NULL,
 	team_id INTEGER NOT NULL,
-	content VARCHAR(256) NOT NULL,
+	content VARCHAR(1000) NOT NULL,
 	send_type SEND_TYPE NOT NULL,
 	message_type MESSAGE_TYPE NOT NULL,
 	timestamp TIMESTAMP NOT NULL DEFAULT now(),
