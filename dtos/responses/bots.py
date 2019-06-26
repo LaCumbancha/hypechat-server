@@ -18,7 +18,8 @@ class SuccessfulBotListResponse(Jsonizable, Response):
     def _output_bot(self):
         return list(map(lambda bot: {
             "id": bot.id,
-            "name": bot.name
+            "name": bot.name,
+            "url": bot.callback
         }, self.bots))
 
     def status_code(self):
