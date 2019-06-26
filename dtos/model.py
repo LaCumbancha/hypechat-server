@@ -21,6 +21,7 @@ class FacebookUserDTO:
 
     def __init__(self, facebook_id, email, first_name, last_name, profile_pic):
         self.facebook_id = facebook_id
+        self.username = f"{first_name}{last_name}"
         self.email = email
         self.first_name = first_name
         self.last_name = last_name

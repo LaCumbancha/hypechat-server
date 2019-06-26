@@ -99,9 +99,11 @@ class MessageDatabaseClient:
             UserTableEntry.last_name,
             UserTableEntry.profile_pic,
             UserTableEntry.online,
+            BotTableEntry.bot_name,
             MessageTableEntry.content,
             MessageTableEntry.message_type,
             MessageTableEntry.timestamp,
+            UserTableEntry.user_id.label("is_user"),
             chats.c.unseen
         ).join(
             last_messages_mixed,
@@ -129,7 +131,7 @@ class MessageDatabaseClient:
                     MessageTableEntry.receiver_id == chats.c.user_id,
                 )
             )
-        ).join(
+        ).outerjoin(
             UserTableEntry,
             or_(
                 and_(
@@ -139,6 +141,18 @@ class MessageDatabaseClient:
                 and_(
                     UserTableEntry.user_id == last_messages_mixed.c.user2,
                     UserTableEntry.user_id != user_id
+                )
+            )
+        ).outerjoin(
+            BotTableEntry,
+            or_(
+                and_(
+                    BotTableEntry.bot_id == last_messages_mixed.c.user1,
+                    BotTableEntry.bot_id != user_id
+                ),
+                and_(
+                    BotTableEntry.bot_id == last_messages_mixed.c.user2,
+                    BotTableEntry.bot_id != user_id
                 )
             )
         ).all()

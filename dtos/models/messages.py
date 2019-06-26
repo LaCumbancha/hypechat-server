@@ -88,14 +88,12 @@ class BotMention:
 
 class PreviewDirectMessage:
 
-    def __init__(self, message_id, sender_id, receiver_id, chat_username, chat_first_name, chat_last_name, chat_picture,
-                 chat_online, content, message_type, timestamp, offset):
+    def __init__(self, message_id, receiver_id, sender, content, message_type, timestamp, offset, chat_name,
+                 chat_online=False, chat_picture=None):
         self.message_id = message_id
-        self.sender_id = sender_id
         self.receiver_id = receiver_id
-        self.chat_username = chat_username
-        self.chat_first_name = chat_first_name
-        self.chat_last_name = chat_last_name
+        self.sender = sender
+        self.chat_name = chat_name
         self.chat_picture = chat_picture
         self.chat_online = chat_online
         self.content = content
