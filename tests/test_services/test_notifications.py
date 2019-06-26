@@ -88,10 +88,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("Hypechat", MockedNotificationServer.notification.message_title)
         self.assertEqual("You have been invited to join a team!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("inviter").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("inviter").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("inviter").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("inviter").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("inviter_id"))
         self.assertEqual(NotificationType.TEAM_INVITATION.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -118,10 +115,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("Hypechat", MockedNotificationServer.notification.message_title)
         self.assertEqual("You have been upgraded in team Test-Team!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("admin").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("admin").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("admin").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("admin").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("admin_id"))
         self.assertEqual(NotificationType.TEAM_ROLE_CHANGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -152,10 +146,7 @@ class NotificationServiceTestCase(unittest.TestCase):
                          MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
         self.assertEqual("Test-Channel", MockedNotificationServer.notification.data_message.get("channel_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("inviter").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("inviter").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("inviter").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("inviter").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("inviter_id"))
         self.assertEqual(NotificationType.CHANNEL_INVITATION.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -183,10 +174,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("Hypechat", MockedNotificationServer.notification.message_title)
         self.assertEqual("You receive a direct message!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("sender").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender_id"))
         self.assertEqual(NotificationType.MESSAGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -215,8 +203,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("Hypechat", MockedNotificationServer.notification.message_title)
         self.assertEqual("You receive a direct message!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
-        self.assertEqual("Test-Bot", MockedNotificationServer.notification.data_message.get("sender").get("name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender_id"))
         self.assertEqual(NotificationType.MESSAGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -247,10 +234,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("You receive a channel message!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
         self.assertEqual("Test-Channel", MockedNotificationServer.notification.data_message.get("channel_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("sender").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender_id"))
         self.assertEqual(NotificationType.MESSAGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -282,8 +266,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("You receive a channel message!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
         self.assertEqual("Test-Channel", MockedNotificationServer.notification.data_message.get("channel_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
-        self.assertEqual("Test-Bot", MockedNotificationServer.notification.data_message.get("sender").get("name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender_id"))
         self.assertEqual(NotificationType.MESSAGE.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
@@ -334,10 +317,7 @@ class NotificationServiceTestCase(unittest.TestCase):
         self.assertEqual("You have been mentioned!", MockedNotificationServer.notification.message_body)
         self.assertEqual("Test-Team", MockedNotificationServer.notification.data_message.get("team_name"))
         self.assertEqual("Test-Channel", MockedNotificationServer.notification.data_message.get("channel_name"))
-        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender").get("id"))
-        self.assertEqual("Tester0", MockedNotificationServer.notification.data_message.get("sender").get("username"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("first_name"))
-        self.assertEqual("Test0", MockedNotificationServer.notification.data_message.get("sender").get("last_name"))
+        self.assertEqual(0, MockedNotificationServer.notification.data_message.get("sender_id"))
         self.assertEqual(NotificationType.MENTION.value,
                          MockedNotificationServer.notification.data_message.get("notification_type"))
 
