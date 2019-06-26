@@ -49,15 +49,10 @@ class MessageService:
         last_messages.sort(key=lambda msg: msg.timestamp, reverse=True)
         for message in last_messages:
             chats += [{
-                "chat_id": message.sender_id if message.sender_id != user_id else message.receiver_id,
-                "chat_name": message.chat_username,
+                "chat_id": message.sender.id if message.sender.id != user_id else message.receiver_id,
+                "chat_name": message.chat_name,
                 "chat_picture": message.chat_picture,
-                "sender": {
-                    "id": message.sender_id,
-                    "username": message.chat_username,
-                    "first_name": message.chat_first_name,
-                    "last_name": message.chat_last_name,
-                },
+                "sender": vars(message.sender),
                 "mentions": MentionService.get_mentions(message.message_id),
                 "content": word_censor.remove_forbidden_words(message),
                 "type": message.message_type,

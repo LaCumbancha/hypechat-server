@@ -86,15 +86,28 @@ class MessageModelMapper:
     def to_direct_messages_previews(cls, last_messages):
         preview_messages = []
         for last_message in last_messages:
+            if last_message.is_user is not None:
+                sender = UserMessageSender(
+                    user_id=last_message.sender_id,
+                    username=last_message.username,
+                    first_name=last_message.first_name,
+                    last_name=last_message.last_name
+                )
+                chat_name = last_message.username
+            else:
+                sender = BotMessageSender(
+                    bot_id=last_message.sender_id,
+                    bot_name=last_message.bot_name
+                )
+                chat_name = last_message.bot_name
+
             if not any(list(map(lambda message: message.message_id == last_message.message_id, preview_messages))):
                 preview_messages += [
                     PreviewDirectMessage(
                         message_id=last_message.message_id,
-                        sender_id=last_message.sender_id,
                         receiver_id=last_message.receiver_id,
-                        chat_username=last_message.username,
-                        chat_first_name=last_message.first_name,
-                        chat_last_name=last_message.last_name,
+                        sender=sender,
+                        chat_name=chat_name,
                         chat_picture=last_message.profile_pic,
                         chat_online=last_message.online,
                         content=last_message.content,
