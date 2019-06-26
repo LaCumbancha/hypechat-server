@@ -31,12 +31,7 @@ class NotificationService:
             data = {
                 "notification_type": NotificationType.TEAM_INVITATION.value,
                 "team_name": team.name,
-                "inviter": {
-                    "id": inviter_user.id,
-                    "username": inviter_user.username,
-                    "first_name": inviter_user.first_name,
-                    "last_name": inviter_user.last_name
-                },
+                "inviter_id": inviter_user.id,
                 "invitation_token": invitation.token
             }
 
@@ -71,12 +66,7 @@ class NotificationService:
         data = {
             "notification_type": NotificationType.TEAM_ROLE_CHANGE.value,
             "team_name": team.name,
-            "admin": {
-                "id": admin.id,
-                "username": admin.username,
-                "first_name": admin.first_name,
-                "last_name": admin.last_name
-            }
+            "admin_id": admin.id
         }
 
         try:
@@ -107,12 +97,7 @@ class NotificationService:
             "notification_type": NotificationType.CHANNEL_INVITATION.value,
             "channel_name": channel.name,
             "team_name": team.name,
-            "inviter": {
-                "id": inviter_user.id,
-                "username": inviter_user.username,
-                "first_name": inviter_user.first_name,
-                "last_name": inviter_user.last_name
-            }
+            "inviter_id": inviter_user.id
         }
 
         try:
@@ -139,23 +124,12 @@ class NotificationService:
 
         if sender is None:
             sender = BotDatabaseClient.get_bot_by_id(message.sender_id)
-            sender_data = {
-                "id": sender.id,
-                "name": sender.name
-            }
-        else:
-            sender_data = {
-                "id": sender.id,
-                "username": sender.username,
-                "first_name": sender.first_name,
-                "last_name": sender.last_name
-            }
 
         message_body = "You receive a direct message!"
         data = {
             "notification_type": NotificationType.MESSAGE.value,
             "team_name": team.name,
-            "sender": sender_data
+            "sender_id": sender.id
         }
 
         if not is_user_receiver:
@@ -190,23 +164,12 @@ class NotificationService:
 
             if sender is None:
                 sender = BotDatabaseClient.get_bot_by_id(message.sender_id)
-                sender_data = {
-                    "id": sender.id,
-                    "name": sender.name
-                }
-            else:
-                sender_data = {
-                    "id": sender.id,
-                    "username": sender.username,
-                    "first_name": sender.first_name,
-                    "last_name": sender.last_name
-                }
 
             message_body = "You have been mentioned!"
             data = {
                 "notification_type": NotificationType.MENTION.value,
                 "team_name": team.name,
-                "sender": sender_data
+                "sender_id": sender.id
             }
 
             channel = ChannelDatabaseClient.get_channel_by_id(mentioned_id)
