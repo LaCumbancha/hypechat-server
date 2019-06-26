@@ -80,15 +80,19 @@ class UserService:
 
         if user:
             try:
-                hashing.verify(user_data.password, user.password)
-                cls.logger().debug(f"Generating token for user {user.id}")
-                user.token = Authenticator.generate(user.id, user_data.password)
-                user.online = True
-                UserDatabaseClient.update_user(user)
-                DatabaseClient.commit()
-                cls.logger().info(f"User #{user.id} logged in")
-                headers = {"auth_token": user.token}
-                return SuccessfulUserResponse(user, headers)
+                if hashing.verify(user_data.password, user.password):
+                    cls.logger().debug(f"Generating token for user {user.id}")
+                    user.token = Authenticator.generate(user.id, user_data.password)
+                    user.online = True
+                    UserDatabaseClient.update_user(user)
+                    DatabaseClient.commit()
+                    cls.logger().info(f"User #{user.id} logged in")
+                    headers = {"auth_token": user.token}
+                    return SuccessfulUserResponse(user, headers)
+                else:
+                    cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
+                    return SuccessfulUserMessageResponse("Wrong email or password.",
+                                                         UserResponseStatus.WRONG_CREDENTIALS.value)
             except ValueError:
                 cls.logger().info(f"Wrong credentials while attempting to log in user #{user_data.email}")
                 return SuccessfulUserMessageResponse("Wrong email or password.",
