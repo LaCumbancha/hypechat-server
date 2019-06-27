@@ -144,3 +144,14 @@ class FacebookWrongTokenError(HypechatError):
         self.message = message
         self.status = self.WRONG_FACEBOOK_TOKEN
         self.payload = payload
+
+
+class WrongEmailError(HypechatError):
+    status_code = StatusCode.BAD_REQUEST.value
+    NOT_VALID_EMAIL = "NOT_VALID_EMAIL"
+
+    def __init__(self, message, payload=None):
+        HypechatError()
+        self.message = message
+        self.status = self.NOT_VALID_EMAIL
+        self.payload = payload

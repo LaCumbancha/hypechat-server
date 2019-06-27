@@ -5,10 +5,13 @@ from dtos.inputs.teams import *
 from dtos.inputs.channels import *
 from exceptions.exceptions import *
 
+import re
 import logging
 
 
 class ClientRequest:
+    EMAIL_PATTERN = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    email_regex = re.compile("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 
     def __init__(self, data):
         self.data = data
@@ -33,6 +36,11 @@ class ClientRequest:
     @classmethod
     def has_empty_body(cls, body):
         return body == b''
+
+    @classmethod
+    def validate_email(cls, email):
+        if cls.email_regex.match(email) is None:
+            raise WrongEmailError("Please, enter a valid email.")
 
     def query_params(self):
         return self.data.args
@@ -60,9 +68,11 @@ class ClientRequest:
             self.logger.error("Missing parameter in request body: password.")
             raise MissingRequestParameterError("password")
 
+        self.validate_email(email)
+
         return NewUserDTO(
             username=username,
-            email=email,
+            email=email.lower(),
             password=password,
             first_name=self.json_body().get("first_name"),
             last_name=self.json_body().get("last_name"),
@@ -85,8 +95,10 @@ class ClientRequest:
                 self.logger.error("Missing parameter in request body: password.")
                 raise MissingRequestParameterError("password")
 
+            self.validate_email(email)
+
         return LoginDTO(
-            email=email,
+            email=email.lower() if email is not None else None,
             password=password,
             facebook_token=facebook_token
         )
@@ -98,8 +110,10 @@ class ClientRequest:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
+        self.validate_email(email)
+
         return RecoverPasswordDTO(
-            email=email
+            email=email.lower()
         )
 
     def regenerate_password_data(self):
@@ -114,8 +128,10 @@ class ClientRequest:
             self.logger.error("Missing parameter in request body: recover_token.")
             raise MissingRequestParameterError("recover_token")
 
+        self.validate_email(email)
+
         return RegeneratePasswordDTO(
-            email=email,
+            email=email.lower(),
             recover_token=recover_token
         )
 
@@ -205,7 +221,8 @@ class ClientRequest:
                 mentions=self.json_body().get("mentions")
             )
         except MessageTypeNotAvailableError:
-            logging.getLogger(self.__class__.__name__).warning(f"Message type {self.json_body().get('message_type')} not defined.")
+            logging.getLogger(self.__class__.__name__).warning(
+                f"Message type {self.json_body().get('message_type')} not defined.")
             raise
 
     def chat_data(self, team_id, chat_id):
@@ -283,10 +300,12 @@ class ClientRequest:
             self.logger.error("Missing parameter in request body: email.")
             raise MissingRequestParameterError("email")
 
+        self.validate_email(email)
+
         return TeamInviteDTO(
             token=auth_token,
             team_id=team_id,
-            email=email
+            email=email.lower()
         )
 
     def accept_team_invite_data(self):
@@ -399,7 +418,8 @@ class ClientRequest:
                 welcome_message=self.json_body().get("welcome_message")
             )
         except VisibilityNotAvailableError:
-            logging.getLogger(self.__class__.__name__).warning(f"Visibility {self.json_body().get('visibility')} not defined.")
+            logging.getLogger(self.__class__.__name__).warning(
+                f"Visibility {self.json_body().get('visibility')} not defined.")
             raise
 
     def channel_invitation_data(self):
