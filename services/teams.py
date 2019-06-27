@@ -111,46 +111,54 @@ class TeamService:
 
     @classmethod
     def invite_user(cls, invite_data):
-        team_admin = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_moderator)
-        already_member = TeamDatabaseClient.get_user_in_team_by_email(invite_data.email,
-                                                                      invite_data.authentication.team_id)
+        team_mod = Authenticator.authenticate_team(invite_data.authentication, TeamRoles.is_team_moderator)
 
+        invited_user = UserDatabaseClient.get_user_by_email(invite_data.email)
+        if invited_user is not None and invited_user.role == UserRoles.ADMIN.value:
+            cls.logger().info(f"Mod #{team_mod.id} tried to invite admin #{invited_user.id} to team #{team_mod.team_id}.")
+            return BadRequestTeamMessageResponse("You cannot invite an admin to a team!",
+                                                 TeamResponseStatus.ROLE_UNAVAILABLE.value)
+
+        already_member = TeamDatabaseClient.get_user_in_team_by_email(invite_data.email, team_mod.team_id)
         if already_member is not None:
+            cls.logger().info(f"Mod #{team_mod.id} tried to invite user #{already_member.user_id} to team "
+                              f"#{team_mod.team_id}, but it already belongs to that team.")
             return BadRequestTeamMessageResponse("This user already belongs to the team.",
                                                  TeamResponseStatus.ALREADY_REGISTERED.value)
 
-        if TeamDatabaseClient.get_team_invite(team_admin.team_id, invite_data.email) is not None:
+        if TeamDatabaseClient.get_team_invite(team_mod.team_id, invite_data.email) is not None:
+            cls.logger().info(f"Mod #{team_mod.id} tried to invite an user already invited to team #{team_mod.team_id}")
             return BadRequestTeamMessageResponse("This user was already invited to join the team.",
                                                  TeamResponseStatus.ALREADY_INVITED.value)
 
         invite_token = Authenticator.generate_team_invitation()
         new_invite = TeamInvite(
-            team_id=team_admin.team_id,
+            team_id=team_mod.team_id,
             email=invite_data.email,
             token=invite_token
         )
 
         try:
             TeamDatabaseClient.add_invite(new_invite)
-            team = TeamDatabaseClient.get_team_by_id(team_admin.team_id)
+            team = TeamDatabaseClient.get_team_by_id(team_mod.team_id)
             DatabaseClient.commit()
-            cls.logger().info(f"New invitation for {new_invite.email} to join team #{team_admin.team_id}, by user #"
-                              f"{team_admin.id}.")
+            cls.logger().info(f"New invitation for {new_invite.email} to join team #{team_mod.team_id}, by user #"
+                              f"{team_mod.id}.")
 
             email_data = TeamInvitationEmailDTO(
                 email=invite_data.email,
                 team_name=team.name,
-                inviter_name=team_admin.username,
+                inviter_name=team_mod.username,
                 token=invite_token,
                 message_template=EmailService.team_invitation_message
             )
             EmailService.send_email(email_data)
-            NotificationService.notify_team_invitation(new_invite, team_admin.id)
-            cls.logger().info(f"Team #{team_admin.team_id} invitation email sent to {new_invite.email}.")
+            NotificationService.notify_team_invitation(new_invite, team_mod.id)
+            cls.logger().info(f"Team #{team_mod.team_id} invitation email sent to {new_invite.email}.")
 
         except IntegrityError:
             DatabaseClient.rollback()
-            cls.logger().error(f"Couldn't invite user {new_invite.email} to team #{team_admin.team_id}.")
+            cls.logger().error(f"Couldn't invite user {new_invite.email} to team #{team_mod.team_id}.")
             return UnsuccessfulTeamMessageResponse("Couldn't invite user to team.")
         else:
             return SuccessfulTeamMessageResponse("User invited.", TeamResponseStatus.INVITED.value)
