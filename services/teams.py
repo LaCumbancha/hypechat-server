@@ -73,6 +73,11 @@ class TeamService:
             cls.logger().info(f"User {add_data.add_user_id} not found.")
             raise UserNotFoundError("User not found.", UserResponseStatus.USER_NOT_FOUND.value)
 
+        if user.role == UserRoles.ADMIN.value:
+            cls.logger().warning(f"Admin #{admin.id} trying to add other admin to a team.")
+            return BadRequestTeamMessageResponse("You cannot add an admin to a team!",
+                                                 TeamResponseStatus.ROLE_UNAVAILABLE.value)
+
         if TeamDatabaseClient.get_user_in_team_by_ids(user.id, add_data.authentication.team_id) is not None:
             cls.logger().info(
                 f"User {add_data.add_user_id} already part of team #{add_data.authentication.team_id}.")
@@ -234,7 +239,7 @@ class TeamService:
     @classmethod
     def team_user_profile(cls, user_data):
         user = Authenticator.authenticate_team(user_data.authentication)
-        response = UserService.team_user_profile(user_data.user_id, user.team_id)
+        response = UserService.team_user_profile(user_data.user_id, user.team_id, user.team_role == UserRoles.ADMIN.value)
         return response or BadRequestTeamMessageResponse("You cannot access to this user's profile",
                                                          TeamResponseStatus.USER_NOT_MEMBER.value)
 
