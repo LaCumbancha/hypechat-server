@@ -48,7 +48,7 @@ class TeamService:
                 role=TeamRoles.CREATOR.value
             )
             TeamDatabaseClient.add_team_user(new_user_by_team)
-            BotService.register_tito(team.id)
+            BotService.register_tito_in_team(team.id)
             DatabaseClient.commit()
             cls.logger().info(f"Team #{team.id} created.")
             cls.logger().info(f"User #{user.id} assigned as team #{team.id} {new_user_by_team.role}.")

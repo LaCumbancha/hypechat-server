@@ -193,6 +193,7 @@ class UserServiceTestCase(unittest.TestCase):
             MockedUserDatabase.stored_users = MockedUserDatabase.batch_users
             MockedUserDatabase.batch_users = []
 
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = None
         sys.modules["daos.users"].UserDatabaseClient.add_client = MagicMock(side_effect=add_client)
         sys.modules["daos.users"].UserDatabaseClient.add_user = MagicMock(side_effect=add_user)
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)
@@ -227,9 +228,9 @@ class UserServiceTestCase(unittest.TestCase):
 
         response = UserService.login_user(data)
         self.assertFalse(MockedUserDatabase.batch_login)
-        self.assertTrue(MockedUserDatabase.stored_login)
-        self.assertIsInstance(response, SuccessfulUserResponse)
-        self.assertEqual(response.status, UserResponseStatus.ACTIVE.value)
+        self.assertFalse(MockedUserDatabase.stored_login)
+        self.assertIsInstance(response, SuccessfulUserMessageResponse)
+        self.assertEqual(response.status, UserResponseStatus.WRONG_CREDENTIALS.value)
 
     def test_app_user_login_with_correct_password_works_properly(self):
         data = MagicMock()

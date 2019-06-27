@@ -26,7 +26,6 @@ sys.modules["models.authentication"] = MagicMock()
 sys.modules["logging"].getLogger = MagicMock()
 
 from services.teams import TeamService
-
 mock = MagicMock()
 
 

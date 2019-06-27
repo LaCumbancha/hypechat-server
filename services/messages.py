@@ -1,4 +1,4 @@
-from daos.database import *
+from daos.database import DatabaseClient
 from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
 from daos.channels import ChannelDatabaseClient
@@ -36,6 +36,7 @@ class MessageService:
         direct_messages = cls._generate_direct_chats_list(db_direct_messages, user.id, user.team_id)
         channel_messages = cls._generate_channel_chats_list(db_channel_messages, user.team_id)
         total_messages = direct_messages + channel_messages
+        total_messages.sort(key=lambda msg: msg.get("timestamp"), reverse=True)
 
         cls.logger().info(f"Retrieved {len(total_messages)} chats from user #{user.id} ({user.username}).")
         return ChatsListResponse(total_messages)
@@ -245,7 +246,7 @@ class MessageService:
             for member in channel_members:
                 receiver_user = MessageDatabaseClient.get_chat_by_ids(member.id, receiver_id, team_id)
 
-                if receiver_user:
+                if receiver_user is not None:
                     cls.logger().debug(f"Receiving channel member chat already exists. Increasing offset by 1.")
                     receiver_user.offset += 1
                     receivers_chat += [receiver_user]

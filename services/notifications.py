@@ -134,7 +134,7 @@ class NotificationService:
 
         if not is_user_receiver:
             channel = ChannelDatabaseClient.get_channel_by_id(message.receiver_id)
-            message_body = "Your receive a channel message!"
+            message_body = "You receive a channel message!"
             data["channel_name"] = channel.name
 
         try:

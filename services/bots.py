@@ -29,7 +29,7 @@ class BotService:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def register_tito(cls, team_id):
+    def register_tito_in_team(cls, team_id):
         try:
             team_tito = TeamUser(
                 user_id=cls.TITO_ID,
@@ -39,7 +39,8 @@ class BotService:
             TeamDatabaseClient.add_team_user(team_tito)
             DatabaseClient.commit()
             cls.logger().info(f"Tito added to team #{team_id}.")
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
+            DatabaseClient.rollback()
             cls.logger().error(f"Failing to register Tito into team #{team_id}.", exc)
             raise
 
