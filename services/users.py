@@ -268,12 +268,12 @@ class UserService:
         return SuccessfulFullUserResponse(cls._generate_user_profile(profile))
 
     @classmethod
-    def team_user_profile(cls, user_id, team_id):
+    def team_user_profile(cls, user_id, team_id, admin_search=False):
         profile = UserDatabaseClient.get_user_profile(user_id)
         cls.logger().info(f"Retrieved user #{user_id} profile.")
         output_profile = cls._generate_user_profile(profile)
 
-        if any(list(map(lambda team: team.get("id") == team_id, output_profile.get("teams")))):
+        if admin_search or any(list(map(lambda team: team.get("id") == team_id, output_profile.get("teams")))):
             return SuccessfulFullUserResponse(output_profile)
 
     @classmethod
