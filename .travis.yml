@@ -1,0 +1,16 @@
+language: python
+install:
+  - pip install -r requirements.txt
+script:
+  - python -m unittest tests/test_dtos/test_responses.py
+  - python -m unittest tests/test_models/test_constants.py
+  - python -m unittest tests/test_models/test_requests.py
+  - python -m unittest tests/test_models/test_authentication.py
+  - python -m unittest tests/test_services/test_emails.py
+  - python -m unittest tests/test_services/test_facebook.py
+  - python -m unittest tests/test_services/test_mentions.py
+  - python -m unittest tests/test_services/test_users.py
+  - python -m unittest tests/test_services/test_teams.py
+  - python -m unittest tests/test_services/test_notifications.py
+  - python -m unittest tests/test_services/test_bots.py
+  - python -m unittest tests/test_services/test_messages.py
