@@ -6,6 +6,8 @@ from daos.mappers.bots import BotDatabaseMapper, BotModelMapper
 from tables.bots import BotTableEntry
 from tables.users import UsersByTeamsTableEntry
 
+from sqlalchemy import func
+
 
 class BotDatabaseClient:
 
@@ -21,7 +23,9 @@ class BotDatabaseClient:
 
     @classmethod
     def get_bot_by_name(cls, name):
-        bot_entry = db.session.query(BotTableEntry).filter(BotTableEntry.bot_name == name).one_or_none()
+        bot_entry = db.session.query(BotTableEntry).filter(
+            func.lower(BotTableEntry.bot_name) == name.lower()
+        ).one_or_none()
         return BotModelMapper.to_bot(bot_entry)
 
     @classmethod

@@ -29,7 +29,10 @@ class UserService:
 
     @classmethod
     def create_user(cls, user_data):
-
+        if UserDatabaseClient.get_user_by_username(user_data.username) is not None:
+            cls.logger().info(f"Failing to create user #{user_data.username}. Username already in use.")
+            return BadRequestUserMessageResponse("Username already in use for other user.",
+                                                 UserResponseStatus.ALREADY_REGISTERED.value)
         try:
             new_client = UserDatabaseClient.add_client()
             new_user = User(
@@ -54,10 +57,6 @@ class UserService:
             if UserDatabaseClient.get_user_by_email(user_data.email) is not None:
                 cls.logger().info(f"Failing to create user {user_data.username}. Email already in use.", exc)
                 return BadRequestUserMessageResponse("Email already in use for other user.",
-                                                     UserResponseStatus.ALREADY_REGISTERED.value)
-            elif UserDatabaseClient.get_user_by_username(user_data.username) is not None:
-                cls.logger().info(f"Failing to create user #{user_data.username}. Username already in use.", exc)
-                return BadRequestUserMessageResponse("Username already in use for other user.",
                                                      UserResponseStatus.ALREADY_REGISTERED.value)
             else:
                 cls.logger().info(f"Failing to create user #{user_data.username}.")

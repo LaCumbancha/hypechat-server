@@ -8,6 +8,8 @@ from tables.users import UserTableEntry, UsersByTeamsTableEntry
 from tables.teams import TeamTableEntry, TeamsInvitesTableEntry, ForbiddenWordTableEntry
 from tables.channels import ChannelTableEntry
 
+from sqlalchemy import func
+
 
 class TeamDatabaseClient:
 
@@ -84,7 +86,9 @@ class TeamDatabaseClient:
 
     @classmethod
     def get_team_by_name(cls, team_name):
-        team_entry = db.session.query(TeamTableEntry).filter(TeamTableEntry.team_name == team_name).one_or_none()
+        team_entry = db.session.query(TeamTableEntry).filter(
+            func.lower(TeamTableEntry.team_name) == team_name.lower()
+        ).one_or_none()
         return TeamModelMapper.to_team(team_entry)
 
     @classmethod

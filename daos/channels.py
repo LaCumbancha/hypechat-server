@@ -6,7 +6,7 @@ from daos.mappers.channels import ChannelDatabaseMapper, ChannelModelMapper
 from tables.channels import ChannelTableEntry
 from tables.users import UserTableEntry, UsersByChannelsTableEntry
 
-from sqlalchemy import and_
+from sqlalchemy import func, and_
 
 
 class ChannelDatabaseClient:
@@ -78,7 +78,7 @@ class ChannelDatabaseClient:
             ChannelTableEntry.description,
             ChannelTableEntry.welcome_message
         ).filter(
-            ChannelTableEntry.name == channel_name
+            func.lower(ChannelTableEntry.name) == channel_name.lower()
         ).join(
             UserTableEntry,
             UserTableEntry.user_id == ChannelTableEntry.creator
