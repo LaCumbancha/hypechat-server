@@ -193,6 +193,7 @@ class UserServiceTestCase(unittest.TestCase):
             MockedUserDatabase.stored_users = MockedUserDatabase.batch_users
             MockedUserDatabase.batch_users = []
 
+        sys.modules["daos.users"].UserDatabaseClient.get_user_by_username.return_value = None
         sys.modules["daos.users"].UserDatabaseClient.add_client = MagicMock(side_effect=add_client)
         sys.modules["daos.users"].UserDatabaseClient.add_user = MagicMock(side_effect=add_user)
         sys.modules["daos.database"].DatabaseClient.commit = MagicMock(side_effect=commit)

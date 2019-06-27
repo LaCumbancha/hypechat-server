@@ -52,25 +52,25 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertRaises(MissingRequestParameterError, client_request.new_user_data)
 
     def test_new_user_data_without_username_throws_exception(self):
-        body_json = {"password": "pass", "email": "test@test"}
+        body_json = {"password": "pass", "email": "test@test.com"}
         input_request = Request(body=body_json)
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestParameterError, client_request.new_user_data)
 
     def test_new_user_data_without_password_throws_exception(self):
-        body_json = {"username": "test", "email": "test@test"}
+        body_json = {"username": "test", "email": "test@test.com"}
         input_request = Request(body=body_json)
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestParameterError, client_request.new_user_data)
 
     def test_new_user_data_with_full_data_works_properly(self):
-        body_json = {"username": "test", "password": "pass", "email": "test@test"}
+        body_json = {"username": "test", "password": "pass", "email": "test@test.com"}
         input_request = Request(body=body_json)
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.new_user_data(), NewUserDTO)
 
     def test_app_login_data_without_password_throws_exception(self):
-        body_json = {"email": "test@test"}
+        body_json = {"email": "test@test.com"}
         input_request = Request(body=body_json)
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestParameterError, client_request.login_data)
@@ -82,7 +82,7 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertRaises(MissingRequestParameterError, client_request.login_data)
 
     def test_login_data_with_full_data_works_properly(self):
-        body_json_app = {"email": "test@test", "password": "pass"}
+        body_json_app = {"email": "test@test.com", "password": "pass"}
         body_json_face = {"facebook_token": "token-test"}
         input_request_app = Request(body=body_json_app)
         input_request_face = Request(body=body_json_face)
@@ -98,7 +98,7 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertRaises(MissingRequestParameterError, client_request.recover_password_data)
 
     def test_recover_password_data_with_full_data_works_properly(self):
-        recover_json = {"email": "test@test"}
+        recover_json = {"email": "test@test.com"}
         input_request = Request(body=recover_json)
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.recover_password_data(), RecoverPasswordDTO)
@@ -116,7 +116,7 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertRaises(MissingRequestParameterError, client_request.regenerate_password_data)
 
     def test_regenerate_password_data_with_full_data_works_properly(self):
-        body_json = {"recover_token": "test", "email": "test@test"}
+        body_json = {"recover_token": "test", "email": "test@test.com"}
         input_request = Request(body=body_json)
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.regenerate_password_data(), RegeneratePasswordDTO)
@@ -220,7 +220,7 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertIsInstance(client_request.add_user_team_data(), AddUserTeamDTO)
 
     def test_invite_user_to_team_data_without_team_id_throws_exception(self):
-        body_json = {"email": "test@test"}
+        body_json = {"email": "test@test.com"}
         input_request = Request(body=body_json, headers=authentication_headers)
         client_request = ClientRequest(input_request)
         self.assertRaises(MissingRequestParameterError, client_request.team_invite_data)
@@ -232,7 +232,7 @@ class ClientRequestTestCase(unittest.TestCase):
         self.assertRaises(MissingRequestParameterError, client_request.team_invite_data)
 
     def test_invite_user_to_team_data_with_full_data_works_properly(self):
-        body_json = {"team_id": 0, "email": "test@test"}
+        body_json = {"team_id": 0, "email": "test@test.com"}
         input_request = Request(body=body_json, headers=authentication_headers)
         client_request = ClientRequest(input_request)
         self.assertIsInstance(client_request.team_invite_data(), TeamInviteDTO)
