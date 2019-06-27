@@ -246,7 +246,7 @@ class MessageService:
             for member in channel_members:
                 receiver_user = MessageDatabaseClient.get_chat_by_ids(member.id, receiver_id, team_id)
 
-                if receiver_user:
+                if receiver_user is not None:
                     cls.logger().debug(f"Receiving channel member chat already exists. Increasing offset by 1.")
                     receiver_user.offset += 1
                     receivers_chat += [receiver_user]
