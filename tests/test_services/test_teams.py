@@ -258,7 +258,8 @@ class UserServiceTestCase(unittest.TestCase):
 
         '''Mocked outputs'''
         mod = User(user_id=0)
-        user = User(user_id=1)
+        mod.team_id = 0
+        user = TeamUser(user_id=1, team_id=0)
 
         sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = mod
         sys.modules["daos.teams"].TeamDatabaseClient.get_user_in_team_by_email.return_value = user
@@ -520,6 +521,7 @@ class UserServiceTestCase(unittest.TestCase):
         '''Mocked outputs'''
         user = User(user_id=0)
         user.team_id = 0
+        user.team_role = TeamRoles.MEMBER.value
 
         sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
         sys.modules["services.users"].UserService.team_user_profile.return_value = None
