@@ -58,7 +58,9 @@ class UserDatabaseClient:
 
     @classmethod
     def get_user_by_username(cls, username):
-        user_entry = db.session.query(UserTableEntry).filter(UserTableEntry.username == username).one_or_none()
+        user_entry = db.session.query(UserTableEntry).filter(
+            func.lower(UserTableEntry.username) == username.lower()
+        ).one_or_none()
         return UserModelMapper.to_user(user_entry)
 
     @classmethod
