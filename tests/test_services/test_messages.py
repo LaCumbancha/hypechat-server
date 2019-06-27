@@ -2,9 +2,11 @@ import unittest
 from unittest.mock import MagicMock
 
 from dtos.models.users import PublicUser
+from dtos.models.channels import Channel, ChannelCreator
 from dtos.models.messages import *
-from dtos.responses.messages import ChatsListResponse
-from models.constants import TeamRoles, MessageResponseStatus
+from dtos.responses.messages import ChatsListResponse, MessageListResponse
+from models.constants import TeamRoles, MessageResponseStatus, SendMessageType
+from exceptions.exceptions import ChatNotFoundError
 from datetime import datetime, timedelta
 
 '''Mocking environment properties'''
@@ -23,6 +25,10 @@ sys.modules["logging"].getLogger = MagicMock()
 from services.messages import MessageService
 
 mock = MagicMock()
+
+
+class MockedMessageDatabase:
+    stored_chat = None
 
 
 class MessagesServiceTestCase(unittest.TestCase):
@@ -49,7 +55,7 @@ class MessagesServiceTestCase(unittest.TestCase):
         self.assertEqual(0, len(response.chats))
         self.assertEqual(MessageResponseStatus.LIST.value, response.json().get("status"))
 
-    def test_get_preview_messages_from_user_with_non_emtpy_chat_lists_work_proplery(self):
+    def test_get_preview_messages_from_user_with_non_emtpy_chat_lists_work_properly(self):
         data = MagicMock()
 
         '''Mocked ouputs'''
@@ -100,3 +106,85 @@ class MessagesServiceTestCase(unittest.TestCase):
         self.assertEqual(True, response.chats[3].get("unseen"))
         self.assertEqual(0, response.chats[3].get("sender").get("id"))
         self.assertEqual(MessageResponseStatus.LIST.value, response.json().get("status"))
+
+    def test_get_messages_from_non_existent_chat_returns_not_found(self):
+        data = MagicMock()
+
+        '''Mocked ouputs'''
+        user = PublicUser(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        user.team_id = 0
+        user.team_role = TeamRoles.MEMBER.value
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.messages"].MessageDatabaseClient.get_chat_by_ids.return_value = None
+
+        self.assertRaises(ChatNotFoundError, MessageService.get_messages_from_chat, data)
+
+    def test_get_messages_from_direct_chat_set_offset_in_0_and_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked ouputs'''
+        user = PublicUser(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        user.team_id = 0
+        user.team_role = TeamRoles.MEMBER.value
+        chat = Chat(user_id=0, chat_id=1, team_id=0, offset=1)
+        sender1 = UserMessageSender(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        message1 = ChatMessage(message_id=1, sender=sender1, receiver_id=1, team_id=0, content="Test-Message-0",
+                               message_type="TEXT", timestamp=datetime.now() - timedelta(hours=1))
+        sender2 = UserMessageSender(user_id=1, username="Tester1", first_name="Test1", last_name="Test1")
+        message2 = ChatMessage(message_id=0, sender=sender2, receiver_id=0, team_id=0, content="Test-Message-1",
+                               message_type="TEXT", timestamp=datetime.now() - timedelta(hours=0))
+        direct_chats = [message1, message2]
+
+        def add_or_update_chat(chat):
+            from tests.test_services import test_messages
+            MockedMessageDatabase.stored_chat = chat
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.messages"].MessageDatabaseClient.get_chat_by_ids.return_value = chat
+        sys.modules["daos.channels"].ChannelDatabaseClient.get_channel_by_id.return_value = None
+        sys.modules["daos.messages"].MessageDatabaseClient.get_direct_chat.return_value = direct_chats
+        sys.modules["daos.messages"].MessageDatabaseClient.add_or_update_chat = MagicMock(side_effect=add_or_update_chat)
+
+        response = MessageService.get_messages_from_chat(data)
+        self.assertIsInstance(response, MessageListResponse)
+        self.assertEqual(False, response.is_channel)
+        self.assertEqual(2, len(response.messages))
+        self.assertEqual(1, response.messages[0].get("sender").get("id"))
+        self.assertEqual(0, response.messages[1].get("sender").get("id"))
+        self.assertEqual(0, MockedMessageDatabase.stored_chat.offset)
+
+    def test_get_messages_from_channel_chat_set_offset_in_0_and_works_properly(self):
+        data = MagicMock()
+
+        '''Mocked ouputs'''
+        user = PublicUser(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        user.team_id = 0
+        user.team_role = TeamRoles.MEMBER.value
+        chat = Chat(user_id=0, chat_id=1, team_id=0, offset=1)
+        channel = Channel(channel_id=2, name="Channel-Test", creator=ChannelCreator(user_id=5), team_id=0)
+        sender1 = UserMessageSender(user_id=0, username="Tester0", first_name="Test0", last_name="Test0")
+        message1 = ChatMessage(message_id=1, sender=sender1, receiver_id=2, team_id=0, content="Test-Message-0",
+                               message_type="TEXT", timestamp=datetime.now() - timedelta(hours=1))
+        sender2 = UserMessageSender(user_id=1, username="Tester1", first_name="Test1", last_name="Test1")
+        message2 = ChatMessage(message_id=0, sender=sender2, receiver_id=2, team_id=0, content="Test-Message-1",
+                               message_type="TEXT", timestamp=datetime.now() - timedelta(hours=0))
+        channel_chats = [message1, message2]
+
+        def add_or_update_chat(chat):
+            from tests.test_services import test_messages
+            MockedMessageDatabase.stored_chat = chat
+
+        sys.modules["models.authentication"].Authenticator.authenticate_team.return_value = user
+        sys.modules["daos.messages"].MessageDatabaseClient.get_chat_by_ids.return_value = chat
+        sys.modules["daos.channels"].ChannelDatabaseClient.get_channel_by_id.return_value = channel
+        sys.modules["daos.messages"].MessageDatabaseClient.get_channel_chat.return_value = channel_chats
+        sys.modules["daos.messages"].MessageDatabaseClient.add_or_update_chat = MagicMock(side_effect=add_or_update_chat)
+
+        response = MessageService.get_messages_from_chat(data)
+        self.assertIsInstance(response, MessageListResponse)
+        self.assertEqual(True, response.is_channel)
+        self.assertEqual(2, len(response.messages))
+        self.assertEqual(1, response.messages[0].get("sender").get("id"))
+        self.assertEqual(0, response.messages[1].get("sender").get("id"))
+        self.assertEqual(0, MockedMessageDatabase.stored_chat.offset)

@@ -66,15 +66,15 @@ class BadRequestMessageSentResponse(Jsonizable, Response):
 
 class MessageListResponse(Jsonizable, Response):
 
-    def __init__(self, messages_list, is_channel):
+    def __init__(self, messages, is_channel):
         self.is_channel = is_channel
-        self.messages_list = messages_list
+        self.messages = messages
 
     def json(self):
         return {
             "status": MessageResponseStatus.LIST.value,
             "chat_type": SendMessageType.CHANNEL.value if self.is_channel else SendMessageType.DIRECT.value,
-            "messages": self.messages_list
+            "messages": self.messages
         }
 
     def status_code(self):

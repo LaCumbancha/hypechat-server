@@ -1,4 +1,4 @@
-from daos.database import *
+from daos.database import DatabaseClient
 from daos.users import UserDatabaseClient
 from daos.teams import TeamDatabaseClient
 from daos.channels import ChannelDatabaseClient
